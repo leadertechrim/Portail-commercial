@@ -1,0 +1,76 @@
+// // src/api.js
+// export async function loginUser(email, password) {
+//   const res = await fetch("http://127.0.0.1:8000/login", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ email, password }),
+//   });
+
+//   if (!res.ok) {
+//     const data = await res.json();
+//     throw new Error(data.message || "Erreur login");
+//   }
+
+//   return await res.json(); // { token, role }
+// }
+
+// export async function fetchSources(token) {
+//   const res = await fetch("http://127.0.0.1:8000/api/sources", {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+//   return res.ok ? await res.json() : [];
+// }
+
+// export async function addSource(token, source) {
+//   const res = await fetch("http://127.0.0.1:8000/api/sources", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${token}`,
+//     },
+//     body: JSON.stringify(source),
+//   });
+//   return await res.json();
+// }
+
+// src/api.js
+
+// ✅ Déclare ton backend une seule fois
+const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+
+// ---------------- LOGIN ----------------
+export async function loginUser(email, password) {
+  const res = await fetch(`${API_BASE_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.message || "Erreur login");
+  }
+
+  return await res.json(); // { token, role }
+}
+
+// ---------------- GET SOURCES ----------------
+export async function fetchSources(token) {
+  const res = await fetch(`${API_BASE_URL}/api/sources`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.ok ? await res.json() : [];
+}
+
+// ---------------- ADD SOURCE ----------------
+export async function addSource(token, source) {
+  const res = await fetch(`${API_BASE_URL}/api/sources`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(source),
+  });
+  return await res.json();
+}
