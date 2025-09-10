@@ -1,0 +1,110 @@
+/* Variables CSS pour les breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+  --large: 1200px;
+}
+
+/* Mixins pour media queries */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .header {
+    padding: 10px 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .links-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .tool-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .add-source-form {
+    flex-direction: column;
+  }
+
+  .add-source-form input {
+    width: 100%;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .links-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tool-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .links-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .tool-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .links-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .tool-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Améliorations pour les appareils tactiles */
+@media (hover: none) and (pointer: coarse) {
+  .link-item,
+  .tool-card {
+    min-height: 44px; /* Taille minimale recommandée pour le touch */
+  }
+
+  button,
+  .search-input {
+    min-height: 44px;
+  }
+}
+
+/* Mode paysage sur mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .login-page {
+    padding: 20px 0;
+  }
+
+  .login-box {
+    padding: 30px 25px;
+  }
+}
+
+/* Améliorations pour les écrans haute résolution */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .logo-img,
+  .login-logo {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

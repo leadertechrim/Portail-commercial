@@ -425,3 +425,86 @@ h2 {
   color: var(--secondary-color);
   margin-bottom: 10px;
 }
+
+/* ... existing styles ... */
+
+/* Bouton Panier dans le header */
+.cart-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s;
+}
+
+.cart-btn:hover {
+  background: #229954;
+}
+
+/* Bouton Ajouter au Panier */
+.add-to-cart-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  z-index: 2;
+}
+
+.add-to-cart-btn:hover {
+  background: var(--secondary-color);
+  transform: scale(1.1);
+}
+
+.add-to-cart-btn.in-cart {
+  background: #27ae60;
+}
+
+.add-to-cart-btn.in-cart:hover {
+  background: #229954;
+}
+
+/* Position relative pour les cartes de liens */
+.link-item {
+  position: relative;
+}
+
+/* Compteur dans les cartes d'outils */
+.cart-count {
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+/* Responsive pour le header */
+@media (max-width: 768px) {
+  .header-right {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .cart-btn {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+}

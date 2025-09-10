@@ -1,0 +1,195 @@
+.recently-visited {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.recently-visited-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--secondary-color);
+}
+
+.recently-visited-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+}
+
+.clear-history-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.clear-history-btn:hover {
+  background: #c0392b;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 30px 20px;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: #ddd;
+  margin-bottom: 15px;
+}
+
+.empty-history p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.visited-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.visited-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  transition: all 0.2s;
+}
+
+.visited-item:hover {
+  background: #f0f0f0;
+  transform: translateX(5px);
+}
+
+.visited-info h4 {
+  margin: 0 0 5px 0;
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.visited-category {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 0 8px 0;
+  font-style: italic;
+}
+
+.visited-meta {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.visited-time {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.visit-count {
+  color: var(--secondary-color);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.visit-again-btn {
+  background: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  min-width: 40px;
+  height: 40px;
+}
+
+.visit-again-btn:hover {
+  background: var(--secondary-color);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .recently-visited-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .visited-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .visited-meta {
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+  }
+
+  .visit-again-btn {
+    align-self: flex-end;
+  }
+}
+
+/* ... existing styles ... */
+
+/* Supprimer les styles liés au panier */
+/* .cart-btn, .add-to-cart-btn, .cart-count supprimés */
+
+/* Styles pour la section Récemment Visités */
+.recently-visited-section {
+  background: var(--card-background);
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px var(--hover-shadow);
+  margin-bottom: 30px;
+}
+
+.recently-visited-section h2 {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recently-visited-section h2 i {
+  color: var(--secondary-color);
+}
+
+/* Responsive pour le header */
+@media (max-width: 768px) {
+  .header-right {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}

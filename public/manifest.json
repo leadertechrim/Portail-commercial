@@ -1,6 +1,7 @@
 {
-  "short_name": "Appels",
+  "short_name": "APLOFR",
   "name": "Portail des Appels d'Offres",
+  "description": "Plateforme centralisée pour consulter et gérer les appels d'offres",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,17 +11,39 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#f67800",
-  "background_color": "#ffffff",
-  "orientation": "portrait"
+  "background_color": "#f0f2f5",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "categories": ["business", "productivity"],
+  "screenshots": [
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sources",
+      "short_name": "Sources",
+      "description": "Consulter les sources d'appels d'offres",
+      "url": "/sources",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
 }
