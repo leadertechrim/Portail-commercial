@@ -36,8 +36,8 @@
 // src/api.js
 
 // ✅ Déclare ton backend une seule fois
-// const API_BASE_URL = "http://127.0.0.1:8000";
-const API_BASE_URL = "https://applesoffres-production.up.railway.app/";
+const API_BASE_URL = "http://127.0.0.1:8000";
+// const API_BASE_URL = "https://applesoffres-production.up.railway.app/";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -88,4 +88,28 @@ export async function fetchSourcesGrouped(token) {
     console.error("fetchSourcesGrouped failed:", e);
     return { nationale: [], internationale: [] };
   }
+}
+
+// ... existing code ...
+
+// ---------------- UPDATE SOURCE ----------------
+export async function updateSource(token, sourceId, data) {
+  const res = await fetch(`${API_BASE_URL}/api/sources/${sourceId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return await res.json();
+}
+
+// ---------------- DELETE SOURCE ----------------
+export async function deleteSource(token, sourceId) {
+  const res = await fetch(`${API_BASE_URL}/api/sources/${sourceId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
 }

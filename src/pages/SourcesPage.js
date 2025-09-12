@@ -1,10 +1,16 @@
 // src/pages/SourcesPage.js
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchSourcesGrouped, addSource } from "../api";
-import "./../styles/SourcesPage.css";
+import {
+  fetchSourcesGrouped,
+  addSource,
+  updateSource,
+  deleteSource,
+} from "../api";
 import { useCart } from "../hooks/useCart";
 import RecentlyVisited from "../components/RecentlyVisited";
+import EditSourceModal from "../components/EditSourceModal";
+import "./../styles/SourcesPage.css";
 
 export default function SourcesPage() {
   const [sourcesNat, setSourcesNat] = useState([]);
@@ -17,13 +23,15 @@ export default function SourcesPage() {
   const [nomEntite, setNomEntite] = useState("");
   const [url, setUrl] = useState("");
   const [categorie, setCategorie] = useState("Nationale");
+  const [order, setOrder] = useState(1);
+  const [editingSource, setEditingSource] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
 
   const loadSources = useCallback(async () => {
     const data = await fetchSourcesGrouped(token);
-    // Le backend trie déjà par ("order", 1) puis ("nom_entite", 1)
     setSourcesNat(data.nationale || []);
     setSourcesInt(data.internationale || []);
     setFilteredNat(data.nationale || []);
@@ -61,15 +69,44 @@ export default function SourcesPage() {
     const data = await addSource(token, {
       nom_entite: nomEntite,
       url,
-      categorie, // "Nationale" | "Internationale"
+      categorie,
+      order: parseInt(order) || 1,
     });
     if (data.message === "Source ajoutée") {
       setNomEntite("");
       setUrl("");
       setCategorie("Nationale");
+      setOrder(1);
       loadSources();
     } else {
       alert(data.message || "Erreur ajout");
+    }
+  };
+
+  const handleEditSource = (source) => {
+    setEditingSource(source);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveSource = async (sourceId, data) => {
+    const result = await updateSource(token, sourceId, data);
+    if (result.message === "Source mise à jour") {
+      setIsEditModalOpen(false);
+      setEditingSource(null);
+      loadSources();
+    } else {
+      alert(result.message || "Erreur modification");
+    }
+  };
+
+  const handleDeleteSource = async (sourceId) => {
+    const result = await deleteSource(token, sourceId);
+    if (result.message === "Source supprimée") {
+      setIsEditModalOpen(false);
+      setEditingSource(null);
+      loadSources();
+    } else {
+      alert(result.message || "Erreur suppression");
     }
   };
 
@@ -85,6 +122,9 @@ export default function SourcesPage() {
         {items.length === 0 && <li className="no-results">Aucun résultat</li>}
         {items.map((s) => (
           <li key={s._id} className="link-item">
+            {/* Badge d'ordre en cercle en haut */}
+            {s.order && <span className="order-badge">{s.order}</span>}
+
             <a
               href={s.url}
               target="_blank"
@@ -97,6 +137,18 @@ export default function SourcesPage() {
               </h3>
               <p className="category">{s.categorie}</p>
             </a>
+
+            {role === "admin" && (
+              <div className="admin-actions">
+                <button
+                  className="edit-btn"
+                  onClick={() => handleEditSource(s)}
+                  title="Modifier"
+                >
+                  <i className="fas fa-edit"></i>
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -108,7 +160,7 @@ export default function SourcesPage() {
       <header className="header">
         <div className="header-left">
           <a className="logo" href="#">
-            <img src="/logo192.png" alt="Logo" className="logo-img" />
+            <img src="/logo512.png" alt="Logo" className="logo-img" />
             <span className="logo-text">Appels d'Offres</span>
           </a>
         </div>
@@ -121,7 +173,8 @@ export default function SourcesPage() {
             className="search-input"
           />
           <button className="logout-btn" onClick={handleLogout}>
-            Déconnexion
+            <i className="fas fa-sign-out-alt"></i>
+            <span>Se déconnecter</span>
           </button>
         </div>
       </header>
@@ -169,16 +222,27 @@ export default function SourcesPage() {
         {role === "admin" && (
           <section className="admin-section">
             <h2>Ajouter une Source</h2>
+            <div className="admin-info">
+              <i className="fas fa-info-circle"></i>
+              <p>
+                <strong>Ordre :</strong> Détermine la position d'affichage. Si
+                vous mettez l'ordre 3, les entités avec ordre 3, 4, 5...
+                deviendront 4, 5, 6... automatiquement.
+              </p>
+            </div>
             <form onSubmit={handleAddSource} className="add-source-form">
               <input
                 placeholder="Nom entité"
                 value={nomEntite}
                 onChange={(e) => setNomEntite(e.target.value)}
+                required
               />
               <input
                 placeholder="URL"
+                type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
+                required
               />
               <select
                 value={categorie}
@@ -187,6 +251,14 @@ export default function SourcesPage() {
                 <option value="Nationale">Nationale</option>
                 <option value="Internationale">Internationale</option>
               </select>
+              <input
+                type="number"
+                placeholder="Ordre"
+                min="1"
+                value={order}
+                onChange={(e) => setOrder(e.target.value)}
+                required
+              />
               <button type="submit">Ajouter</button>
             </form>
           </section>
@@ -194,8 +266,16 @@ export default function SourcesPage() {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2025 Portail des Appels d'Offres. Tous droits réservés.</p>
+        <p>&copy; 2025 Portail des Appels d'Offres - LeaderTech Solutions</p>
       </footer>
+
+      <EditSourceModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        source={editingSource}
+        onSave={handleSaveSource}
+        onDelete={handleDeleteSource}
+      />
     </div>
   );
 }

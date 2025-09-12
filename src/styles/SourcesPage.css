@@ -688,3 +688,341 @@ h2 {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
+/* ... existing styles ... */
+
+/* Badge d'ordre - Cercle moderne en haut */
+.link-item .order-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  z-index: 3;
+  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.3);
+  border: 2px solid white;
+}
+
+/* Actions admin - Boutons modernes orange */
+.link-item .admin-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+.link-item .edit-btn {
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.3);
+  border: 2px solid white;
+}
+
+.link-item .edit-btn:hover {
+  background: linear-gradient(135deg, #e66a00, #e67e22);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(246, 120, 0, 0.4);
+}
+
+.link-item .edit-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Position relative pour les cartes avec actions */
+.link-item {
+  position: relative;
+  padding-right: 60px !important; /* Espace pour les boutons */
+  padding-top: 40px !important; /* Espace pour le badge d'ordre */
+  overflow: visible;
+  background: #f9f9f9;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.link-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #f67800;
+}
+
+.link-item a {
+  text-decoration: none;
+  color: var(--text-color);
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.link-item h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.link-item h3 .icon {
+  color: var(--secondary-color);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.link-item .category {
+  font-size: 0.9rem;
+  color: #777;
+  font-style: italic;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Supprimer le badge d'ordre du lien */
+.link-item a .order-badge {
+  display: none !important;
+}
+
+/* Formulaire admin amélioré */
+.add-source-form {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.add-source-form input,
+.add-source-form select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.add-source-form input:focus,
+.add-source-form select:focus {
+  outline: none;
+  border-color: #f67800;
+  box-shadow: 0 0 0 3px rgba(246, 120, 0, 0.1);
+}
+
+.add-source-form button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.3);
+}
+
+.add-source-form button:hover {
+  background: linear-gradient(135deg, #e66a00, #e67e22);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(246, 120, 0, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .add-source-form {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .link-item .admin-actions {
+    position: static;
+    justify-content: flex-end;
+    margin-top: 15px;
+  }
+
+  .link-item {
+    padding-right: 20px !important;
+    padding-top: 20px !important;
+  }
+
+  .link-item .order-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .link-item .edit-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+}
+
+.admin-info {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-info i {
+  color: #856404;
+  font-size: 1.1rem;
+  margin-top: 2px;
+}
+
+.admin-info p {
+  margin: 0;
+  color: #856404;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Bouton de déconnexion amélioré */
+.logout-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover {
+  background: var(--secondary-color);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.logout-btn i {
+  font-size: 0.8rem;
+}
+
+.logout-btn span {
+  font-size: 0.8rem;
+}
+
+/* Pied de page amélioré */
+.footer {
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: #fff;
+  padding: 15px 0;
+  margin-top: 40px;
+  text-align: center;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer {
+    padding: 12px 0;
+  }
+
+  .footer p {
+    font-size: 0.8rem;
+  }
+
+  .logo-img {
+    height: 35px;
+    width: 35px;
+  }
+}
+
+/* Version alternative - Bouton très compact */
+.logout-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.logout-btn i {
+  font-size: 0.7rem;
+}
+
+.logout-btn span {
+  font-size: 0.7rem;
+}
+
+/* Sur mobile, version icône seule */
+@media (max-width: 768px) {
+  .logout-btn span {
+    display: none;
+  }
+
+  .logout-btn {
+    padding: 6px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+  }
+}
+
+/* Logo circulaire */
+.logo-img {
+  height: 40px;
+  width: 40px;
+  margin-right: 10px;
+  border-radius: 10%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid white;
+}
