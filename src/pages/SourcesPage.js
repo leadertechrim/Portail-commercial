@@ -161,7 +161,7 @@ export default function SourcesPage() {
         <div className="header-left">
           <a className="logo" href="#">
             <img src="/logo512.png" alt="Logo" className="logo-img" />
-            <span className="logo-text">Sites des appels d'offres</span>
+            <span className="logo-text">Portail des appels d'offres</span>
           </a>
         </div>
         <div className="header-right">
