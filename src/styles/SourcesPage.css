@@ -177,7 +177,8 @@ body {
 
 :root {
   --primary-color: #f67800;
-  --secondary-color: #df7008;
+  /* --secondary-color: #df7008; */
+  --secondary-color: #f67800;
   --background-color: #f0f2f5;
   --card-background: #ffffff;
   --text-color: #333;
@@ -324,7 +325,7 @@ h2 {
 }
 
 .link-item h3 .icon {
-  color: var(--secondary-color);
+  color: #526069;
   margin-right: 10px;
 }
 
@@ -333,7 +334,10 @@ h2 {
   color: #777;
   font-style: italic;
 }
-
+.fasfa-link icon {
+  color: #526069;
+  margin-right: 10px;
+}
 /* Tool cards */
 .tool-cards {
   display: grid;
@@ -391,7 +395,22 @@ h2 {
 .add-source-form button:hover {
   background: var(--secondary-color);
 }
+/* Ciblage spécifique des liens avec icône de lien */
+.link-item a:has(.fas.fa-link.icon) {
+  color: #666 !important;
+}
 
+.link-item a:has(.fas.fa-link.icon) h3 {
+  color: #666 !important;
+}
+
+.link-item a:has(.fas.fa-link.icon) .icon {
+  color: #666 !important;
+}
+
+.link-item a:has(.fas.fa-link.icon) * {
+  color: #666 !important;
+}
 /* Footer */
 .footer {
   text-align: center;
@@ -1025,4 +1044,78 @@ h2 {
   object-fit: cover;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border: 2px solid white;
+}
+
+/* Ajouter à la fin du fichier */
+
+/* Bouton Mon Panier */
+.cart-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.cart-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Bouton d'ajout d'appels d'offres */
+.add-call-btn {
+  background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s;
+  width: 100%;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.source-item:hover .add-call-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.add-call-btn:hover {
+  background: linear-gradient(135deg, #20c997 0%, var(--success-color) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Ajuster le positionnement des éléments dans source-item */
+.source-item {
+  position: relative;
+  padding-bottom: 50px; /* Espace pour le bouton */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cart-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .add-call-btn {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

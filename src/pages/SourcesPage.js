@@ -135,7 +135,7 @@ export default function SourcesPage() {
                 <i className="fas fa-link icon"></i>
                 {s.nom_entite}
               </h3>
-              <p className="category">{s.categorie}</p>
+              {/* <p className="category">{s.categorie}</p> */}
             </a>
 
             {role === "admin" && (
@@ -143,7 +143,7 @@ export default function SourcesPage() {
                 <button
                   className="edit-btn"
                   onClick={() => handleEditSource(s)}
-                  title="Modifier"
+                  title="Agir"
                 >
                   <i className="fas fa-edit"></i>
                 </button>
@@ -161,7 +161,7 @@ export default function SourcesPage() {
         <div className="header-left">
           <a className="logo" href="#">
             <img src="/logo512.png" alt="Logo" className="logo-img" />
-            <span className="logo-text">Appels d'Offres</span>
+            <span className="logo-text">Sites des appels d'offres</span>
           </a>
         </div>
         <div className="header-right">
@@ -181,11 +181,12 @@ export default function SourcesPage() {
 
       <main className="main-content">
         <Section
-          title="Sources des Appels d'Offres — Nationale"
+          // title="Sources des Appels d'Offres — Nationale"
+          title="Sites des appels d'offres nationaux"
           items={filteredNat}
         />
         <Section
-          title="Sources des Appels d'Offres — Internationale"
+          title="Sites des appels d'offres internationaux"
           items={filteredInt}
         />
 
@@ -266,7 +267,7 @@ export default function SourcesPage() {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2025 Portail des Appels d'Offres - LeaderTech Solutions</p>
+        <p>&copy; 2025 Portail des Appels d'Offres - LEADERTECH-SOLUTIONS</p>
       </footer>
 
       <EditSourceModal

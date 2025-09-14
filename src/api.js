@@ -37,7 +37,9 @@
 
 // ✅ Déclare ton backend une seule fois
 // const API_BASE_URL = "http://127.0.0.1:8000";
-const API_BASE_URL = "https://applesoffres-production.up.railway.app/";
+// const API_BASE_URL = "https://applesoffres-production.up.railway.app/";
+// Changez l'URL pour Railway
+const API_BASE_URL = "https://applesoffres-production.up.railway.app";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -77,11 +79,35 @@ export async function addSource(token, source) {
 }
 
 // ---------------- GET SOURCES GROUPED ----------------
+// export async function fetchSourcesGrouped(token) {
+//   try {
+//     const res = await fetch(`${API_BASE_URL}/api/sources/grouped`, {
+//       headers: { Authorization: token ? `Bearer ${token}` : undefined },
+//     });
+//     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+//     return await res.json();
+//   } catch (e) {
+//     console.error("fetchSourcesGrouped failed:", e);
+//     return { nationale: [], internationale: [] };
+//   }
+// }
 export async function fetchSourcesGrouped(token) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/sources/grouped`, {
-      headers: { Authorization: token ? `Bearer ${token}` : undefined },
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+        "Content-Type": "application/json",
+      },
     });
+
+    //     // Vérifier le type de contenu
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await res.text();
+      console.error("Réponse non-JSON reçue:", text.substring(0, 200));
+      throw new Error("Réponse non-JSON reçue");
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (e) {
