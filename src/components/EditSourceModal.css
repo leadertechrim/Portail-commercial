@@ -170,7 +170,7 @@
 
 .delete-btn {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
+  color: white !important;
   border: none;
   padding: 12px 24px;
   border-radius: 8px;

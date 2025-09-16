@@ -139,3 +139,125 @@ export async function deleteSource(token, sourceId) {
   });
   return await res.json();
 }
+
+// ---------------- USER MANAGEMENT (ADMIN) ----------------
+
+// Récupérer tous les utilisateurs
+export async function fetchUsers(token) {
+  const res = await fetch(`${API_BASE_URL}/api/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors de la récupération des utilisateurs"
+    );
+  }
+
+  return await res.json();
+}
+
+// Créer un nouvel utilisateur
+export async function createUser(userData, token) {
+  const res = await fetch(`${API_BASE_URL}/api/users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(userData),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors de la création de l'utilisateur"
+    );
+  }
+
+  return await res.json();
+}
+
+// Modifier un utilisateur
+export async function updateUser(userId, userData, token) {
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(userData),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors de la mise à jour de l'utilisateur"
+    );
+  }
+
+  return await res.json();
+}
+
+// Supprimer un utilisateur
+export async function deleteUser(userId, token) {
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors de la suppression de l'utilisateur"
+    );
+  }
+
+  return await res.json();
+}
+
+// Changer le mot de passe d'un utilisateur
+export async function changePassword(userId, passwordData, token) {
+  const res = await fetch(
+    `${API_BASE_URL}/api/users/${userId}/change-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(passwordData),
+    }
+  );
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors du changement de mot de passe"
+    );
+  }
+
+  return await res.json();
+}
+
+// Changer son propre mot de passe (admin)
+export async function changeOwnPassword(passwordData, token) {
+  const res = await fetch(`${API_BASE_URL}/api/admin/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(passwordData),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(
+      data.message || "Erreur lors du changement de mot de passe"
+    );
+  }
+
+  return await res.json();
+}

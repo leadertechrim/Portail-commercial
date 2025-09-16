@@ -10,6 +10,7 @@ import {
 import { useCart } from "../hooks/useCart";
 import RecentlyVisited from "../components/RecentlyVisited";
 import EditSourceModal from "../components/EditSourceModal";
+import Sidebar from "../components/Sidebar";
 import "./../styles/SourcesPage.css";
 
 export default function SourcesPage() {
@@ -26,6 +27,7 @@ export default function SourcesPage() {
   const [order, setOrder] = useState(1);
   const [editingSource, setEditingSource] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
@@ -156,9 +158,18 @@ export default function SourcesPage() {
   );
 
   return (
-    <div className="sources-page">
+    <div className={`sources-page ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       <header className="header">
         <div className="header-left">
+          <button
+            className="menu-btn"
+            onClick={() => setSidebarOpen(true)}
+            title="Ouvrir le menu"
+          >
+            <i className="fas fa-bars"></i>
+          </button>
           <a className="logo" href="#">
             <img src="/logo512.png" alt="Logo" className="logo-img" />
             <span className="logo-text">Portail des appels d'offres</span>
@@ -174,7 +185,7 @@ export default function SourcesPage() {
           />
           <button className="logout-btn" onClick={handleLogout}>
             <i className="fas fa-sign-out-alt"></i>
-            <span>Se déconnecter</span>
+            {/* <span>Se déconnecter</span> */}
           </button>
         </div>
       </header>

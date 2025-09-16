@@ -1,0 +1,233 @@
+/* Buttons.css - Styles unifiés pour tous les boutons */
+
+/* Boutons principaux */
+.btn-primary {
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  box-shadow: 0 2px 8px rgba(246, 120, 0, 0.25);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #e66a00, #e67e22);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.4);
+}
+
+/* Boutons secondaires */
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Boutons d'action (petits) */
+.btn-action {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-edit:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-password {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #212529;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-password:hover {
+  background: linear-gradient(135deg, #e0a800, #d39e00);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+/* Bouton menu */
+.btn-menu {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.btn-menu:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Bouton logout */
+.btn-logout {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  background: #fff;
+  color: #f67800;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-logout:hover {
+  background: #f67800;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(246, 120, 0, 0.3);
+}
+
+/* Boutons de formulaire */
+.btn-form {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 100px;
+  height: 36px;
+  justify-content: center;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #f67800, #f68215);
+  color: white;
+  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.3);
+}
+
+.btn-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e66a00, #e67e22);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(246, 120, 0, 0.4);
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* États désactivés */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-action:disabled,
+.btn-form:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    height: 32px;
+  }
+  
+  .btn-action {
+    min-width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .btn-menu {
+    min-width: 32px;
+    height: 32px;
+    padding: 6px 8px;
+    font-size: 1rem;
+  }
+  
+  .btn-logout {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    height: 28px;
+  }
+  
+  .btn-form {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    height: 32px;
+    min-width: 80px;
+  }
+}
+
