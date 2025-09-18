@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "./UserModal.css";
 
-const UserModal = ({ user, onSave, onClose }) => {
+const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "user",
     telephone: "",
     statut: "actif",
-    gerer: true,
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -20,21 +20,21 @@ const UserModal = ({ user, onSave, onClose }) => {
       setFormData({
         name: user.name || "",
         email: user.email || "",
-        password: "admin123",
+        password: "", // Password is now optional for edit, so clear it
+        confirmPassword: "", // Clear confirmation password
         role: user.role || "user",
         telephone: user.telephone || "",
         statut: user.statut || "actif",
-        gerer: user.gerer !== undefined ? user.gerer : true,
       });
     } else {
       setFormData({
         name: "",
         email: "",
         password: "",
+        confirmPassword: "",
         role: "user",
         telephone: "",
         statut: "actif",
-        gerer: true,
       });
     }
   }, [user]);
@@ -65,6 +65,11 @@ const UserModal = ({ user, onSave, onClose }) => {
         "Le mot de passe doit contenir au moins 6 caractères";
     }
 
+    // Validation de la confirmation de mot de passe
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -87,8 +92,12 @@ const UserModal = ({ user, onSave, onClose }) => {
         gerer: formData.gerer,
       };
 
-      if (!user && formData.password.trim()) {
-        userData.password = formData.password;
+      // Pour un nouvel utilisateur, le mot de passe est obligatoire
+      // Pour la modification, le mot de passe est optionnel
+      if (!user) {
+        userData.password = formData.password.trim();
+      } else if (formData.password.trim()) {
+        userData.password = formData.password.trim();
       }
 
       await onSave(userData);
@@ -117,13 +126,22 @@ const UserModal = ({ user, onSave, onClose }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>{user ? "Modifier l'utilisateur" : "Nouvel utilisateur"}</h2>
+          <h2>
+            {isViewMode
+              ? "Détails de l'utilisateur"
+              : user
+              ? "Modifier l'utilisateur"
+              : "Nouvel utilisateur"}
+          </h2>
           <button className="close-btn" onClick={onClose}>
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="user-form">
+        <form
+          onSubmit={isViewMode ? (e) => e.preventDefault() : handleSubmit}
+          className="user-form"
+        >
           <div className="form-group">
             <label htmlFor="name">Nom *</label>
             <input
@@ -134,6 +152,7 @@ const UserModal = ({ user, onSave, onClose }) => {
               onChange={handleChange}
               className={errors.name ? "error" : ""}
               placeholder="Nom complet"
+              readOnly={isViewMode}
             />
             {errors.name && (
               <span className="error-message">{errors.name}</span>
@@ -150,6 +169,7 @@ const UserModal = ({ user, onSave, onClose }) => {
               onChange={handleChange}
               className={errors.email ? "error" : ""}
               placeholder="email@exemple.com"
+              readOnly={isViewMode}
             />
             {errors.email && (
               <span className="error-message">{errors.email}</span>
@@ -166,6 +186,7 @@ const UserModal = ({ user, onSave, onClose }) => {
               onChange={handleChange}
               className={errors.telephone ? "error" : ""}
               placeholder="+22241000000"
+              readOnly={isViewMode}
             />
             {errors.telephone && (
               <span className="error-message">{errors.telephone}</span>
@@ -175,6 +196,7 @@ const UserModal = ({ user, onSave, onClose }) => {
             </small>
           </div>
 
+          {!isViewMode && (
           <div className="form-group">
             <label htmlFor="password">Mot de passe {!user && "*"}</label>
             <div className="password-input-container">
@@ -183,12 +205,10 @@ const UserModal = ({ user, onSave, onClose }) => {
                 id="password"
                 name="password"
                 value={formData.password}
-                onChange={user ? undefined : handleChange}
-                className={`${errors.password ? "error" : ""} ${
-                  user ? "readonly" : ""
-                }`}
-                placeholder={user ? "Mot de passe fixe" : "Mot de passe"}
-                readOnly={!!user}
+                  onChange={handleChange}
+                  className={errors.password ? "error" : ""}
+                  placeholder="Mot de passe"
+                  readOnly={isViewMode}
               />
               <button
                 type="button"
@@ -201,19 +221,57 @@ const UserModal = ({ user, onSave, onClose }) => {
                 }
               >
                 <i
-                  className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                    className={`fas ${
+                      showPassword ? "fa-eye-slash" : "fa-eye"
+                    }`}
                 ></i>
               </button>
             </div>
             {errors.password && (
               <span className="error-message">{errors.password}</span>
             )}
-            {user && (
+            </div>
+          )}
+
+          {user && !isViewMode && (
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirmation mot de passe</label>
+              <div className="password-input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={errors.confirmPassword ? "error" : ""}
+                  placeholder="Confirmer le mot de passe"
+                  readOnly={isViewMode}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                >
+                  <i
+                    className={`fas ${
+                      showPassword ? "fa-eye-slash" : "fa-eye"
+                    }`}
+                  ></i>
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <span className="error-message">{errors.confirmPassword}</span>
+              )}
               <small className="help-text">
-                Mot de passe fixe - non modifiable
+                Confirmer le nouveau mot de passe (optionnel)
               </small>
+            </div>
             )}
-          </div>
 
           <div className="form-group">
             <label htmlFor="role">Rôle *</label>
@@ -222,9 +280,11 @@ const UserModal = ({ user, onSave, onClose }) => {
               name="role"
               value={formData.role}
               onChange={handleChange}
+              disabled={isViewMode}
             >
               <option value="user">Utilisateur</option>
               <option value="admin">Administrateur</option>
+              <option value="spectateur">Spectateur</option>
             </select>
           </div>
 
@@ -235,29 +295,11 @@ const UserModal = ({ user, onSave, onClose }) => {
               name="statut"
               value={formData.statut}
               onChange={handleChange}
+              disabled={isViewMode}
             >
               <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
-              <option value="suspendu">Suspendu</option>
+              <option value="inactif">Non actif</option>
             </select>
-          </div>
-
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="gerer"
-                checked={formData.gerer}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    gerer: e.target.checked,
-                  }))
-                }
-                className="checkbox-input"
-              />
-              <span className="checkbox-text">Peut gérer les utilisateurs</span>
-            </label>
           </div>
 
           <div className="form-actions">
@@ -267,8 +309,9 @@ const UserModal = ({ user, onSave, onClose }) => {
               onClick={onClose}
               disabled={loading}
             >
-              Annuler
+              {isViewMode ? "Fermer" : "Annuler"}
             </button>
+            {!isViewMode && (
             <button type="submit" className="save-btn" disabled={loading}>
               {loading ? (
                 <>
@@ -282,6 +325,7 @@ const UserModal = ({ user, onSave, onClose }) => {
                 </>
               )}
             </button>
+            )}
           </div>
         </form>
       </div>

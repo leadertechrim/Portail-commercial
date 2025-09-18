@@ -177,6 +177,68 @@
   box-shadow: 0 2px 6px rgba(246, 120, 0, 0.3) !important;
 }
 
+/* Styles pour les documents - Design élégant et minimaliste */
+.documents-list {
+  margin-top: 15px;
+  padding: 20px;
+  background: #fafbfc;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+}
+
+.documents-list h4 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.document-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #e1e5e9;
+  transition: all 0.2s ease;
+  min-height: 50px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.document-item:hover {
+  border-color: #f67800;
+  box-shadow: 0 2px 8px rgba(246, 120, 0, 0.15);
+}
+
+.document-item i {
+  color: #6c757d;
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.document-item span {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 400;
+  word-break: break-word !important;
+  white-space: normal !important;
+  line-height: 1.4;
+  max-width: 300px;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  display: block;
+}
+
+/* Styles pour les anciens attachments (compatibilité) */
 .attachments-list {
   margin-top: 15px;
   padding: 15px;
@@ -257,6 +319,56 @@
   left: 100%;
 }
 
+/* Actions des documents - Design élégant et minimaliste */
+.document-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* Boutons d'actions des documents - Design élégant et minimaliste */
+.open-document,
+.download-document,
+.remove-document {
+  background: transparent;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.open-document:hover {
+  background: #f67800;
+  color: white;
+  border-color: #f67800;
+}
+
+.download-document:hover {
+  background: #17a2b8;
+  color: white;
+  border-color: #17a2b8;
+}
+
+.remove-document:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+/* Actions des anciens attachments (compatibilité) */
 .attachment-actions {
   display: flex;
   gap: 8px;
@@ -501,5 +613,26 @@
 
   .form-actions button {
     width: 100%;
+  }
+
+  /* Responsive pour les documents */
+  .document-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .document-actions {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .open-document,
+  .download-document,
+  .remove-document {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
   }
 }

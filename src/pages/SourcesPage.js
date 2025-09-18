@@ -142,15 +142,17 @@ export default function SourcesPage() {
               {/* <p className="category">{s.categorie}</p> */}
             </a>
 
-            <div className="admin-actions">
-              <button
-                className="edit-btn"
-                onClick={() => handleEditSource(s)}
-                title="Modifier cette source"
-              >
-                <i className="fas fa-edit"></i>
-              </button>
-            </div>
+            {role === "admin" && (
+              <div className="admin-actions">
+                <button
+                  className="edit-btn"
+                  onClick={() => handleEditSource(s)}
+                  title="Modifier cette source"
+                >
+                  <i className="fas fa-edit"></i>
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -193,7 +195,7 @@ export default function SourcesPage() {
           items={filteredInt}
         />
 
-        <section className="tools-section">
+        {/* <section className="tools-section">
           <div className="tool-cards">
             <div className="tool-card">
               <i className="fas fa-bell tool-icon"></i>
@@ -211,55 +213,57 @@ export default function SourcesPage() {
               <p>Notre système collecte les données quotidiennement.</p>
             </div>
           </div>
-        </section>
+        </section> */}
 
         <RecentlyVisited
           recentlyVisited={recentlyVisited}
           clearHistory={clearHistory}
         />
 
-        <section className="admin-section">
-          <h2>Gérer les Sources</h2>
-          <div className="admin-info">
-            <i className="fas fa-info-circle"></i>
-            <p>
-              <strong>Gestion des sources :</strong> Vous pouvez ajouter,
-              modifier et supprimer des sources d'appels d'offres. L'ordre
-              détermine la position d'affichage dans la liste.
-            </p>
-          </div>
-          <form onSubmit={handleAddSource} className="add-source-form">
-            <input
-              placeholder="Nom entité"
-              value={nomEntite}
-              onChange={(e) => setNomEntite(e.target.value)}
-              required
-            />
-            <input
-              placeholder="URL"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-            />
-            <select
-              value={categorie}
-              onChange={(e) => setCategorie(e.target.value)}
-            >
-              <option value="Nationale">Nationale</option>
-              <option value="Internationale">Internationale</option>
-            </select>
-            <input
-              type="number"
-              placeholder="Ordre"
-              min="1"
-              value={order}
-              onChange={(e) => setOrder(e.target.value)}
-              required
-            />
-            <button type="submit">Ajouter</button>
-          </form>
-        </section>
+        {role === "admin" && (
+          <section className="admin-section">
+            <h2>Gérer les Sources</h2>
+            <div className="admin-info">
+              <i className="fas fa-info-circle"></i>
+              <p>
+                <strong>Gestion des sources :</strong> Vous pouvez ajouter,
+                modifier et supprimer des sources d'appels d'offres. L'ordre
+                détermine la position d'affichage dans la liste.
+              </p>
+            </div>
+            <form onSubmit={handleAddSource} className="add-source-form">
+              <input
+                placeholder="Nom entité"
+                value={nomEntite}
+                onChange={(e) => setNomEntite(e.target.value)}
+                required
+              />
+              <input
+                placeholder="URL"
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+              />
+              <select
+                value={categorie}
+                onChange={(e) => setCategorie(e.target.value)}
+              >
+                <option value="Nationale">Nationale</option>
+                <option value="Internationale">Internationale</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Ordre"
+                min="1"
+                value={order}
+                onChange={(e) => setOrder(e.target.value)}
+                required
+              />
+              <button type="submit">Ajouter</button>
+            </form>
+          </section>
+        )}
       </main>
 
       <footer className="footer">

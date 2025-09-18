@@ -102,6 +102,9 @@ export async function fetchUsers(token) {
 }
 
 export async function createUser(userData, token) {
+  console.log("API createUser - Données reçues:", userData);
+  console.log("API createUser - Token:", token ? "Présent" : "Manquant");
+
   const res = await fetch(`${API_BASE_URL}/api/users`, {
     method: "POST",
     headers: {
@@ -111,14 +114,20 @@ export async function createUser(userData, token) {
     body: JSON.stringify(userData),
   });
 
+  console.log("API createUser - Status de réponse:", res.status);
+  console.log("API createUser - Headers de réponse:", res.headers);
+
   if (!res.ok) {
     const data = await res.json();
+    console.error("API createUser - Erreur du serveur:", data);
     throw new Error(
       data.message || "Erreur lors de la création de l'utilisateur"
     );
   }
 
-  return await res.json();
+  const result = await res.json();
+  console.log("API createUser - Résultat du serveur:", result);
+  return result;
 }
 
 export async function updateUser(userId, userData, token) {
@@ -200,10 +209,10 @@ export async function changeOwnPassword(passwordData, token) {
   return await res.json();
 }
 
-// ===== GESTION DES APPELS D'OFFRES (PANIER) =====
-export const fetchCartItems = async (token) => {
+// ===== GESTION DES OFFRES =====
+export const fetchOffers = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/panier`, {
+    const response = await fetch(`${API_BASE_URL}/api/offres`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -215,65 +224,30 @@ export const fetchCartItems = async (token) => {
     }
 
     const data = await response.json();
+    console.log("📡 Réponse complète du backend:", data);
+    console.log("📊 Type de données:", typeof data);
+    console.log("📋 Est-ce un tableau?", Array.isArray(data));
+    if (Array.isArray(data)) {
+      console.log("✅ Nombre d'offres:", data.length);
+    } else {
+      console.log("⚠️ Structure des données:", data);
+    }
     return data;
   } catch (error) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/calls-for-tender`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Données récupérées du backend:", data);
-
-      if (Array.isArray(data)) {
-        const mappedData = data.map((item) => ({
-          _id: item._id,
-          title: item.title || "Titre non défini",
-          type: "appel_offre",
-          description: item.description || "",
-          source: item.source || "",
-          pieces_jointes: item.pieces_jointes || item.attachments || [],
-          commentaire:
-            item.Commentaire ||
-            item.commentaire ||
-            item.note ||
-            item.comment ||
-            "",
-          quantity: 1,
-          price: item.price || 0,
-          status: item.state || "pending",
-          client: item.client || "",
-          deadline: item.deadline,
-          created_at: item.created_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString(),
-        }));
-        console.log("Données mappées:", mappedData);
-        return mappedData;
-      }
-
-      return data;
-    } catch (fallbackError) {
-      throw fallbackError;
-    }
+    console.error("Erreur lors de la récupération des offres:", error);
+    return [];
   }
 };
 
-export const addCartItem = async (itemData, token) => {
+export const addOffer = async (offerData, token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/panier`, {
+    const response = await fetch(`${API_BASE_URL}/api/offres`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(itemData),
+      body: JSON.stringify(offerData),
     });
 
     if (!response.ok) {
@@ -289,15 +263,15 @@ export const addCartItem = async (itemData, token) => {
   }
 };
 
-export const updateCartItem = async (itemId, itemData, token) => {
+export const updateOffer = async (offerId, offerData, token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/panier/${itemId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/offres/${offerId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(itemData),
+      body: JSON.stringify(offerData),
     });
 
     if (!response.ok) {
@@ -313,9 +287,9 @@ export const updateCartItem = async (itemId, itemData, token) => {
   }
 };
 
-export const deleteCartItem = async (itemId, token) => {
+export const deleteOffer = async (offerId, token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/panier/${itemId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/offres/${offerId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -335,9 +309,9 @@ export const deleteCartItem = async (itemId, token) => {
   }
 };
 
-export const getCartStats = async (token) => {
+export const getOffersStats = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/panier/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/offres/stats`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -351,42 +325,25 @@ export const getCartStats = async (token) => {
     return await response.json();
   } catch (error) {
     try {
-      const cartItems = await fetchCartItems(token);
+      const offers = await fetchOffers(token);
       const stats = {
-        total_items: cartItems.length,
-        non_prepare_items: cartItems.filter(
-          (item) => item.status === "non_prepare"
+        total_items: offers.length,
+        en_preparation_items: offers.filter(
+          (item) => item.statut === "En préparation"
         ).length,
-        en_preparation_items: cartItems.filter(
-          (item) => item.status === "en_preparation"
-        ).length,
-        envoyee_items: cartItems.filter((item) => item.status === "envoyee")
+        envoyee_items: offers.filter((item) => item.statut === "Envoyée")
           .length,
-        pending_items: cartItems.filter(
-          (item) => item.status === "pending" || item.status === "ouvert"
+        non_prepare_items: offers.filter(
+          (item) => item.statut === "Non préparé"
         ).length,
-        approved_items: cartItems.filter(
-          (item) => item.status === "approved" || item.status === "attribue"
-        ).length,
-        completed_items: cartItems.filter(
-          (item) => item.status === "completed" || item.status === "ferme"
-        ).length,
-        total_value: cartItems.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        ),
       };
       return stats;
     } catch (fallbackError) {
       return {
         total_items: 0,
-        non_prepare_items: 0,
         en_preparation_items: 0,
         envoyee_items: 0,
-        pending_items: 0,
-        approved_items: 0,
-        completed_items: 0,
-        total_value: 0,
+        non_prepare_items: 0,
       };
     }
   }
@@ -516,6 +473,306 @@ export const deleteCallForTender = async (callId, token) => {
   try {
     const response = await fetch(
       `${API_BASE_URL}/api/calls-for-tender/${callId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+// ===========================================
+// GESTION DES CLIENTS
+// ===========================================
+
+export const fetchClients = async (token) => {
+  try {
+    console.log("Fetching clients with token:", token ? "Present" : "Missing");
+    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Clients response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Clients API error:", errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Clients data received:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return [];
+  }
+};
+
+export const createClient = async (clientData, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/clients`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(clientData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const updateClient = async (clientId, clientData, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/clients/${clientId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(clientData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const deleteClient = async (clientId, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/clients/${clientId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+// ===========================================
+// GESTION DES PARTENAIRES
+// ===========================================
+
+export const fetchPartners = async (token) => {
+  try {
+    console.log("Fetching partners with token:", token ? "Present" : "Missing");
+    const response = await fetch(`${API_BASE_URL}/api/partenaires`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Partners response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Partners API error:", errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Partners data received:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching partners:", error);
+    return [];
+  }
+};
+
+export const createPartner = async (partnerData, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/partenaires`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(partnerData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const updatePartner = async (partnerId, partnerData, token) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/partenaires/${partnerId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(partnerData),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const deletePartner = async (partnerId, token) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/partenaires/${partnerId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+// ===========================================
+// GESTION DU PERSONNEL
+// ===========================================
+
+export const fetchPersonnel = async (token) => {
+  try {
+    console.log(
+      "Fetching personnel with token:",
+      token ? "Present" : "Missing"
+    );
+    const response = await fetch(`${API_BASE_URL}/api/personnels`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Personnel response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Personnel API error:", errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Personnel data received:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching personnel:", error);
+    return [];
+  }
+};
+
+export const createPersonnel = async (personnelData, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/personnels`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(personnelData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const updatePersonnel = async (personnelId, personnelData, token) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/personnels/${personnelId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(personnelData),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { message: "Erreur de connexion" };
+  }
+};
+
+export const deletePersonnel = async (personnelId, token) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/personnels/${personnelId}`,
       {
         method: "DELETE",
         headers: {

@@ -201,6 +201,13 @@
   box-shadow: 0 4px 12px rgba(246, 120, 0, 0.2);
 }
 
+.role-badge.spectateur {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+}
+
 .role-badge:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -293,17 +300,32 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+.view-btn {
+  background: #ffffff !important;
+  color: #f67800 !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+.view-btn:hover {
+  background: #f8f9fa !important;
+  color: #ff8c00 !important;
+  border-color: #adb5bd !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
 .edit-btn {
-  color: #007bff;
-  border-color: #007bff;
-  background: rgba(0, 123, 255, 0.1);
+  background: #ffffff !important;
+  color: #6c757d !important;
+  border: 1px solid #dee2e6 !important;
 }
 
 .edit-btn:hover {
-  background: #007bff;
-  color: white;
+  background: #f8f9fa !important;
+  color: #495057 !important;
+  border-color: #adb5bd !important;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 .password-btn {

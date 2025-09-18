@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  fetchUsers,
-  createUser,
-  updateUser,
-  deleteUser,
-  changePassword,
-} from "../api";
+import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
 import UserModal from "../components/UserModal";
-import PasswordModal from "../components/PasswordModal";
 import Sidebar from "../components/Sidebar";
 import "./AdminPage.css";
 
@@ -17,14 +10,14 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [passwordUserId, setPasswordUserId] = useState(null);
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
   const token = localStorage.getItem("token");
+  const isSpectator = role === "spectateur";
 
   const loadUsers = useCallback(async () => {
     try {
@@ -40,7 +33,7 @@ const AdminPage = () => {
   }, [token]);
 
   useEffect(() => {
-    if (role !== "admin") {
+    if (role !== "admin" && role !== "spectateur") {
       navigate("/sources");
       return;
     }
@@ -49,12 +42,19 @@ const AdminPage = () => {
 
   const handleCreateUser = async (userData) => {
     try {
-      await createUser(userData, token);
+      console.log("Données utilisateur à créer:", userData);
+      console.log("Token:", token ? "Présent" : "Manquant");
+
+      const result = await createUser(userData, token);
+      console.log("Résultat de création:", result);
+
       await loadUsers();
       setIsUserModalOpen(false);
       setError("");
+      alert("Utilisateur créé avec succès");
     } catch (err) {
-      setError("Erreur lors de la création de l'utilisateur");
+      console.error("Erreur détaillée:", err);
+      setError(`Erreur lors de la création de l'utilisateur: ${err.message}`);
     }
   };
 
@@ -84,35 +84,25 @@ const AdminPage = () => {
     }
   };
 
-  const handleChangePassword = async (userId, passwordData) => {
-    try {
-      await changePassword(userId, passwordData, token);
-      setIsPasswordModalOpen(false);
-      setPasswordUserId(null);
-      setError("");
-    } catch (err) {
-      setError("Erreur lors du changement de mot de passe");
-    }
-  };
-
   const openEditModal = (user) => {
     setEditingUser(user);
+    setIsViewMode(false);
     setIsUserModalOpen(true);
   };
 
-  const openPasswordModal = (userId) => {
-    setPasswordUserId(userId);
-    setIsPasswordModalOpen(true);
+  const openViewModal = (user) => {
+    setEditingUser(user);
+    setIsViewMode(true);
+    setIsUserModalOpen(true);
   };
 
   const closeModals = () => {
     setIsUserModalOpen(false);
-    setIsPasswordModalOpen(false);
     setEditingUser(null);
-    setPasswordUserId(null);
+    setIsViewMode(false);
   };
 
-  if (role !== "admin") {
+  if (role !== "admin" && role !== "spectateur") {
     return null;
   }
 
@@ -125,13 +115,15 @@ const AdminPage = () => {
           Retour
         </button>
         {/* <h1>Gestion des Utilisateurs</h1> */}
-        <button
-          className="add-user-btn"
-          onClick={() => setIsUserModalOpen(true)}
-        >
-          <i className="fas fa-plus"></i>
-          Nouvel Utilisateur
-        </button>
+        {!isSpectator && (
+          <button
+            className="add-user-btn"
+            onClick={() => setIsUserModalOpen(true)}
+          >
+            <i className="fas fa-plus"></i>
+            Nouvel Utilisateur
+          </button>
+        )}
       </div>
 
       {error && (
@@ -157,8 +149,8 @@ const AdminPage = () => {
                   <th>Téléphone</th>
                   <th>Rôle</th>
                   <th>Statut</th>
+                  {/* <th>Gérer</th> */}
                   <th>Gérer</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,7 +171,7 @@ const AdminPage = () => {
                         {user.statut || "actif"}
                       </span>
                     </td>
-                    <td>
+                    {/* <td>
                       <span
                         className={`manage-badge ${user.gerer ? "yes" : "no"}`}
                       >
@@ -190,29 +182,33 @@ const AdminPage = () => {
                         ></i>
                         {user.gerer ? "Oui" : "Non"}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="actions">
                       <button
-                        className="edit-btn"
-                        onClick={() => openEditModal(user)}
-                        title="Modifier"
+                        className="view-btn"
+                        onClick={() => openViewModal(user)}
+                        title="Voir les détails"
                       >
-                        <i className="fas fa-edit"></i>
+                        <i className="fas fa-eye"></i>
                       </button>
-                      <button
-                        className="password-btn"
-                        onClick={() => openPasswordModal(user._id)}
-                        title="Changer le mot de passe"
-                      >
-                        <i className="fas fa-key"></i>
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDeleteUser(user._id)}
-                        title="Supprimer"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+                      {!isSpectator && (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={() => openEditModal(user)}
+                            title="Modifier"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteUser(user._id)}
+                            title="Supprimer"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -231,14 +227,7 @@ const AdminPage = () => {
               : handleCreateUser
           }
           onClose={closeModals}
-        />
-      )}
-
-      {isPasswordModalOpen && (
-        <PasswordModal
-          userId={passwordUserId}
-          onSave={handleChangePassword}
-          onClose={closeModals}
+          isViewMode={isViewMode}
         />
       )}
     </div>

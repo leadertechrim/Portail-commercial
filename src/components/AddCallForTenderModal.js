@@ -3,17 +3,13 @@ import "./AddCallForTenderModal.css";
 
 const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    title: "",
-    source: "",
+    intitulee: "",
+    lien: "",
     client: "",
-    state: "",
-    description: "",
-    deadline: "",
-    price: "1",
-    type: "appel_offre",
-    commentaire: "",
-    quantity: 1,
-    attachments: [],
+    statut: "Non préparé",
+    note_commentaire: "",
+    date_limite: "",
+    documents: [],
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -36,44 +32,40 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
     const files = Array.from(e.target.files);
     setFormData((prev) => ({
       ...prev,
-      attachments: [...prev.attachments, ...files],
+      documents: [...prev.documents, ...files],
     }));
   };
 
   const removeAttachment = (index) => {
     setFormData((prev) => ({
       ...prev,
-      attachments: prev.attachments.filter((_, i) => i !== index),
+      documents: prev.documents.filter((_, i) => i !== index),
     }));
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Le titre est requis";
+    if (!formData.intitulee.trim()) {
+      newErrors.intitulee = "L'intitulé est requis";
     }
-    if (!formData.source.trim()) {
-      newErrors.source = "La source est requise";
+    if (!formData.lien.trim()) {
+      newErrors.lien = "Le lien est requis";
     }
     if (!formData.client.trim()) {
       newErrors.client = "Le client est requis";
     }
-    if (!formData.state.trim()) {
-      newErrors.state = "Le statut est requis";
+    if (!formData.statut.trim()) {
+      newErrors.statut = "Le statut est requis";
     }
-    if (!formData.deadline.trim()) {
-      newErrors.deadline = "La date limite est requise";
-    }
-    if (!formData.type.trim()) {
-      newErrors.type = "Le type est requis";
-    }
-    if (!formData.price || formData.price === "") {
-      newErrors.price = "Le prix est requis";
+    if (!formData.date_limite.trim()) {
+      newErrors.date_limite = "La date limite est requise";
     } else {
-      const priceNum = parseFloat(formData.price);
-      if (isNaN(priceNum) || priceNum <= 0 || priceNum < 0.01) {
-        newErrors.price = "Le prix doit être un nombre positif (minimum 0.01)";
+      const deadlineDate = new Date(formData.date_limite);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (deadlineDate < today) {
+        newErrors.date_limite = "La date limite ne peut pas être dans le passé";
       }
     }
 
@@ -119,17 +111,13 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleClose = () => {
     setFormData({
-      title: "",
-      source: "",
+      intitulee: "",
+      lien: "",
       client: "",
-      state: "",
-      description: "",
-      deadline: "",
-      price: "1",
-      type: "appel_offre",
-      commentaire: "",
-      quantity: 1,
-      attachments: [],
+      statut: "Non préparé",
+      note_commentaire: "",
+      date_limite: "",
+      documents: [],
     });
     setErrors({});
     onClose();
@@ -141,7 +129,7 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="modal-overlay">
       <div className="modal-content add-call-modal">
         <div className="modal-header">
-          <h2>Ajouter un Appel d'Offres</h2>
+          <h2>Ajouter une Offre</h2>
           <button className="modal-close" onClick={handleClose}>
             <i className="fas fa-times"></i>
           </button>
@@ -149,34 +137,34 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
 
         <form onSubmit={handleSubmit} className="add-call-form">
           <div className="form-group">
-            <label htmlFor="title">Titre *</label>
+            <label htmlFor="intitulee">Intitulé *</label>
             <input
               type="text"
-              id="title"
-              name="title"
-              value={formData.title}
+              id="intitulee"
+              name="intitulee"
+              value={formData.intitulee}
               onChange={handleChange}
-              placeholder="Titre de l'appel d'offres"
-              className={errors.title ? "error" : ""}
+              placeholder="Intitulé de l'offre"
+              className={errors.intitulee ? "error" : ""}
             />
-            {errors.title && (
-              <span className="error-message">{errors.title}</span>
+            {errors.intitulee && (
+              <span className="error-message">{errors.intitulee}</span>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="source">Source *</label>
+            <label htmlFor="lien">Lien *</label>
             <input
-              type="text"
-              id="source"
-              name="source"
-              value={formData.source}
+              type="url"
+              id="lien"
+              name="lien"
+              value={formData.lien}
               onChange={handleChange}
-              placeholder="Source de l'appel d'offres"
-              className={errors.source ? "error" : ""}
+              placeholder="Lien vers l'offre"
+              className={errors.lien ? "error" : ""}
             />
-            {errors.source && (
-              <span className="error-message">{errors.source}</span>
+            {errors.lien && (
+              <span className="error-message">{errors.lien}</span>
             )}
           </div>
 
@@ -197,115 +185,64 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="state">Statut *</label>
+            <label htmlFor="statut">Statut *</label>
             <select
-              id="state"
-              name="state"
-              value={formData.state}
+              id="statut"
+              name="statut"
+              value={formData.statut}
               onChange={handleChange}
-              className={errors.state ? "error" : ""}
+              className={errors.statut ? "error" : ""}
             >
-              <option value="">Sélectionner un état</option>
-              <option value="en_preparation">En préparation</option>
-              <option value="envoyee">Envoyée</option>
-              <option value="non_prepare">Non préparé</option>
+              <option value="Non préparé">Non préparé</option>
+              <option value="En préparation">En préparation</option>
+              <option value="Envoyée">Envoyée</option>
             </select>
-            {errors.state && (
-              <span className="error-message">{errors.state}</span>
+            {errors.statut && (
+              <span className="error-message">{errors.statut}</span>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="deadline">Date limite *</label>
+            <label htmlFor="date_limite">Date limite *</label>
             <input
               type="date"
-              id="deadline"
-              name="deadline"
-              value={formData.deadline}
+              id="date_limite"
+              name="date_limite"
+              value={formData.date_limite}
               onChange={handleChange}
-              className={errors.deadline ? "error" : ""}
+              className={errors.date_limite ? "error" : ""}
             />
-            {errors.deadline && (
-              <span className="error-message">{errors.deadline}</span>
+            {errors.date_limite && (
+              <span className="error-message">{errors.date_limite}</span>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="note_commentaire">Note/Commentaire</label>
             <textarea
-              id="description"
-              name="description"
-              value={formData.description}
+              id="note_commentaire"
+              name="note_commentaire"
+              value={formData.note_commentaire}
               onChange={handleChange}
-              placeholder="Description de l'appel d'offres"
+              placeholder="Note ou commentaire sur l'offre"
               rows="4"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="price">Prix *</label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="Prix en MRU"
-              min="0.01"
-              step="0.01"
-              className={errors.price ? "error" : ""}
-            />
-            {errors.price && (
-              <span className="error-message">{errors.price}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="type">Type *</label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className={errors.type ? "error" : ""}
-            >
-              <option value="">Sélectionner un type</option>
-              <option value="appel_offre">Appel d'offres</option>
-              <option value="consultation">Consultation</option>
-              <option value="marché">Marché</option>
-              <option value="prestation">Prestation</option>
-            </select>
-            {errors.type && (
-              <span className="error-message">{errors.type}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="commentaire">Commentaire</label>
-            <textarea
-              id="commentaire"
-              name="commentaire"
-              value={formData.commentaire}
-              onChange={handleChange}
-              placeholder="Commentaire ou note sur l'appel d'offres"
-              rows="3"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="attachments">Pièces jointes</label>
+            <label htmlFor="documents">Documents</label>
             <input
               type="file"
-              id="attachments"
-              name="attachments"
+              id="documents"
+              name="documents"
               onChange={handleFileChange}
               multiple
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
             />
-            {formData.attachments.length > 0 && (
+            {formData.documents.length > 0 && (
               <div className="attachments-list">
                 <h4>Fichiers sélectionnés:</h4>
-                {formData.attachments.map((file, index) => (
+                {formData.documents.map((file, index) => (
                   <div key={index} className="attachment-item">
                     <i className="fas fa-file"></i>
                     <span>{file.name}</span>
@@ -371,7 +308,7 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
               ) : (
                 <>
                   <i className="fas fa-save"></i>
-                  Ajouter
+                  Créer l'offre
                 </>
               )}
             </button>

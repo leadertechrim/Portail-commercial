@@ -4,6 +4,10 @@ import LoginPage from "./pages/LoginPage";
 import SourcesPage from "./pages/SourcesPage";
 import AdminPage from "./pages/AdminPage";
 import CartPage from "./pages/CartPage";
+import AIOffersPage from "./pages/AIOffersPage";
+import ClientsPage from "./pages/ClientsPage";
+import PartnersPage from "./pages/PartnersPage";
+import PersonnelPage from "./pages/PersonnelPage";
 import InstallPrompt from "./components/InstallPrompt";
 import { usePWA } from "./hooks/usePWA";
 import "./styles/Responsive.css";
@@ -32,6 +36,10 @@ export default function App() {
           <Route path="/sources" element={<SourcesPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/ai-offers" element={<AIOffersPage />} />
+          <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/partners" element={<PartnersPage />} />
+          <Route path="/personnel" element={<PersonnelPage />} />
           <Route path="*" element={<LoginPage />} />
         </Routes>
 

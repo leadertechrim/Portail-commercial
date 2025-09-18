@@ -30,7 +30,7 @@ const RecentlyVisited = ({ recentlyVisited, clearHistory }) => {
 
       {recentlyVisited.length === 0 ? (
         <div className="empty-history">
-          <FaEye className="empty-icon" />
+          {/* <FaEye className="empty-icon" /> */}
           <p>Aucun lien visité récemment</p>
         </div>
       ) : (

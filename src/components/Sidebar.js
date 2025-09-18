@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useCart } from "../hooks/useCart";
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -8,19 +7,47 @@ const Sidebar = () => {
   const location = useLocation();
   const role = localStorage.getItem("role");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [buttonPosition] = useState({
+    top: "15px",
+    left: "auto",
+    right: "15px",
+    bottom: "auto",
+  });
 
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Gérer le redimensionnement de la fenêtre
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const menuItems = [
     {
       id: "home",
-      label: "Accueil",
+      // label: "Accueil",
+      label: "Offres",
       icon: "fas fa-home",
       path: "/sources",
       description: "Page des sources d'appels d'offres",
+    },
+    {
+      id: "ai-offers",
+      label: "Offres AI",
+      icon: "fas fa-robot",
+      path: "/ai-offers",
+      description: "Offres d'emploi avec intelligence artificielle",
     },
     {
       id: "cart",
@@ -28,6 +55,30 @@ const Sidebar = () => {
       icon: "fas fa-shopping-basket",
       path: "/cart",
       description: "Gérer mes appels d'offres",
+    },
+    {
+      id: "clients",
+      label: "Clients",
+      icon: "fas fa-building",
+      path: "/clients",
+      description: "Gestion des clients",
+      adminOnly: true,
+    },
+    {
+      id: "partners",
+      label: "Partenaires",
+      icon: "fas fa-handshake",
+      path: "/partners",
+      description: "Gestion des partenaires",
+      adminOnly: true,
+    },
+    {
+      id: "personnel",
+      label: "Personnels",
+      icon: "fas fa-users",
+      path: "/personnel",
+      description: "Gestion du personnel",
+      adminOnly: true,
     },
     {
       id: "users",
@@ -60,17 +111,10 @@ const Sidebar = () => {
         className="mobile-menu-toggle"
         onClick={toggleMobileMenu}
         aria-label="Ouvrir/Fermer le menu"
+        style={isMobile ? buttonPosition : {}}
       >
         <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
       </button>
-
-      {/* Overlay pour mobile */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-menu-overlay"
-          onClick={() => setIsMobileMenuOpen(false)}
-        ></div>
-      )}
 
       <div className={`sidebar ${isMobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-header">
@@ -81,12 +125,22 @@ const Sidebar = () => {
               <span className="sidebar-subtitle">LEADERTECH-SOLUTIONS</span>
             </div>
           </div>
+          {/* Bouton de fermeture mobile - positionné en bas */}
+          {isMobileMenuOpen && isMobile && (
+            <button
+              className="mobile-close-btn"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
           <ul className="sidebar-menu">
             {menuItems.map((item) => {
-              if (item.adminOnly && role !== "admin") {
+              if (item.adminOnly && role !== "admin" && role !== "spectateur") {
                 return null;
               }
 
@@ -141,7 +195,11 @@ const Sidebar = () => {
                 {localStorage.getItem("name") || "Utilisateur"}
               </span>
               <span className="sidebar-user-role">
-                {role === "admin" ? "Administrateur" : "Utilisateur"}
+                {role === "admin"
+                  ? "Administrateur"
+                  : role === "spectateur"
+                  ? "Spectateur"
+                  : "Utilisateur"}
               </span>
             </div>
           </div>
