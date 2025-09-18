@@ -1,4 +1,3 @@
-// src/pages/SourcesPage.js
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,13 +26,14 @@ export default function SourcesPage() {
   const [order, setOrder] = useState(1);
   const [editingSource, setEditingSource] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
 
   const loadSources = useCallback(async () => {
+    console.log("Chargement des sources...");
     const data = await fetchSourcesGrouped(token);
+    console.log("Sources chargées:", data);
     setSourcesNat(data.nationale || []);
     setSourcesInt(data.internationale || []);
     setFilteredNat(data.nationale || []);
@@ -91,7 +91,9 @@ export default function SourcesPage() {
   };
 
   const handleSaveSource = async (sourceId, data) => {
+    console.log("SourcesPage handleSaveSource - ID:", sourceId, "Data:", data);
     const result = await updateSource(token, sourceId, data);
+    console.log("SourcesPage handleSaveSource - Result:", result);
     if (result.message === "Source mise à jour") {
       setIsEditModalOpen(false);
       setEditingSource(null);
@@ -140,17 +142,15 @@ export default function SourcesPage() {
               {/* <p className="category">{s.categorie}</p> */}
             </a>
 
-            {role === "admin" && (
-              <div className="admin-actions">
-                <button
-                  className="edit-btn"
-                  onClick={() => handleEditSource(s)}
-                  title="Agir"
-                >
-                  <i className="fas fa-edit"></i>
-                </button>
-              </div>
-            )}
+            <div className="admin-actions">
+              <button
+                className="edit-btn"
+                onClick={() => handleEditSource(s)}
+                title="Modifier cette source"
+              >
+                <i className="fas fa-edit"></i>
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -158,22 +158,15 @@ export default function SourcesPage() {
   );
 
   return (
-    <div className={`sources-page ${sidebarOpen ? "sidebar-open" : ""}`}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="sources-page">
+      <Sidebar />
 
       <header className="header">
         <div className="header-left">
-          <button
-            className="menu-btn"
-            onClick={() => setSidebarOpen(true)}
-            title="Ouvrir le menu"
-          >
-            <i className="fas fa-bars"></i>
-          </button>
-          <a className="logo" href="#">
-            <img src="/logo512.png" alt="Logo" className="logo-img" />
-            <span className="logo-text">Portail des appels d'offres</span>
-          </a>
+          <div className="logo">
+            {/* <img src="/logo512.png" alt="Logo" className="logo-img" />
+            <span className="logo-text">Portail des appels d'offres</span> */}
+          </div>
         </div>
         <div className="header-right">
           <input
@@ -192,7 +185,6 @@ export default function SourcesPage() {
 
       <main className="main-content">
         <Section
-          // title="Sources des Appels d'Offres — Nationale"
           title="Sites des appels d'offres nationaux"
           items={filteredNat}
         />
@@ -203,11 +195,6 @@ export default function SourcesPage() {
 
         <section className="tools-section">
           <div className="tool-cards">
-            <div className="tool-card">
-              <i className="fas fa-shopping-basket tool-icon"></i>
-              <h3>Mon Panier</h3>
-              <p>Enregistrez vos appels d'offres pour un suivi personnalisé.</p>
-            </div>
             <div className="tool-card">
               <i className="fas fa-bell tool-icon"></i>
               <h3>Alertes</h3>
@@ -231,50 +218,48 @@ export default function SourcesPage() {
           clearHistory={clearHistory}
         />
 
-        {role === "admin" && (
-          <section className="admin-section">
-            <h2>Ajouter une Source</h2>
-            <div className="admin-info">
-              <i className="fas fa-info-circle"></i>
-              <p>
-                <strong>Ordre :</strong> Détermine la position d'affichage. Si
-                vous mettez l'ordre 3, les entités avec ordre 3, 4, 5...
-                deviendront 4, 5, 6... automatiquement.
-              </p>
-            </div>
-            <form onSubmit={handleAddSource} className="add-source-form">
-              <input
-                placeholder="Nom entité"
-                value={nomEntite}
-                onChange={(e) => setNomEntite(e.target.value)}
-                required
-              />
-              <input
-                placeholder="URL"
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                required
-              />
-              <select
-                value={categorie}
-                onChange={(e) => setCategorie(e.target.value)}
-              >
-                <option value="Nationale">Nationale</option>
-                <option value="Internationale">Internationale</option>
-              </select>
-              <input
-                type="number"
-                placeholder="Ordre"
-                min="1"
-                value={order}
-                onChange={(e) => setOrder(e.target.value)}
-                required
-              />
-              <button type="submit">Ajouter</button>
-            </form>
-          </section>
-        )}
+        <section className="admin-section">
+          <h2>Gérer les Sources</h2>
+          <div className="admin-info">
+            <i className="fas fa-info-circle"></i>
+            <p>
+              <strong>Gestion des sources :</strong> Vous pouvez ajouter,
+              modifier et supprimer des sources d'appels d'offres. L'ordre
+              détermine la position d'affichage dans la liste.
+            </p>
+          </div>
+          <form onSubmit={handleAddSource} className="add-source-form">
+            <input
+              placeholder="Nom entité"
+              value={nomEntite}
+              onChange={(e) => setNomEntite(e.target.value)}
+              required
+            />
+            <input
+              placeholder="URL"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+            />
+            <select
+              value={categorie}
+              onChange={(e) => setCategorie(e.target.value)}
+            >
+              <option value="Nationale">Nationale</option>
+              <option value="Internationale">Internationale</option>
+            </select>
+            <input
+              type="number"
+              placeholder="Ordre"
+              min="1"
+              value={order}
+              onChange={(e) => setOrder(e.target.value)}
+              required
+            />
+            <button type="submit">Ajouter</button>
+          </form>
+        </section>
       </main>
 
       <footer className="footer">

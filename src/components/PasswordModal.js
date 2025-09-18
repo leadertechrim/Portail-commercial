@@ -13,10 +13,6 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.currentPassword.trim()) {
-      newErrors.currentPassword = "Le mot de passe actuel est requis";
-    }
-
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = "Le nouveau mot de passe est requis";
     } else if (formData.newPassword.length < 6) {
@@ -42,15 +38,24 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
     }
 
     setLoading(true);
+    setErrors({});
+
     try {
       const passwordData = {
-        currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       };
 
       await onSave(userId, passwordData);
+
+      setFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (error) {
-      console.error("Erreur lors du changement de mot de passe:", error);
+      setErrors({
+        general: error.message || "Erreur lors du changement de mot de passe",
+      });
     } finally {
       setLoading(false);
     }
@@ -63,7 +68,6 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
       [name]: value,
     }));
 
-    // Effacer l'erreur du champ modifié
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -83,7 +87,14 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="password-form">
-          <div className="form-group">
+          {errors.general && (
+            <div className="error-message general-error">
+              <i className="fas fa-exclamation-triangle"></i>
+              {errors.general}
+            </div>
+          )}
+
+          {/* <div className="form-group">
             <label htmlFor="currentPassword">Mot de passe actuel *</label>
             <input
               type="password"
@@ -97,7 +108,7 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
             {errors.currentPassword && (
               <span className="error-message">{errors.currentPassword}</span>
             )}
-          </div>
+          </div> */}
 
           <div className="form-group">
             <label htmlFor="newPassword">Nouveau mot de passe *</label>
@@ -149,12 +160,12 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>
-                  Changement...
+                  Confirmation...
                 </>
               ) : (
                 <>
-                  <i className="fas fa-key"></i>
-                  Changer le mot de passe
+                  <i className="fas fa-check"></i>
+                  Confirmer
                 </>
               )}
             </button>
@@ -166,4 +177,3 @@ const PasswordModal = ({ userId, onSave, onClose }) => {
 };
 
 export default PasswordModal;
-

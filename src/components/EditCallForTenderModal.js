@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import "./AddCallForTenderModal.css";
+import React, { useState, useEffect } from "react";
+import "./EditCallForTenderModal.css";
 
-const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
+const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
   const [formData, setFormData] = useState({
     title: "",
     source: "",
@@ -17,6 +17,24 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (call) {
+      setFormData({
+        title: call.title || "",
+        source: call.source || "",
+        client: call.client || "",
+        state: call.state || "",
+        description: call.description || "",
+        deadline: call.deadline || "",
+        price: call.price || "1",
+        type: call.type || "appel_offre",
+        commentaire: call.Commentaire || call.commentaire || "",
+        quantity: call.quantity || 1,
+        attachments: call.attachments || [],
+      });
+    }
+  }, [call]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -95,8 +113,8 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
         ...formData,
         price: parseFloat(formData.price) || 1,
       };
-      console.log("Données du formulaire AddCallForTenderModal:", dataToSend);
-      await onSubmit(dataToSend);
+      console.log("Données du formulaire EditCallForTenderModal:", dataToSend);
+      await onSave(call._id, dataToSend);
       setFormData({
         title: "",
         source: "",
@@ -139,15 +157,15 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content add-call-modal">
+      <div className="modal-content edit-call-modal">
         <div className="modal-header">
-          <h2>Ajouter un Appel d'Offres</h2>
+          <h2>Modifier l'Appel d'Offres</h2>
           <button className="modal-close" onClick={handleClose}>
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="add-call-form">
+        <form onSubmit={handleSubmit} className="edit-call-form">
           <div className="form-group">
             <label htmlFor="title">Titre *</label>
             <input
@@ -293,7 +311,7 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="attachments">Pièces jointes</label>
+            <label htmlFor="attachments">Nouvelles pièces jointes</label>
             <input
               type="file"
               id="attachments"
@@ -308,13 +326,20 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
                 {formData.attachments.map((file, index) => (
                   <div key={index} className="attachment-item">
                     <i className="fas fa-file"></i>
-                    <span>{file.name}</span>
+                    <span>{file.filename || file.name}</span>
                     <div className="attachment-actions">
                       <button
                         type="button"
-                        onClick={() =>
-                          window.open(URL.createObjectURL(file), "_blank")
-                        }
+                        onClick={() => {
+                          if (file.file) {
+                            window.open(
+                              URL.createObjectURL(file.file),
+                              "_blank"
+                            );
+                          } else if (file.url) {
+                            window.open(file.url, "_blank");
+                          }
+                        }}
                         className="open-attachment"
                         title="Ouvrir le document"
                       >
@@ -323,14 +348,23 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
                       <button
                         type="button"
                         onClick={() => {
-                          const url = URL.createObjectURL(file);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = file.name;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          URL.revokeObjectURL(url);
+                          if (file.file) {
+                            const url = URL.createObjectURL(file.file);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = file.filename || file.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          } else if (file.url) {
+                            const a = document.createElement("a");
+                            a.href = file.url;
+                            a.download = file.filename || file.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }
                         }}
                         className="download-attachment"
                         title="Télécharger le document"
@@ -366,12 +400,12 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>
-                  Ajout...
+                  Modification...
                 </>
               ) : (
                 <>
                   <i className="fas fa-save"></i>
-                  Ajouter
+                  Modifier
                 </>
               )}
             </button>
@@ -382,4 +416,4 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-export default AddCallForTenderModal;
+export default EditCallForTenderModal;

@@ -7,17 +7,24 @@ const UserModal = ({ user, onSave, onClose }) => {
     email: "",
     password: "",
     role: "user",
+    telephone: "",
+    statut: "actif",
+    gerer: true,
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
       setFormData({
         name: user.name || "",
         email: user.email || "",
-        password: "",
+        password: "admin123",
         role: user.role || "user",
+        telephone: user.telephone || "",
+        statut: user.statut || "actif",
+        gerer: user.gerer !== undefined ? user.gerer : true,
       });
     } else {
       setFormData({
@@ -25,6 +32,9 @@ const UserModal = ({ user, onSave, onClose }) => {
         email: "",
         password: "",
         role: "user",
+        telephone: "",
+        statut: "actif",
+        gerer: true,
       });
     }
   }, [user]);
@@ -40,6 +50,10 @@ const UserModal = ({ user, onSave, onClose }) => {
       newErrors.email = "L'email est requis";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "L'email n'est pas valide";
+    }
+
+    if (formData.telephone && !/^\+?[1-9]\d{1,14}$/.test(formData.telephone)) {
+      newErrors.telephone = "Le numéro de téléphone n'est pas valide";
     }
 
     if (!user && !formData.password.trim()) {
@@ -68,15 +82,17 @@ const UserModal = ({ user, onSave, onClose }) => {
         name: formData.name.trim(),
         email: formData.email.trim(),
         role: formData.role,
+        telephone: formData.telephone.trim(),
+        statut: formData.statut,
+        gerer: formData.gerer,
       };
 
-      if (formData.password.trim()) {
+      if (!user && formData.password.trim()) {
         userData.password = formData.password;
       }
 
       await onSave(userData);
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +105,6 @@ const UserModal = ({ user, onSave, onClose }) => {
       [name]: value,
     }));
 
-    // Effacer l'erreur du champ modifié
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -142,24 +157,60 @@ const UserModal = ({ user, onSave, onClose }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Mot de passe {!user && "*"}</label>
+            <label htmlFor="telephone">Téléphone</label>
             <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
+              type="tel"
+              id="telephone"
+              name="telephone"
+              value={formData.telephone}
               onChange={handleChange}
-              className={errors.password ? "error" : ""}
-              placeholder={
-                user ? "Laisser vide pour ne pas changer" : "Mot de passe"
-              }
+              className={errors.telephone ? "error" : ""}
+              placeholder="+22241000000"
             />
+            {errors.telephone && (
+              <span className="error-message">{errors.telephone}</span>
+            )}
+            <small className="help-text">
+              Format international (ex: +22241000000)
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Mot de passe {!user && "*"}</label>
+            <div className="password-input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={user ? undefined : handleChange}
+                className={`${errors.password ? "error" : ""} ${
+                  user ? "readonly" : ""
+                }`}
+                placeholder={user ? "Mot de passe fixe" : "Mot de passe"}
+                readOnly={!!user}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={
+                  showPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+              >
+                <i
+                  className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                ></i>
+              </button>
+            </div>
             {errors.password && (
               <span className="error-message">{errors.password}</span>
             )}
             {user && (
               <small className="help-text">
-                Laisser vide pour ne pas modifier le mot de passe
+                Mot de passe fixe - non modifiable
               </small>
             )}
           </div>
@@ -175,6 +226,38 @@ const UserModal = ({ user, onSave, onClose }) => {
               <option value="user">Utilisateur</option>
               <option value="admin">Administrateur</option>
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="statut">Statut *</label>
+            <select
+              id="statut"
+              name="statut"
+              value={formData.statut}
+              onChange={handleChange}
+            >
+              <option value="actif">Actif</option>
+              <option value="inactif">Inactif</option>
+              <option value="suspendu">Suspendu</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="gerer"
+                checked={formData.gerer}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    gerer: e.target.checked,
+                  }))
+                }
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">Peut gérer les utilisateurs</span>
+            </label>
           </div>
 
           <div className="form-actions">
@@ -207,4 +290,3 @@ const UserModal = ({ user, onSave, onClose }) => {
 };
 
 export default UserModal;
-

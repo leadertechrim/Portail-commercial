@@ -7,7 +7,6 @@ export const usePWA = () => {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Détecter si l'app est installée
     const checkStandalone = () => {
       setIsStandalone(
         window.matchMedia("(display-mode: standalone)").matches ||
@@ -15,18 +14,15 @@ export const usePWA = () => {
       );
     };
 
-    // Gestion de l'événement d'installation
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setIsInstallable(true);
     };
 
-    // Gestion de la connexion
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    // Écouter les événements
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
@@ -46,7 +42,6 @@ export const usePWA = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Installation ${outcome}`);
       setDeferredPrompt(null);
       setIsInstallable(false);
     }

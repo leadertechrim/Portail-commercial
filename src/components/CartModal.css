@@ -22,7 +22,7 @@
 }
 
 .cart-header {
-  background: var(--primary-color);
+  background: #f67800;
   color: white;
   padding: 20px;
   display: flex;
@@ -126,7 +126,7 @@
 
 .item-info h4 {
   margin: 0 0 5px 0;
-  color: var(--primary-color);
+  color: #f67800;
   font-size: 1.1rem;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .visit-btn {
-  background: var(--primary-color);
+  background: #f67800;
   color: white;
   text-decoration: none;
   padding: 8px 12px;
@@ -166,7 +166,7 @@
 }
 
 .visit-btn:hover {
-  background: var(--secondary-color);
+  background: #e66a00;
   color: white;
 }
 

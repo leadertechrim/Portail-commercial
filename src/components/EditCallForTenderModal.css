@@ -1,4 +1,4 @@
-/* AddCallForTenderModal.css - Updated with orange header and buttons */
+/* EditCallForTenderModal.css */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -22,7 +22,7 @@
   }
 }
 
-.add-call-modal {
+.edit-call-modal {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -80,7 +80,7 @@
   transform: scale(1.1);
 }
 
-.add-call-form {
+.edit-call-form {
   padding: 30px;
 }
 
@@ -112,9 +112,9 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #f67800;
+  border-color: #007bff;
   background: white;
-  box-shadow: 0 0 0 3px rgba(246, 120, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .form-group input.error,
@@ -203,7 +203,7 @@
 }
 
 .attachment-item i {
-  color: #f67800;
+  color: #007bff;
   font-size: 0.9rem;
 }
 
@@ -438,13 +438,6 @@
   overflow: hidden !important;
 }
 
-.add-call-modal .save-btn {
-  background: linear-gradient(135deg, #f67800, #ff8c00) !important;
-  color: white !important;
-  border: 2px solid #f67800 !important;
-  box-shadow: 0 4px 15px rgba(246, 120, 0, 0.4) !important;
-}
-
 .save-btn::before {
   content: "";
   position: absolute;
@@ -485,7 +478,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .add-call-modal {
+  .edit-call-modal {
     width: 95%;
     margin: 20px;
   }
@@ -498,7 +491,7 @@
     font-size: 1.2rem;
   }
 
-  .add-call-form {
+  .edit-call-form {
     padding: 20px;
   }
 

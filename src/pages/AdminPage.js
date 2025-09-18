@@ -9,6 +9,7 @@ import {
 } from "../api";
 import UserModal from "../components/UserModal";
 import PasswordModal from "../components/PasswordModal";
+import Sidebar from "../components/Sidebar";
 import "./AdminPage.css";
 
 const AdminPage = () => {
@@ -22,17 +23,8 @@ const AdminPage = () => {
 
   const navigate = useNavigate();
 
-  // Vérifier le rôle admin
   const role = localStorage.getItem("role");
   const token = localStorage.getItem("token");
-
-  useEffect(() => {
-    if (role !== "admin") {
-      navigate("/sources");
-      return;
-    }
-    loadUsers();
-  }, [navigate, role]);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -42,11 +34,18 @@ const AdminPage = () => {
       setError("");
     } catch (err) {
       setError("Erreur lors du chargement des utilisateurs");
-      console.error("Erreur:", err);
     } finally {
       setLoading(false);
     }
   }, [token]);
+
+  useEffect(() => {
+    if (role !== "admin") {
+      navigate("/sources");
+      return;
+    }
+    loadUsers();
+  }, [navigate, role, loadUsers]);
 
   const handleCreateUser = async (userData) => {
     try {
@@ -56,7 +55,6 @@ const AdminPage = () => {
       setError("");
     } catch (err) {
       setError("Erreur lors de la création de l'utilisateur");
-      console.error("Erreur:", err);
     }
   };
 
@@ -69,7 +67,6 @@ const AdminPage = () => {
       setError("");
     } catch (err) {
       setError("Erreur lors de la mise à jour de l'utilisateur");
-      console.error("Erreur:", err);
     }
   };
 
@@ -83,7 +80,6 @@ const AdminPage = () => {
         setError("");
       } catch (err) {
         setError("Erreur lors de la suppression de l'utilisateur");
-        console.error("Erreur:", err);
       }
     }
   };
@@ -96,7 +92,6 @@ const AdminPage = () => {
       setError("");
     } catch (err) {
       setError("Erreur lors du changement de mot de passe");
-      console.error("Erreur:", err);
     }
   };
 
@@ -123,6 +118,7 @@ const AdminPage = () => {
 
   return (
     <div className="admin-page">
+      <Sidebar />
       <div className="admin-header">
         <button className="back-btn" onClick={() => navigate("/sources")}>
           <i className="fas fa-arrow-left"></i>
@@ -158,7 +154,10 @@ const AdminPage = () => {
                 <tr>
                   <th>Nom</th>
                   <th>Email</th>
+                  <th>Téléphone</th>
                   <th>Rôle</th>
+                  <th>Statut</th>
+                  <th>Gérer</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -167,9 +166,29 @@ const AdminPage = () => {
                   <tr key={user._id}>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
+                    <td>{user.telephone || "-"}</td>
                     <td>
                       <span className={`role-badge ${user.role}`}>
                         {user.role}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge ${user.statut || "actif"}`}
+                      >
+                        {user.statut || "actif"}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`manage-badge ${user.gerer ? "yes" : "no"}`}
+                      >
+                        <i
+                          className={`fas ${
+                            user.gerer ? "fa-check" : "fa-times"
+                          }`}
+                        ></i>
+                        {user.gerer ? "Oui" : "Non"}
                       </span>
                     </td>
                     <td className="actions">

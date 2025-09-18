@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import SourcesPage from "./pages/SourcesPage";
 import AdminPage from "./pages/AdminPage";
+import CartPage from "./pages/CartPage";
 import InstallPrompt from "./components/InstallPrompt";
 import { usePWA } from "./hooks/usePWA";
 import "./styles/Responsive.css";
@@ -11,7 +12,12 @@ export default function App() {
   const { isOnline } = usePWA();
 
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <div className="app">
         {!isOnline && (
           <div className="offline-banner">
@@ -25,6 +31,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/sources" element={<SourcesPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="*" element={<LoginPage />} />
         </Routes>
 

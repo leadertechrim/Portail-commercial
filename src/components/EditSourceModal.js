@@ -23,6 +23,8 @@ const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("Données du formulaire EditSourceModal:", formData);
+    console.log("ID de la source:", source._id);
     onSave(source._id, formData);
   };
 

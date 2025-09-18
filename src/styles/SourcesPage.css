@@ -1,4 +1,4 @@
-/* :root {
+:root {
   --primary-color: #f67800;
   --secondary-color: #df7008;
   --background-color: #f0f2f5;
@@ -13,16 +13,30 @@ body {
   background: var(--background-color);
 }
 
-.header {
+.sources-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  position: relative;
+}
+
+.sources-page.sidebar-open {
+  margin-left: 0;
+}
+
+/* .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--primary-color);
+
   color: #fff;
   padding: 15px 40px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-left: 280px;
 }
-
+ */
 .header-left .logo {
   display: flex;
   align-items: center;
@@ -60,6 +74,7 @@ body {
   max-width: 1200px;
   margin: 20px auto;
   padding: 0 20px;
+  margin-left: 280px;
 }
 
 .links-section,
@@ -173,7 +188,7 @@ body {
     width: 100%;
     max-width: 300px;
   }
-} */
+}
 
 :root {
   --primary-color: #f67800;
@@ -268,6 +283,7 @@ body {
   max-width: 1200px;
   margin: 20px auto;
   padding: 0 20px;
+  margin-left: 280px; /* Start after sidebar */
 }
 
 /* Sections */
@@ -965,6 +981,7 @@ h2 {
   padding: 15px 0;
   margin-top: 40px;
   text-align: center;
+  margin-left: 280px; /* Start after sidebar */
 }
 
 .footer p {
@@ -1124,26 +1141,27 @@ h2 {
   border: none;
 }
 
-/* Bouton Menu - Compact et transparent */
-.menu-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  width: 45px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
+/* Menu button removed - sidebar is always visible */
 
-/* .menu-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 30%;
-} */
+/* Responsive styles for always-visible sidebar */
+@media (max-width: 768px) {
+  .sources-page {
+    margin-left: 0;
+  }
 
-.menu-btn i {
-  font-size: 1.5rem; /* Adjust the icon size */
-  color: white;
+  .sidebar {
+    display: none; /* Hide sidebar on mobile */
+  }
+
+  .header {
+    margin-left: 0; /* No sidebar space on mobile */
+  }
+
+  .main-content {
+    margin-left: 0; /* No sidebar space on mobile */
+  }
+
+  .footer {
+    margin-left: 0; /* No sidebar space on mobile */
+  }
 }
