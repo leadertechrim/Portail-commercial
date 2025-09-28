@@ -1,14 +1,8 @@
-// URL de base pour toutes les APIs (configuration dynamique)
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  "https://applesoffres-production.up.railway.app";
-// Pour le développement local, utilisez : "http://127.0.0.1:8000"
+// URL de base pour toutes les APIs (configuration fixe)
+const API_BASE_URL = "https://applesoffres-production.up.railway.app";
 
-// URL de base pour les APIs Flask (configuration dynamique)
-const FLASK_API_BASE_URL =
-  process.env.REACT_APP_FLASK_API_URL ||
-  "https://applesoffres-production.up.railway.app/api";
-// Pour le développement local, utilisez : "http://localhost:8000/api"
+// URL de base pour les APIs Flask (configuration fixe)
+const FLASK_API_BASE_URL = "https://applesoffres-production.up.railway.app/api";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
