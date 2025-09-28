@@ -188,8 +188,28 @@ const CartPage = () => {
       setError("");
 
       console.log("🔍 Chargement des offres...");
+      console.log("🔑 Token utilisé:", token ? "Présent" : "Absent");
+      console.log("👤 Rôle utilisateur:", role);
+      console.log(
+        "🌐 URL API:",
+        `${
+          process.env.REACT_APP_API_URL ||
+          "https://applesoffres-production.up.railway.app"
+        }/api/offres`
+      );
+
       const offersData = await fetchOffers(token);
       console.log("📦 Données reçues du backend:", offersData);
+      console.log("📊 Type de données:", typeof offersData);
+      console.log("📋 Est-ce un tableau?", Array.isArray(offersData));
+      if (Array.isArray(offersData)) {
+        console.log("✅ Nombre d'offres reçues:", offersData.length);
+        if (offersData.length > 0) {
+          console.log("🔍 Première offre:", offersData[0]);
+        }
+      } else {
+        console.log("⚠️ Structure des données:", offersData);
+      }
 
       // Charger les utilisateurs si c'est un admin ou un spectateur
       if (role === "admin" || role === "spectateur") {
@@ -246,6 +266,20 @@ const CartPage = () => {
           console.log("🔍 Rôle utilisateur:", role);
 
           if (currentUserId) {
+            console.log(
+              "🔍 Filtrage des offres pour l'utilisateur:",
+              currentUserId
+            );
+            console.log(
+              "📋 Toutes les offres avant filtrage:",
+              offersData.map((offer) => ({
+                id: offer._id,
+                intitulee: offer.intitulee,
+                responsable_id: offer.responsable_id,
+                responsable_nom: offer.responsable_nom,
+              }))
+            );
+
             filteredOffers = offersData.filter(
               (offer) => String(offer.responsable_id) === String(currentUserId)
             );
@@ -255,6 +289,14 @@ const CartPage = () => {
               "sur",
               offersData.length
             );
+            console.log(
+              "🔍 Offres après filtrage:",
+              filteredOffers.map((offer) => ({
+                id: offer._id,
+                intitulee: offer.intitulee,
+                responsable_id: offer.responsable_id,
+              }))
+            );
           } else {
             console.log("❌ Aucun ID utilisateur trouvé");
             console.log("🔍 Contenu localStorage:", {
@@ -263,6 +305,15 @@ const CartPage = () => {
               token: localStorage.getItem("token") ? "Présent" : "Absent",
               role: localStorage.getItem("role"),
             });
+            console.log("🔍 Token décodé:", token ? "Présent" : "Absent");
+            if (token) {
+              try {
+                const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+                console.log("🔍 Payload du token:", tokenPayload);
+              } catch (e) {
+                console.log("❌ Impossible de décoder le token:", e);
+              }
+            }
             // Si pas d'ID utilisateur, ne pas afficher d'offres
             filteredOffers = [];
           }
@@ -637,6 +688,29 @@ const CartPage = () => {
             <i className="fas fa-shopping-basket"></i>
             <h3>Votre panier est vide</h3>
             <p>Commencez par ajouter votre première offre</p>
+            {role === "user" && (
+              <div
+                style={{
+                  marginTop: "15px",
+                  fontSize: "0.9rem",
+                  color: "#6c757d",
+                }}
+              >
+                <strong>💡 Pour les utilisateurs simples :</strong>
+                <br />
+                • Vous ne voyez que vos propres offres
+                <br />
+                • Vérifiez que vous êtes bien connecté
+                <br />
+                • Utilisez "🔍 Debug Utilisateur" pour diagnostiquer
+                <br />
+                • Utilisez "🧪 Test API Direct" pour tester l'API
+                <br />
+                <strong style={{ color: "#dc3545" }}>
+                  ⚠️ Si aucune donnée ne s'affiche, vérifiez la console (F12)
+                </strong>
+              </div>
+            )}
             <div
               style={{
                 backgroundColor: "#f8f9fa",
@@ -649,7 +723,9 @@ const CartPage = () => {
             >
               <strong>🔧 Mode Debug :</strong>
               <br />
-              1. Vérifiez que le backend est démarré sur http://127.0.0.1:8000
+              1. Vérifiez que le backend est démarré sur{" "}
+              {process.env.REACT_APP_API_URL ||
+                "https://applesoffres-production.up.railway.app"}
               <br />
               2. Cliquez sur "Test Backend" pour vérifier la connectivité
               <br />
@@ -683,7 +759,12 @@ const CartPage = () => {
                 onClick={async () => {
                   console.log("🧪 Test de l'API...");
                   console.log("🔑 Token:", token ? "Présent" : "Absent");
-                  console.log("🌐 URL:", "http://127.0.0.1:8000/api/offres");
+                  console.log(
+                    "🌐 URL:",
+                    process.env.REACT_APP_API_URL
+                      ? `${process.env.REACT_APP_API_URL}/api/offres`
+                      : "https://applesoffres-production.up.railway.app/api/offres"
+                  );
 
                   try {
                     const data = await fetchOffers(token);
@@ -711,9 +792,15 @@ const CartPage = () => {
                   console.log("🔍 Test de connectivité backend...");
                   try {
                     // Test de connectivité simple
-                    const response = await fetch("http://127.0.0.1:8000/", {
-                      method: "GET",
-                    });
+                    const response = await fetch(
+                      `${
+                        process.env.REACT_APP_API_URL ||
+                        "https://applesoffres-production.up.railway.app"
+                      }/`,
+                      {
+                        method: "GET",
+                      }
+                    );
                     console.log("🌐 Backend accessible:", response.ok);
                     console.log("📡 Status:", response.status);
                   } catch (err) {
@@ -911,6 +998,122 @@ const CartPage = () => {
               >
                 🧪 Test Demain (J-1)
               </button>
+              {role === "user" && (
+                <button
+                  onClick={() => {
+                    console.log("🔍 Debug Utilisateur Simple:");
+                    console.log("🔑 Token:", token ? "Présent" : "Absent");
+                    console.log("👤 Rôle:", role);
+                    console.log(
+                      "🆔 ID utilisateur:",
+                      localStorage.getItem("userId") ||
+                        localStorage.getItem("user_id")
+                    );
+
+                    if (token) {
+                      try {
+                        const tokenPayload = JSON.parse(
+                          atob(token.split(".")[1])
+                        );
+                        console.log("🔍 Payload du token:", tokenPayload);
+                        console.log(
+                          "🆔 ID depuis token:",
+                          tokenPayload.user_id || tokenPayload.id
+                        );
+                      } catch (e) {
+                        console.log("❌ Impossible de décoder le token:", e);
+                      }
+                    }
+
+                    console.log("📊 Nombre d'offres totales:", offers.length);
+                    console.log(
+                      "📋 Offres avec responsable_id:",
+                      offers.filter((offer) => offer.responsable_id).length
+                    );
+                    console.log(
+                      "🔍 Offres détaillées:",
+                      offers.map((offer) => ({
+                        id: offer._id,
+                        intitulee: offer.intitulee,
+                        responsable_id: offer.responsable_id,
+                        responsable_nom: offer.responsable_nom,
+                      }))
+                    );
+                  }}
+                  style={{
+                    backgroundColor: "#17a2b8",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 15px",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    marginRight: "10px",
+                  }}
+                >
+                  🔍 Debug Utilisateur
+                </button>
+              )}
+              {role === "user" && (
+                <button
+                  onClick={async () => {
+                    console.log("🧪 Test API Direct pour Utilisateur Simple:");
+                    console.log("🔑 Token:", token ? "Présent" : "Absent");
+                    console.log("👤 Rôle:", role);
+                    console.log(
+                      "🌐 URL API:",
+                      `${
+                        process.env.REACT_APP_API_URL ||
+                        "https://applesoffres-production.up.railway.app"
+                      }/api/offres`
+                    );
+
+                    try {
+                      const response = await fetch(
+                        `${
+                          process.env.REACT_APP_API_URL ||
+                          "https://applesoffres-production.up.railway.app"
+                        }/api/offres`,
+                        {
+                          method: "GET",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        }
+                      );
+
+                      console.log("📡 Status de la réponse:", response.status);
+                      console.log("📡 OK:", response.ok);
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        console.log("📦 Données brutes de l'API:", data);
+                        console.log("📊 Type:", typeof data);
+                        console.log("📋 Est un tableau:", Array.isArray(data));
+                        if (Array.isArray(data)) {
+                          console.log("✅ Nombre d'offres:", data.length);
+                          console.log("🔍 Toutes les offres:", data);
+                        }
+                      } else {
+                        const errorText = await response.text();
+                        console.log("❌ Erreur API:", errorText);
+                      }
+                    } catch (err) {
+                      console.error("💥 Erreur de fetch:", err);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 15px",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    marginRight: "10px",
+                  }}
+                >
+                  🧪 Test API Direct
+                </button>
+              )}
             </div>
             {!isSpectator && (
               <button
