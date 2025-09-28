@@ -1,0 +1,11 @@
+# Configuration MongoDB
+MONGODB_URI=mongodb://localhost:27017/aplofr
+
+# Configuration Flask
+FLASK_ENV=development
+FLASK_DEBUG=True
+FLASK_PORT=5000
+
+# Configuration CORS
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+

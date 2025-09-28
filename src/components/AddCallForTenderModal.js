@@ -1,24 +1,96 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AddCallForTenderModal.css";
+import { fetchClients } from "../api";
+import PartnerSelector from "./PartnerSelector";
+import SimpleFilestackUploader from "./SimpleFilestackUploader";
+import "./SimpleFilestackUploader.css";
 
 const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     intitulee: "",
     lien: "",
     client: "",
-    statut: "Non préparé",
+    categorie: "",
+    numero: "",
+    partenaire: [],
+    statut: "Non préparée",
     note_commentaire: "",
     date_limite: "",
     documents: [],
+    numero_devis: "",
+    numero_facture: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [offerStatuses, setOfferStatuses] = useState([]);
+
+  // Charger la liste des clients et des statuts d'offres
+  useEffect(() => {
+    const loadClients = async () => {
+      const token = localStorage.getItem("token");
+      console.log(
+        "🔍 AddCallForTenderModal - Chargement des clients, token:",
+        token ? "Présent" : "Absent"
+      );
+      if (token) {
+        try {
+          const clientsData = await fetchClients(token);
+          console.log("🔍 AddCallForTenderModal - Clients reçus:", clientsData);
+          setClients(clientsData);
+        } catch (error) {
+          console.error(
+            "🔍 AddCallForTenderModal - Erreur lors du chargement des clients:",
+            error
+          );
+        }
+      }
+    };
+
+    const loadOfferStatuses = () => {
+      try {
+        const savedStatuses = localStorage.getItem("offerStatuses");
+        if (savedStatuses) {
+          const statuses = JSON.parse(savedStatuses);
+          console.log(
+            "📋 Statuts d'offres chargés dans AddCallForTenderModal:",
+            statuses
+          );
+          setOfferStatuses(statuses);
+        } else {
+          const defaultStatuses = [
+            { nom: "Non préparée", couleur: "#dc3545" },
+            { nom: "En préparation", couleur: "#ffc107" },
+            { nom: "Envoyée", couleur: "#28a745" },
+            { nom: "Clôturée", couleur: "#6c757d" },
+          ];
+          setOfferStatuses(defaultStatuses);
+        }
+      } catch (err) {
+        console.error(
+          "❌ Erreur lors du chargement des statuts d'offres:",
+          err
+        );
+        setOfferStatuses([
+          { nom: "Non préparée", couleur: "#dc3545" },
+          { nom: "En préparation", couleur: "#ffc107" },
+          { nom: "Envoyée", couleur: "#28a745" },
+          { nom: "Clôturée", couleur: "#6c757d" },
+        ]);
+      }
+    };
+
+    if (isOpen) {
+      loadClients();
+      loadOfferStatuses();
+    }
+  }, [isOpen]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
     if (errors[name]) {
       setErrors((prev) => ({
@@ -28,18 +100,36 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+  const handlePartnersChange = (selectedPartners) => {
+    setFormData((prev) => ({
+      ...prev,
+      partenaire: selectedPartners,
+    }));
+    if (errors.partenaire) {
+      setErrors((prev) => ({
+        ...prev,
+        partenaire: "",
+      }));
+    }
+  };
+
+  const handleUploadComplete = (files) => {
+    console.log("✅ Fichiers uploadés avec succès:", files);
     setFormData((prev) => ({
       ...prev,
       documents: [...prev.documents, ...files],
     }));
   };
 
-  const removeAttachment = (index) => {
+  const handleUploadError = (error) => {
+    console.error("❌ Erreur upload:", error);
+    alert("Erreur lors de l'upload: " + error.message);
+  };
+
+  const removeDocument = (fileId) => {
     setFormData((prev) => ({
       ...prev,
-      documents: prev.documents.filter((_, i) => i !== index),
+      documents: prev.documents.filter((doc) => doc.id !== fileId),
     }));
   };
 
@@ -82,25 +172,40 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
 
     setLoading(true);
     try {
-      // Convertir le prix en nombre avant l'envoi
+      // Préparer les données pour le backend avec seulement les URLs
       const dataToSend = {
         ...formData,
+        // Le backend attend les clés originales et les mappe automatiquement
+        Catégorie: formData.categorie,
+        "N-Offre": formData.numero,
+        Partenaire: Array.isArray(formData.partenaire)
+          ? formData.partenaire.join(", ")
+          : formData.partenaire,
         price: parseFloat(formData.price) || 1,
+        // Envoyer seulement les URLs des documents
+        documents: formData.documents.map((doc) => doc.url),
       };
-      console.log("Données du formulaire AddCallForTenderModal:", dataToSend);
+
+      console.log(
+        "🚀 AddCallForTenderModal - Données du formulaire:",
+        dataToSend
+      );
+      console.log(
+        "🚀 AddCallForTenderModal - URLs des documents:",
+        dataToSend.documents
+      );
       await onSubmit(dataToSend);
       setFormData({
-        title: "",
-        source: "",
+        intitulee: "",
+        lien: "",
         client: "",
-        state: "",
-        description: "",
-        deadline: "",
-        price: "1",
-        type: "appel_offre",
-        commentaire: "",
-        quantity: 1,
-        attachments: [],
+        categorie: "",
+        numero: "",
+        partenaire: "",
+        statut: "Non préparée",
+        note_commentaire: "",
+        date_limite: "",
+        documents: [],
       });
       setErrors({});
     } catch (error) {
@@ -114,7 +219,10 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
       intitulee: "",
       lien: "",
       client: "",
-      statut: "Non préparé",
+      categorie: "",
+      numero: "",
+      partenaire: [],
+      statut: "Non préparée",
       note_commentaire: "",
       date_limite: "",
       documents: [],
@@ -170,18 +278,69 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
 
           <div className="form-group">
             <label htmlFor="client">Client *</label>
-            <input
-              type="text"
+            <select
               id="client"
               name="client"
               value={formData.client}
               onChange={handleChange}
-              placeholder="Nom du client"
               className={errors.client ? "error" : ""}
-            />
+            >
+              <option value="">Sélectionner un client</option>
+              {clients.length > 0 ? (
+                clients.map((client) => (
+                  <option key={client._id} value={client.raison_sociale}>
+                    {client.raison_sociale}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Aucun client disponible</option>
+              )}
+            </select>
             {errors.client && (
               <span className="error-message">{errors.client}</span>
             )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="categorie">Catégorie</label>
+            <select
+              id="categorie"
+              name="categorie"
+              value={formData.categorie}
+              onChange={handleChange}
+              className={errors.categorie ? "error" : ""}
+            >
+              <option value="">Sélectionner une catégorie</option>
+              <option value="nationale">Nationale</option>
+              <option value="internationale">Internationale</option>
+            </select>
+            {errors.categorie && (
+              <span className="error-message">{errors.categorie}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="numero">N-Offre</label>
+            <input
+              type="text"
+              id="numero"
+              name="numero"
+              value={formData.numero}
+              onChange={handleChange}
+              placeholder="Numéro de l'offre"
+              className={errors.numero ? "error" : ""}
+            />
+            {errors.numero && (
+              <span className="error-message">{errors.numero}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <PartnerSelector
+              selectedPartners={formData.partenaire}
+              onPartnersChange={handlePartnersChange}
+              error={errors.partenaire}
+            />
           </div>
 
           <div className="form-group">
@@ -193,9 +352,12 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleChange}
               className={errors.statut ? "error" : ""}
             >
-              <option value="Non préparé">Non préparé</option>
-              <option value="En préparation">En préparation</option>
-              <option value="Envoyée">Envoyée</option>
+              <option value="">Sélectionner un statut</option>
+              {offerStatuses.map((status) => (
+                <option key={status._id || status.nom} value={status.nom}>
+                  {status.nom}
+                </option>
+              ))}
             </select>
             {errors.statut && (
               <span className="error-message">{errors.statut}</span>
@@ -218,71 +380,54 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="note_commentaire">Note/Commentaire</label>
+            <label htmlFor="note_commentaire">Commentaire</label>
             <textarea
               id="note_commentaire"
               name="note_commentaire"
               value={formData.note_commentaire}
               onChange={handleChange}
-              placeholder="Note ou commentaire sur l'offre"
+              placeholder="Commentaire sur l'offre"
               rows="4"
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="documents">Documents</label>
-            <input
-              type="file"
-              id="documents"
-              name="documents"
-              onChange={handleFileChange}
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            <SimpleFilestackUploader
+              multiple={true}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+              maxFiles={10}
+              onUploadComplete={handleUploadComplete}
+              onUploadError={handleUploadError}
             />
             {formData.documents.length > 0 && (
-              <div className="attachments-list">
-                <h4>Fichiers sélectionnés:</h4>
-                {formData.documents.map((file, index) => (
-                  <div key={index} className="attachment-item">
-                    <i className="fas fa-file"></i>
-                    <span>{file.name}</span>
-                    <div className="attachment-actions">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          window.open(URL.createObjectURL(file), "_blank")
-                        }
-                        className="open-attachment"
-                        title="Ouvrir le document"
-                      >
-                        <i className="fas fa-eye"></i>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const url = URL.createObjectURL(file);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = file.name;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="download-attachment"
-                        title="Télécharger le document"
-                      >
-                        <i className="fas fa-download"></i>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeAttachment(index)}
-                        className="remove-attachment"
-                        title="Supprimer le document"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
+              <div className="uploaded-files-list">
+                <h4>Fichiers uploadés ({formData.documents.length}):</h4>
+                {formData.documents.map((file) => (
+                  <div key={file.id} className="uploaded-file-item">
+                    <div className="file-info">
+                      <i className="fas fa-file"></i>
+                      <div className="file-details">
+                        <span className="file-name">{file.filename}</span>
+                        <span className="file-url">
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Voir le fichier
+                          </a>
+                        </span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => removeDocument(file.id)}
+                      className="remove-file-btn"
+                      title="Supprimer le fichier"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
                   </div>
                 ))}
               </div>

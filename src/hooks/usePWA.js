@@ -41,7 +41,7 @@ export const usePWA = () => {
   const installApp = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+      // const { outcome } = await deferredPrompt.userChoice;
       setDeferredPrompt(null);
       setIsInstallable(false);
     }

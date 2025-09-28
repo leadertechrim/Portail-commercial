@@ -1,0 +1,127 @@
+/* Styles pour le sélecteur de partenaires */
+.partner-selector {
+  margin-bottom: 1rem;
+}
+
+.partner-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.partner-search-container {
+  position: relative;
+}
+
+.partner-search-container input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.partner-search-container input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.partner-search-container input.error {
+  border-color: #dc3545;
+}
+
+.partner-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.partner-option {
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.partner-option:last-child {
+  border-bottom: none;
+}
+
+.partner-option:hover {
+  background-color: #f8f9fa;
+}
+
+.partner-option.no-results {
+  color: #6c757d;
+  cursor: default;
+}
+
+.partner-option.no-results:hover {
+  background-color: transparent;
+}
+
+.selected-partners {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.partner-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 16px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #1976d2;
+}
+
+.partner-name {
+  margin-right: 0.5rem;
+}
+
+.remove-partner {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.remove-partner:hover {
+  background-color: #1976d2;
+  color: white;
+}
+
+.remove-partner i {
+  font-size: 10px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+

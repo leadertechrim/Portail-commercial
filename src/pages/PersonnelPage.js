@@ -97,6 +97,7 @@ const PersonnelPage = () => {
   const filteredPersonnel = personnel.filter(
     (person) =>
       person.nom_prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.Fonction?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.telephone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -148,8 +149,8 @@ const PersonnelPage = () => {
             <tr>
               <th>Nom & Prénom</th>
               <th>Téléphone</th>
-              <th>Email</th>
               <th>WhatsApp</th>
+              <th>Email</th>
               <th>Adresse</th>
               <th>Gérer</th>
             </tr>
@@ -159,8 +160,8 @@ const PersonnelPage = () => {
               <tr key={person._id}>
                 <td>{person.nom_prenom || "-"}</td>
                 <td>{person.telephone || "-"}</td>
-                <td>{person.email || "-"}</td>
                 <td>{person.whatsapp || "-"}</td>
+                <td>{person.email || "-"}</td>
                 <td>{person.adresse || "-"}</td>
                 <td className="actions-cell">
                   <button
@@ -242,6 +243,7 @@ const PersonnelPage = () => {
 const PersonnelModal = ({ isOpen, onClose, onSubmit, personnel, title }) => {
   const [formData, setFormData] = useState({
     nom_prenom: "",
+    Fonction: "",
     telephone: "",
     whatsapp: "",
     email: "",
@@ -256,6 +258,7 @@ const PersonnelModal = ({ isOpen, onClose, onSubmit, personnel, title }) => {
     if (personnel) {
       setFormData({
         nom_prenom: personnel.nom_prenom || "",
+        Fonction: personnel.Fonction || "",
         telephone: personnel.telephone || "",
         whatsapp: personnel.whatsapp || "",
         email: personnel.email || "",
@@ -265,6 +268,7 @@ const PersonnelModal = ({ isOpen, onClose, onSubmit, personnel, title }) => {
     } else {
       setFormData({
         nom_prenom: "",
+        Fonction: "",
         telephone: "",
         whatsapp: "",
         email: "",
@@ -418,7 +422,7 @@ const PersonnelModal = ({ isOpen, onClose, onSubmit, personnel, title }) => {
             />
           </div>
 
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="note_commentaire">Note/Commentaire</label>
             <textarea
               id="note_commentaire"
@@ -428,7 +432,7 @@ const PersonnelModal = ({ isOpen, onClose, onSubmit, personnel, title }) => {
               placeholder="Notes ou commentaires sur le personnel"
               rows="3"
             />
-          </div>
+          </div> */}
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="cancel-btn">
@@ -487,12 +491,12 @@ const PersonnelViewModal = ({ isOpen, onClose, personnel, title }) => {
               <div className="detail-value">{personnel.adresse || "-"}</div>
             </div>
 
-            <div className="detail-group">
+            {/* <div className="detail-group">
               <label>Note/Commentaire</label>
               <div className="detail-value">
                 {personnel.note_commentaire || "-"}
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="modal-actions">

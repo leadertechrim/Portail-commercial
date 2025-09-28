@@ -6,6 +6,8 @@ import {
   updateOffer,
   deleteOffer,
   fetchUsers,
+  fetchClients,
+  fetchPartners,
 } from "../api";
 import AddCallForTenderModal from "../components/AddCallForTenderModal";
 import EditCallForTenderModal from "../components/EditCallForTenderModal";
@@ -15,11 +17,158 @@ import "./CartPage.css";
 const CartPage = () => {
   const [offers, setOffers] = useState([]);
   const [users, setUsers] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [filteredOffers, setFilteredOffers] = useState([]);
+  const [offerStatuses, setOfferStatuses] = useState([]);
+
+  // États pour les filtres
+  const [filters, setFilters] = useState({
+    categorie: "",
+    responsable: "",
+    statut: "",
+    dateLimite: "",
+    client: "",
+    partenaire: "",
+    alertes: "",
+  });
+
+  // Charger les statuts d'offres depuis OfferStatusPage
+  const loadOfferStatuses = useCallback(() => {
+    try {
+      // Charger les états d'offres depuis le localStorage (stockés par OfferStatusPage)
+      const savedStatuses = localStorage.getItem("offerStatuses");
+      if (savedStatuses) {
+        const statuses = JSON.parse(savedStatuses);
+        console.log(
+          "📋 États d'offres chargés depuis OfferStatusPage:",
+          statuses
+        );
+        setOfferStatuses(statuses);
+      } else {
+        // États par défaut si aucun n'est configuré
+        const defaultStatuses = [
+          { nom: "Non préparée", couleur: "#dc3545" },
+          { nom: "En préparation", couleur: "#ffc107" },
+          { nom: "Envoyée", couleur: "#28a745" },
+        ];
+        setOfferStatuses(defaultStatuses);
+      }
+    } catch (err) {
+      console.error("❌ Erreur lors du chargement des états d'offres:", err);
+      setOfferStatuses([
+        { nom: "Non préparée", couleur: "#dc3545" },
+        { nom: "En préparation", couleur: "#ffc107" },
+        { nom: "Envoyée", couleur: "#28a745" },
+      ]);
+    }
+  }, []);
 
   // Log des offres quand elles changent
   useEffect(() => {
     console.log("📋 State des offres mis à jour:", offers);
   }, [offers]);
+
+  // Fonction de filtrage
+  const applyFilters = useCallback(() => {
+    let filtered = [...offers];
+
+    // Filtre par catégorie
+    if (filters.categorie) {
+      filtered = filtered.filter((offer) => {
+        const categorie = offer.Catégorie || offer.categorie || "";
+        return categorie.toLowerCase() === filters.categorie.toLowerCase();
+      });
+    }
+
+    // Filtre par responsable
+    if (filters.responsable) {
+      filtered = filtered.filter((offer) => {
+        const responsable = users.find(
+          (user) => String(user._id) === String(offer.responsable_id)
+        );
+        return (
+          responsable &&
+          responsable.name
+            .toLowerCase()
+            .includes(filters.responsable.toLowerCase())
+        );
+      });
+    }
+
+    // Filtre par statut
+    if (filters.statut) {
+      filtered = filtered.filter((offer) => {
+        const statut = offer.statut || "";
+        return statut.toLowerCase().includes(filters.statut.toLowerCase());
+      });
+    }
+
+    // Filtre par date limite
+    if (filters.dateLimite) {
+      filtered = filtered.filter((offer) => {
+        if (!offer.date_limite) return false;
+        const offerDate = new Date(offer.date_limite)
+          .toISOString()
+          .split("T")[0];
+        return offerDate === filters.dateLimite;
+      });
+    }
+
+    // Filtre par client
+    if (filters.client) {
+      filtered = filtered.filter((offer) => {
+        const client = offer.client || "";
+        return client === filters.client;
+      });
+    }
+
+    // Filtre par partenaire
+    if (filters.partenaire) {
+      filtered = filtered.filter((offer) => {
+        const partenaire = offer.Partenaire || offer.partenaire || "";
+        return partenaire === filters.partenaire;
+      });
+    }
+
+    // Filtre par alertes
+    if (filters.alertes) {
+      filtered = filtered.filter((offer) => {
+        const alert = getDateAlert(offer.date_limite);
+        if (!alert) return filters.alertes === "aucune";
+        return alert.text.toLowerCase().includes(filters.alertes.toLowerCase());
+      });
+    }
+
+    setFilteredOffers(filtered);
+  }, [offers, filters, users]);
+
+  // Appliquer les filtres quand les offres ou les filtres changent
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  // Fonction pour gérer les changements de filtres
+  const handleFilterChange = (filterName, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterName]: value,
+    }));
+  };
+
+  // Fonction pour réinitialiser tous les filtres
+  const resetFilters = () => {
+    setFilters({
+      categorie: "",
+      responsable: "",
+      statut: "",
+      dateLimite: "",
+      client: "",
+      partenaire: "",
+      alertes: "",
+    });
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -53,6 +202,17 @@ const CartPage = () => {
         setUsers(usersData);
         console.log("👥 Utilisateurs chargés:", usersData.length);
       }
+
+      // Charger les clients et partenaires pour les filtres
+      console.log("🏢 Chargement des clients...");
+      const clientsData = await fetchClients(token);
+      setClients(clientsData);
+      console.log("🏢 Clients chargés:", clientsData.length);
+
+      console.log("🤝 Chargement des partenaires...");
+      const partnersData = await fetchPartners(token);
+      setPartners(partnersData);
+      console.log("🤝 Partenaires chargés:", partnersData.length);
 
       if (offersData.message) {
         console.log("❌ Message d'erreur reçu:", offersData.message);
@@ -115,7 +275,23 @@ const CartPage = () => {
           );
         }
 
-        setOffers(filteredOffers);
+        // Normaliser les documents pour chaque offre
+        const normalizedOffers = filteredOffers.map((offer) => {
+          // Debug: Vérifier les documents
+          console.log(
+            `🔍 Offre ${offer.intitulee} - Documents:`,
+            offer.document || offer.documents
+          );
+
+          return {
+            ...offer,
+            // Normaliser les documents (peuvent être dans 'document' ou 'documents')
+            documents: offer.document || offer.documents || [],
+          };
+        });
+
+        setOffers(normalizedOffers);
+        setFilteredOffers(normalizedOffers); // Initialiser les offres filtrées
       } else {
         console.log(
           "⚠️ Format de données inattendu:",
@@ -140,7 +316,30 @@ const CartPage = () => {
       return;
     }
     loadOffers();
-  }, [navigate, token, loadOffers]);
+    // Charger les statuts d'offres dynamiques
+    loadOfferStatuses();
+  }, [navigate, token, loadOffers, loadOfferStatuses]);
+
+  // Synchronisation en temps réel avec OfferStatusPage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log(
+        "🔄 Synchronisation des états d'offres depuis OfferStatusPage..."
+      );
+      loadOfferStatuses();
+    };
+
+    // Écouter les changements dans localStorage
+    window.addEventListener("storage", handleStorageChange);
+
+    // Vérification périodique pour les changements dans le même onglet
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [loadOfferStatuses]);
 
   const handleCreateOffer = async (offerData) => {
     try {
@@ -159,16 +358,32 @@ const CartPage = () => {
 
   const handleUpdateOffer = async (offerId, offerData) => {
     try {
+      console.log("🔍 CartPage handleUpdateOffer - ID:", offerId);
+      console.log("🔍 CartPage handleUpdateOffer - Data:", offerData);
+      console.log(
+        "🔍 CartPage handleUpdateOffer - Token:",
+        token ? "Présent" : "Absent"
+      );
+
       const result = await updateOffer(offerId, offerData, token);
+
+      console.log("🔍 CartPage handleUpdateOffer - Résultat API:", result);
+      console.log("🔍 CartPage handleUpdateOffer - Message:", result.message);
+
       if (result.message === "Offre mise à jour avec succès") {
         alert("Offre modifiée avec succès !");
         setIsEditModalOpen(false);
         setEditingItem(null);
         loadOffers();
       } else {
+        console.log(
+          "🔍 CartPage handleUpdateOffer - Message différent:",
+          result.message
+        );
         alert(result.message || "Erreur lors de la modification");
       }
     } catch (error) {
+      console.log("🔍 CartPage handleUpdateOffer - Erreur:", error);
       alert(`Erreur lors de la modification: ${error.message}`);
     }
   };
@@ -287,19 +502,32 @@ const CartPage = () => {
   };
 
   const getStateColor = (state) => {
-    const colors = {
-      "Non préparé": "#6c757d",
+    // Chercher la couleur dans les statuts dynamiques
+    const status = offerStatuses.find((s) => s.nom === state);
+    if (status) {
+      return status.couleur;
+    }
+
+    // Couleurs par défaut pour compatibilité avec les anciens formats
+    const defaultColors = {
+      "Non préparée": "#dc3545",
       "En préparation": "#ffc107",
-      Envoyée: "#17a2b8",
+      Envoyée: "#28a745",
+      Clôturée: "#6c757d",
       // Anciens formats pour compatibilité
+      "Non préparé": "#dc3545",
+      "En prépa": "#f67800",
+      "A préparer": "#dc3545",
+      "En attente": "#dc3545",
+      Clôturé: "#6c757d",
       non_prepare: "#6c757d",
       en_preparation: "#ffc107",
-      envoyee: "#17a2b8",
-      envoyeé: "#17a2b8",
-      envoyée: "#17a2b8",
-      Envoyé: "#17a2b8",
+      envoyee: "#28a745",
+      envoyeé: "#28a745",
+      envoyée: "#28a745",
+      Envoyé: "#28a745",
     };
-    return colors[state] || "#6c757d";
+    return defaultColors[state] || "#6c757d"; // Couleur par défaut
   };
 
   if (loading) {
@@ -458,25 +686,8 @@ const CartPage = () => {
                   console.log("🌐 URL:", "http://127.0.0.1:8000/api/offres");
 
                   try {
-                    const response = await fetch(
-                      "http://127.0.0.1:8000/api/offres",
-                      {
-                        method: "GET",
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                        },
-                      }
-                    );
-                    console.log("📡 Status:", response.status);
-                    console.log("📡 OK:", response.ok);
-
-                    if (response.ok) {
-                      const data = await response.json();
-                      console.log("📦 Données brutes:", data);
-                    } else {
-                      const errorText = await response.text();
-                      console.log("❌ Erreur:", errorText);
-                    }
+                    const data = await fetchOffers(token);
+                    console.log("📡 Données reçues:", data);
                   } catch (err) {
                     console.error("💥 Erreur de fetch:", err);
                   }
@@ -499,6 +710,7 @@ const CartPage = () => {
                 onClick={async () => {
                   console.log("🔍 Test de connectivité backend...");
                   try {
+                    // Test de connectivité simple
                     const response = await fetch("http://127.0.0.1:8000/", {
                       method: "GET",
                     });
@@ -699,218 +911,413 @@ const CartPage = () => {
               >
                 🧪 Test Demain (J-1)
               </button>
-              {!isSpectator && (
-                <button
-                  className="add-first-call-btn"
-                  onClick={() => setIsAddModalOpen(true)}
-                >
-                  <i className="fas fa-plus"></i>
-                  Ajouter ma première offre
-                </button>
-              )}
             </div>
+            {!isSpectator && (
+              <button
+                className="add-first-call-btn"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <i className="fas fa-plus"></i>
+                Ajouter ma première offre
+              </button>
+            )}
           </div>
         ) : (
-          <div className="calls-table-container">
-            <table className="calls-table">
-              <thead>
-                <tr>
-                  <th>Intitulé</th>
-                  <th>Lien</th>
-                  <th>Client</th>
-                  <th>Date limite</th>
-                  <th>Statut</th>
-                  {(role === "admin" || role === "spectateur") && (
-                    <th>Responsable</th>
-                  )}
-                  <th>Alertes</th>
-                  <th>Note et commentaire</th>
-                  <th>Documents</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {offers.map((offer) => {
-                  console.log("Offre complète:", offer);
-                  return (
-                    <tr key={offer._id}>
-                      {/* Intitulé */}
-                      <td className="call-title">
-                        <strong>{offer.intitulee}</strong>
-                      </td>
+          <>
+            <div className="filters-section">
+              <h3>Filtres</h3>
+              <div className="filters-grid">
+                {/* Filtre Catégorie */}
+                <div className="filter-group">
+                  <label htmlFor="filter-categorie">Catégorie</label>
+                  <select
+                    id="filter-categorie"
+                    value={filters.categorie}
+                    onChange={(e) =>
+                      handleFilterChange("categorie", e.target.value)
+                    }
+                  >
+                    <option value="">Toutes les catégories</option>
+                    <option value="nationale">Nationale</option>
+                    <option value="internationale">Internationale</option>
+                  </select>
+                </div>
 
-                      {/* Lien */}
-                      <td className="source-cell">
-                        {offer.lien ? (
-                          <a
-                            href={offer.lien}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="source-link"
-                          >
-                            <i className="fas fa-external-link-alt"></i>
-                            Voir lien
-                          </a>
-                        ) : (
-                          "-"
+                {/* Filtre Responsable (pour admin) */}
+                {(role === "admin" || role === "spectateur") && (
+                  <div className="filter-group">
+                    <label htmlFor="filter-responsable">Responsable</label>
+                    <select
+                      id="filter-responsable"
+                      value={filters.responsable}
+                      onChange={(e) =>
+                        handleFilterChange("responsable", e.target.value)
+                      }
+                    >
+                      <option value="">Tous les responsables</option>
+                      {users.map((user) => (
+                        <option key={user._id} value={user.name}>
+                          {user.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Filtre Statut */}
+                <div className="filter-group">
+                  <label htmlFor="filter-statut">Statut</label>
+                  <select
+                    id="filter-statut"
+                    value={filters.statut}
+                    onChange={(e) =>
+                      handleFilterChange("statut", e.target.value)
+                    }
+                  >
+                    <option value="">Tous les statuts</option>
+                    {offerStatuses.map((status) => (
+                      <option key={status._id || status.nom} value={status.nom}>
+                        {status.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtre Date limite */}
+                <div className="filter-group">
+                  <label htmlFor="filter-date">Date limite</label>
+                  <input
+                    type="date"
+                    id="filter-date"
+                    value={filters.dateLimite}
+                    onChange={(e) =>
+                      handleFilterChange("dateLimite", e.target.value)
+                    }
+                  />
+                </div>
+
+                {/* Filtre Client */}
+                <div className="filter-group">
+                  <label htmlFor="filter-client">Client</label>
+                  <select
+                    id="filter-client"
+                    value={filters.client}
+                    onChange={(e) =>
+                      handleFilterChange("client", e.target.value)
+                    }
+                  >
+                    <option value="">Tous les clients</option>
+                    {clients.map((client) => (
+                      <option key={client._id} value={client.raison_sociale}>
+                        {client.raison_sociale}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtre Partenaire */}
+                <div className="filter-group">
+                  <label htmlFor="filter-partenaire">Partenaire</label>
+                  <select
+                    id="filter-partenaire"
+                    value={filters.partenaire}
+                    onChange={(e) =>
+                      handleFilterChange("partenaire", e.target.value)
+                    }
+                  >
+                    <option value="">Tous les partenaires</option>
+                    {partners.map((partner) => (
+                      <option key={partner._id} value={partner.raison_sociale}>
+                        {partner.raison_sociale}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtre Alertes */}
+                <div className="filter-group">
+                  <label htmlFor="filter-alertes">Alertes</label>
+                  <select
+                    id="filter-alertes"
+                    value={filters.alertes}
+                    onChange={(e) =>
+                      handleFilterChange("alertes", e.target.value)
+                    }
+                  >
+                    <option value="">Toutes les alertes</option>
+                    <option value="EXPIRÉ">EXPIRÉ</option>
+                    <option value="AUJOURD'HUI">AUJOURD'HUI</option>
+                    <option value="J-1">J-1</option>
+                    <option value="J-3">J-3</option>
+                    <option value="J-7">J-7</option>
+                    <option value="J-14">J-14</option>
+                    <option value="J-21">J-21</option>
+                    <option value="aucune">Aucune alerte</option>
+                  </select>
+                </div>
+
+                {/* Bouton de réinitialisation */}
+                <div className="filter-group">
+                  <button
+                    type="button"
+                    className="reset-filters-btn"
+                    onClick={resetFilters}
+                  >
+                    <i className="fas fa-times"></i>
+                    Réinitialiser
+                  </button>
+                </div>
+              </div>
+
+              <div className="filters-info">
+                <span className="results-count">
+                  {filteredOffers.length} offre
+                  {filteredOffers.length > 1 ? "s" : ""} trouvée
+                  {filteredOffers.length > 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+
+            <div className="calls-table-container">
+              <table className="calls-table">
+                <thead>
+                  <tr>
+                    <th>N-Offre</th>
+                    <th>Intitulé</th>
+                    <th>Lien</th>
+                    <th>Client</th>
+                    <th>Partenaire</th>
+                    {(role === "admin" || role === "spectateur") && (
+                      <th>Responsable</th>
+                    )}
+                    <th>Date limite</th>
+                    <th>Catégorie</th>
+                    <th>Statut</th>
+                    <th>Alertes</th>
+                    <th>Commentaire</th>
+                    <th>Documents</th>
+                    <th>Gérer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOffers.map((offer) => {
+                    console.log("Offre complète:", offer);
+                    return (
+                      <tr key={offer._id}>
+                        {/* N-Offre */}
+                        <td>{offer["N-Offre"] || offer.numero || "-"}</td>
+
+                        {/* Intitulé */}
+                        <td className="call-title">
+                          <strong>{offer.intitulee}</strong>
+                        </td>
+
+                        {/* Lien */}
+                        <td className="source-cell">
+                          {offer.lien ? (
+                            <a
+                              href={offer.lien}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="source-link"
+                            >
+                              <i className="fas fa-external-link-alt"></i>
+                              Voir lien
+                            </a>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+
+                        {/* Client */}
+                        <td>{offer.client || "-"}</td>
+
+                        {/* Partenaire */}
+                        <td>{offer.Partenaire || offer.partenaire || "-"}</td>
+
+                        {/* Responsable - visible pour l'admin et le spectateur */}
+                        {(role === "admin" || role === "spectateur") && (
+                          <td className="responsable-cell">
+                            {(() => {
+                              const responsable = users.find(
+                                (user) =>
+                                  String(user._id) ===
+                                  String(offer.responsable_id)
+                              );
+                              return responsable ? (
+                                <div className="responsable-info">
+                                  <i className="fas fa-user"></i>
+                                  <span>{responsable.name}</span>
+                                </div>
+                              ) : (
+                                <span style={{ color: "#6c757d" }}>-</span>
+                              );
+                            })()}
+                          </td>
                         )}
-                      </td>
 
-                      {/* Client */}
-                      <td>{offer.client || "-"}</td>
+                        {/* Date limite */}
+                        <td>{formatDate(offer.date_limite)}</td>
 
-                      {/* Date limite */}
-                      <td>{formatDate(offer.date_limite)}</td>
+                        {/* Catégorie */}
+                        <td>
+                          {offer.Catégorie || offer.categorie ? (
+                            <span
+                              className={`category-badge ${(
+                                offer.Catégorie || offer.categorie
+                              ).toLowerCase()}`}
+                            >
+                              {offer.Catégorie || offer.categorie}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
 
-                      {/* Statut */}
-                      <td>
-                        <span
-                          className="status-badge"
-                          style={{
-                            backgroundColor: getStateColor(offer.statut),
-                          }}
-                        >
-                          {offer.statut || "En préparation"}
-                        </span>
-                      </td>
+                        {/* Statut */}
+                        <td>
+                          <span
+                            className="status-badge"
+                            style={{
+                              backgroundColor: getStateColor(offer.statut),
+                            }}
+                          >
+                            {offer.statut || "En préparation"}
+                          </span>
+                        </td>
 
-                      {/* Responsable - visible pour l'admin et le spectateur */}
-                      {(role === "admin" || role === "spectateur") && (
-                        <td className="responsable-cell">
+                        {/* Alertes */}
+                        <td className="alert-cell">
                           {(() => {
-                            const responsable = users.find(
-                              (user) =>
-                                String(user._id) ===
-                                String(offer.responsable_id)
+                            console.log(
+                              "🔍 Calcul d'alerte pour offre:",
+                              offer.intitulee,
+                              "Date:",
+                              offer.date_limite
                             );
-                            return responsable ? (
-                              <div className="responsable-info">
-                                <i className="fas fa-user"></i>
-                                <span>{responsable.name}</span>
-                              </div>
-                            ) : (
-                              <span style={{ color: "#6c757d" }}>-</span>
-                            );
+                            const alert = getDateAlert(offer.date_limite);
+                            console.log("📊 Résultat alerte:", alert);
+
+                            if (alert) {
+                              return (
+                                <span
+                                  className="alert-badge"
+                                  style={{
+                                    backgroundColor: alert.color,
+                                  }}
+                                >
+                                  <i className={alert.icon}></i>
+                                  {alert.text}
+                                </span>
+                              );
+                            }
+                            return <span style={{ color: "#6c757d" }}>-</span>;
                           })()}
                         </td>
-                      )}
 
-                      {/* Alertes */}
-                      <td className="alert-cell">
-                        {(() => {
-                          console.log(
-                            "🔍 Calcul d'alerte pour offre:",
-                            offer.intitulee,
-                            "Date:",
-                            offer.date_limite
-                          );
-                          const alert = getDateAlert(offer.date_limite);
-                          console.log("📊 Résultat alerte:", alert);
-
-                          if (alert) {
-                            return (
-                              <span
-                                className="alert-badge"
+                        {/* Commentaire */}
+                        <td className="comment-cell">
+                          {offer.note_commentaire &&
+                          offer.note_commentaire.trim() !== "" ? (
+                            <div className="comment-content">
+                              <i
+                                className="fas fa-comment-alt"
                                 style={{
-                                  backgroundColor: alert.color,
+                                  marginRight: "5px",
+                                  color: "#f67800",
                                 }}
-                              >
-                                <i className={alert.icon}></i>
-                                {alert.text}
-                              </span>
-                            );
-                          }
-                          return <span style={{ color: "#6c757d" }}>-</span>;
-                        })()}
-                      </td>
-
-                      {/* Note et commentaire */}
-                      <td className="comment-cell">
-                        {offer.note_commentaire &&
-                        offer.note_commentaire.trim() !== "" ? (
-                          <div className="comment-content">
-                            <i
-                              className="fas fa-comment-alt"
-                              style={{
-                                marginRight: "5px",
-                                color: "#f67800",
-                              }}
-                            ></i>
-                            {offer.note_commentaire}
-                          </div>
-                        ) : (
-                          <span style={{ color: "#6c757d" }}>-</span>
-                        )}
-                      </td>
-
-                      {/* Documents */}
-                      <td className="documents-cell">
-                        {(() => {
-                          const documents = offer.documents || [];
-                          console.log(
-                            "Documents pour l'offre:",
-                            offer.intitulee,
-                            documents
-                          );
-                          if (documents && documents.length > 0) {
-                            return (
-                              <div className="documents-list">
-                                {documents.map((document, index) => (
-                                  <a
-                                    key={index}
-                                    href={document}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="document-link"
-                                  >
-                                    <i className="fas fa-paperclip"></i>
-                                    {document}
-                                  </a>
-                                ))}
-                              </div>
-                            );
-                          }
-                          return <span style={{ color: "#6c757d" }}>-</span>;
-                        })()}
-                      </td>
-
-                      {/* Actions */}
-                      <td>
-                        <div className="actions">
-                          {isSpectator ? (
-                            <button
-                              className="view-btn"
-                              onClick={() => handleViewItem(offer)}
-                              title="Voir les détails"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
+                              ></i>
+                              {offer.note_commentaire}
+                            </div>
                           ) : (
-                            <>
-                              <button
-                                className="edit-btn"
-                                onClick={() => handleEditItem(offer)}
-                                title="Modifier"
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="delete-btn"
-                                onClick={() => handleDeleteOffer(offer._id)}
-                                title="Supprimer"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </>
+                            <span style={{ color: "#6c757d" }}>-</span>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+
+                        {/* Documents */}
+                        <td className="documents-cell">
+                          {(() => {
+                            const documents = offer.documents || [];
+                            console.log(
+                              "Documents pour l'offre:",
+                              offer.intitulee,
+                              documents
+                            );
+                            if (documents && documents.length > 0) {
+                              return (
+                                <div className="documents-list">
+                                  {documents.map((document, index) => {
+                                    const url =
+                                      typeof document === "string"
+                                        ? document
+                                        : document.url;
+                                    const filename =
+                                      typeof document === "string"
+                                        ? document.split("/").pop()
+                                        : document.filename ||
+                                          document.name ||
+                                          `Document ${index + 1}`;
+                                    return (
+                                      <a
+                                        key={index}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="document-link"
+                                        title={`Voir ${filename}`}
+                                      >
+                                        <i className="fas fa-file"></i>
+                                        <span className="document-name">
+                                          {filename}
+                                        </span>
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </td>
+
+                        {/* Gérer */}
+                        <td>
+                          <div className="actions">
+                            {isSpectator ? (
+                              <button
+                                className="view-btn"
+                                onClick={() => handleViewItem(offer)}
+                                title="Voir les détails"
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  className="edit-btn"
+                                  onClick={() => handleEditItem(offer)}
+                                  title="Modifier"
+                                >
+                                  <i className="fas fa-edit"></i>
+                                </button>
+                                <button
+                                  className="delete-btn"
+                                  onClick={() => handleDeleteOffer(offer._id)}
+                                  title="Supprimer"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -944,12 +1351,70 @@ const CartPage = () => {
                 <h3>Informations générales</h3>
                 <div className="view-grid">
                   <div className="view-item">
+                    <label>N-Offre :</label>
+                    <span>
+                      {viewingItem["N-Offre"] ||
+                        viewingItem.numero ||
+                        "Non défini"}
+                    </span>
+                  </div>
+                  <div className="view-item">
                     <label>Intitulé :</label>
                     <span>{viewingItem.intitulee}</span>
                   </div>
                   <div className="view-item">
                     <label>Client :</label>
                     <span>{viewingItem.client}</span>
+                  </div>
+                  <div className="view-item">
+                    <label>Partenaire :</label>
+                    <span>
+                      {viewingItem.Partenaire ||
+                        viewingItem.partenaire ||
+                        "Non défini"}
+                    </span>
+                  </div>
+                  {(role === "admin" || role === "spectateur") && (
+                    <div className="view-item">
+                      <label>Responsable :</label>
+                      <span>
+                        {(() => {
+                          const responsable = users.find(
+                            (user) =>
+                              String(user._id) ===
+                              String(viewingItem.responsable_id)
+                          );
+                          return responsable ? (
+                            <div className="responsable-info">
+                              <i className="fas fa-user"></i>
+                              {responsable.name}
+                            </div>
+                          ) : (
+                            "Non trouvé"
+                          );
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="view-item">
+                    <label>Date limite :</label>
+                    <span>{formatDate(viewingItem.date_limite)}</span>
+                  </div>
+                  <div className="view-item">
+                    <label>Catégorie :</label>
+                    <span>
+                      {viewingItem.Catégorie || viewingItem.categorie ? (
+                        <span
+                          className={`category-badge ${(
+                            viewingItem.Catégorie || viewingItem.categorie
+                          ).toLowerCase()}`}
+                        >
+                          {viewingItem.Catégorie || viewingItem.categorie}
+                        </span>
+                      ) : (
+                        "Non définie"
+                      )}
+                    </span>
                   </div>
                   <div className="view-item">
                     <label>Statut :</label>
@@ -986,36 +1451,9 @@ const CartPage = () => {
                   </div>
                 </div>
               </div>
-
-              {(role === "admin" || role === "spectateur") && (
-                <div className="view-section">
-                  <h3>Responsable</h3>
-                  <div className="view-item">
-                    <label>Nom :</label>
-                    <span>
-                      {(() => {
-                        const responsable = users.find(
-                          (user) =>
-                            String(user._id) ===
-                            String(viewingItem.responsable_id)
-                        );
-                        return responsable ? (
-                          <div className="responsable-info">
-                            <i className="fas fa-user"></i>
-                            {responsable.name}
-                          </div>
-                        ) : (
-                          "Non trouvé"
-                        );
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               {viewingItem.note_commentaire && (
                 <div className="view-section">
-                  <h3>Note/Commentaire</h3>
+                  <h3>Commentaire</h3>
                   <div className="view-item">
                     <p className="comment-text">
                       {viewingItem.note_commentaire}
@@ -1023,17 +1461,34 @@ const CartPage = () => {
                   </div>
                 </div>
               )}
-
               {viewingItem.documents && viewingItem.documents.length > 0 && (
                 <div className="view-section">
                   <h3>Documents</h3>
                   <div className="documents-list">
-                    {viewingItem.documents.map((document, index) => (
-                      <div key={index} className="document-item">
-                        <i className="fas fa-file"></i>
-                        <span>{document}</span>
-                      </div>
-                    ))}
+                    {viewingItem.documents.map((document, index) => {
+                      const url =
+                        typeof document === "string" ? document : document.url;
+                      const filename =
+                        typeof document === "string"
+                          ? document.split("/").pop()
+                          : document.filename ||
+                            document.name ||
+                            `Document ${index + 1}`;
+                      return (
+                        <div key={index} className="document-item">
+                          <i className="fas fa-file"></i>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={url}
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                            {filename}
+                          </a>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

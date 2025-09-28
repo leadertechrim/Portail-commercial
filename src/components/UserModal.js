@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { fetchPersonnel } from "../api";
 import "./UserModal.css";
 
 const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
   const [formData, setFormData] = useState({
     name: "",
+    Fonction: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -14,11 +16,13 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [personnel, setPersonnel] = useState([]);
 
   useEffect(() => {
     if (user) {
       setFormData({
         name: user.name || "",
+        Fonction: user.Fonction || "",
         email: user.email || "",
         password: "", // Password is now optional for edit, so clear it
         confirmPassword: "", // Clear confirmation password
@@ -29,6 +33,7 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
     } else {
       setFormData({
         name: "",
+        Fonction: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -39,21 +44,33 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
     }
   }, [user]);
 
+  // Charger les personnels pour la liste déroulante
+  useEffect(() => {
+    const loadPersonnel = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const personnelData = await fetchPersonnel(token);
+          console.log("📋 Données personnels reçues:", personnelData);
+          console.log("📋 Premier personnel:", personnelData[0]);
+          console.log(
+            "📋 Champ nom_prenom du premier:",
+            personnelData[0]?.nom_prenom
+          );
+          setPersonnel(personnelData);
+        }
+      } catch (error) {
+        console.log("Erreur lors du chargement des personnels:", error);
+      }
+    };
+    loadPersonnel();
+  }, []);
+
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Le nom est requis";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "L'email n'est pas valide";
-    }
-
-    if (formData.telephone && !/^\+?[1-9]\d{1,14}$/.test(formData.telephone)) {
-      newErrors.telephone = "Le numéro de téléphone n'est pas valide";
+      newErrors.name = "Le nom et prénom sont requis";
     }
 
     if (!user && !formData.password.trim()) {
@@ -85,9 +102,8 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
     try {
       const userData = {
         name: formData.name.trim(),
-        email: formData.email.trim(),
+        Fonction: formData.Fonction.trim(),
         role: formData.role,
-        telephone: formData.telephone.trim(),
         statut: formData.statut,
         gerer: formData.gerer,
       };
@@ -143,57 +159,111 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
           className="user-form"
         >
           <div className="form-group">
-            <label htmlFor="name">Nom *</label>
-            <input
-              type="text"
+            <label htmlFor="name">Nom et prénom *</label>
+            <select
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               className={errors.name ? "error" : ""}
-              placeholder="Nom complet"
-              readOnly={isViewMode}
-            />
+              disabled={isViewMode}
+            >
+              <option value="">Sélectionner un personnel</option>
+              {personnel.map((person) => {
+                // Utiliser le champ correct des personnels
+                const displayName =
+                  person.nom_prenom || `Personnel ${person._id}`;
+                const valueName = person.nom_prenom;
+
+                return (
+                  <option key={person._id} value={valueName}>
+                    {displayName}
+                  </option>
+                );
+              })}
+            </select>
             {errors.name && (
               <span className="error-message">{errors.name}</span>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+            <label htmlFor="Fonction">Fonction</label>
+            <select
+              id="Fonction"
+              name="Fonction"
+              value={formData.Fonction}
               onChange={handleChange}
-              className={errors.email ? "error" : ""}
-              placeholder="email@exemple.com"
-              readOnly={isViewMode}
-            />
-            {errors.email && (
-              <span className="error-message">{errors.email}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="telephone">Téléphone</label>
-            <input
-              type="tel"
-              id="telephone"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className={errors.telephone ? "error" : ""}
-              placeholder="+22241000000"
-              readOnly={isViewMode}
-            />
-            {errors.telephone && (
-              <span className="error-message">{errors.telephone}</span>
-            )}
-            <small className="help-text">
-              Format international (ex: +22241000000)
-            </small>
+              disabled={isViewMode}
+            >
+              <option value="">Sélectionner une fonction</option>
+              <option value="Directeur">Directeur</option>
+              <option value="Directeur Général">Directeur Général</option>
+              <option value="Directeur Technique">Directeur Technique</option>
+              <option value="Directeur Commercial">Directeur Commercial</option>
+              <option value="Directeur Financier">Directeur Financier</option>
+              <option value="Directeur RH">Directeur RH</option>
+              <option value="Chef de Projet">Chef de Projet</option>
+              <option value="Chef d'Équipe">Chef d'Équipe</option>
+              <option value="Chef de Service">Chef de Service</option>
+              <option value="Chef de Département">Chef de Département</option>
+              <option value="Manager">Manager</option>
+              <option value="Manager Commercial">Manager Commercial</option>
+              <option value="Manager Technique">Manager Technique</option>
+              <option value="Manager Projet">Manager Projet</option>
+              <option value="Superviseur">Superviseur</option>
+              <option value="Coordinateur">Coordinateur</option>
+              <option value="Responsable">Responsable</option>
+              <option value="Responsable Commercial">
+                Responsable Commercial
+              </option>
+              <option value="Responsable Technique">
+                Responsable Technique
+              </option>
+              <option value="Responsable Projet">Responsable Projet</option>
+              <option value="Responsable Qualité">Responsable Qualité</option>
+              <option value="Ingénieur">Ingénieur</option>
+              <option value="Ingénieur Senior">Ingénieur Senior</option>
+              <option value="Ingénieur Principal">Ingénieur Principal</option>
+              <option value="Ingénieur Projet">Ingénieur Projet</option>
+              <option value="Ingénieur Système">Ingénieur Système</option>
+              <option value="Développeur">Développeur</option>
+              <option value="Développeur Senior">Développeur Senior</option>
+              <option value="Développeur Principal">
+                Développeur Principal
+              </option>
+              <option value="Analyste">Analyste</option>
+              <option value="Analyste Fonctionnel">Analyste Fonctionnel</option>
+              <option value="Analyste Technique">Analyste Technique</option>
+              <option value="Analyste Système">Analyste Système</option>
+              <option value="Consultant">Consultant</option>
+              <option value="Consultant Senior">Consultant Senior</option>
+              <option value="Consultant Principal">Consultant Principal</option>
+              <option value="Architecte">Architecte</option>
+              <option value="Architecte Solution">Architecte Solution</option>
+              <option value="Architecte Système">Architecte Système</option>
+              <option value="Architecte Technique">Architecte Technique</option>
+              <option value="Spécialiste">Spécialiste</option>
+              <option value="Spécialiste Technique">
+                Spécialiste Technique
+              </option>
+              <option value="Spécialiste Métier">Spécialiste Métier</option>
+              <option value="Expert">Expert</option>
+              <option value="Expert Technique">Expert Technique</option>
+              <option value="Expert Métier">Expert Métier</option>
+              <option value="Technicien">Technicien</option>
+              <option value="Technicien Senior">Technicien Senior</option>
+              <option value="Technicien Principal">Technicien Principal</option>
+              <option value="Assistant">Assistant</option>
+              <option value="Assistant Manager">Assistant Manager</option>
+              <option value="Assistant Projet">Assistant Projet</option>
+              <option value="Stagiaire">Stagiaire</option>
+              <option value="Stagiaire Ingénieur">Stagiaire Ingénieur</option>
+              <option value="Stagiaire Développeur">
+                Stagiaire Développeur
+              </option>
+              <option value="Autre">Autre</option>
+            </select>
           </div>
 
           {!isViewMode && (

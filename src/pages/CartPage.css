@@ -1,5 +1,156 @@
 /* CartPage.css */
 
+/* Styles pour les filtres */
+.filters-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.filters-section h3 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #f67800;
+  box-shadow: 0 0 0 0.2rem rgba(246, 120, 0, 0.25);
+}
+
+.filter-group input[type="text"] {
+  background-color: #fff;
+}
+
+.filter-group input[type="date"] {
+  background-color: #fff;
+}
+
+.reset-filters-btn {
+  background: linear-gradient(135deg, #f67800 0%, #e56b00 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.reset-filters-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.reset-filters-btn:hover {
+  background: linear-gradient(135deg, #e56b00 0%, #d45a00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(246, 120, 0, 0.4);
+}
+
+.reset-filters-btn:hover::before {
+  left: 100%;
+}
+
+.reset-filters-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(246, 120, 0, 0.3);
+}
+
+.reset-filters-btn i {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.reset-filters-btn:hover i {
+  transform: rotate(90deg);
+}
+
+.filters-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.results-count {
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Responsive pour les filtres */
+@media (max-width: 768px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .filters-section {
+    padding: 15px;
+  }
+
+  .filters-section h3 {
+    font-size: 16px;
+  }
+}
+
 /* Styles pour les nouvelles colonnes */
 .responsable-cell {
   font-size: 14px;
@@ -9,6 +160,61 @@
 .responsable-cell i {
   margin-right: 5px;
   color: #f67800;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  background-color: #17a2b8;
+}
+
+/* Couleurs spécifiques pour les catégories */
+.category-badge.nationale,
+.category-badge.Nationale {
+  background: #e9ecef !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 15px rgba(233, 236, 239, 0.4) !important;
+}
+
+.category-badge.internationale,
+.category-badge.Internationale {
+  background: #e9ecef !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 15px rgba(233, 236, 239, 0.4) !important;
+}
+
+.category-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Styles élégants pour les badges de statut */
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  opacity: 0.9;
+}
+
+.status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  opacity: 1;
 }
 
 .alert-cell {
@@ -358,17 +564,18 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  background-color: #ffffff;
 }
 
 .calls-table thead {
-  background: #f8f9fa;
+  background: #f67800;
 }
 
 .calls-table th {
   padding: 20px 15px;
   text-align: left;
   font-weight: 700;
-  color: #343a40;
+  color: white;
   border-bottom: 2px solid #ced4da;
   white-space: nowrap;
 }
@@ -377,6 +584,8 @@
   padding: 15px;
   border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
+  background-color: #ffffff;
+  color: #495057;
 }
 
 .calls-table tbody tr:last-child td {
@@ -384,8 +593,16 @@
 }
 
 .calls-table tbody tr:hover {
-  background: #f1f3f5;
+  background: #f8f9fa;
   transition: background 0.3s ease;
+}
+
+.calls-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.calls-table tbody tr:nth-child(even):hover {
+  background-color: #e9ecef;
 }
 
 .call-title {
@@ -945,4 +1162,53 @@
     height: 28px;
     font-size: 0.75rem;
   }
+}
+
+/* Styles pour les documents */
+.documents-cell {
+  max-width: 200px;
+}
+
+.documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.document-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(246, 120, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(246, 120, 0, 0.2);
+  text-decoration: none;
+  color: #f67800;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  max-width: 150px; /* Limit width to prevent overflow in table cells */
+}
+
+.document-link:hover {
+  background: rgba(246, 120, 0, 0.15);
+  border-color: rgba(246, 120, 0, 0.3);
+  color: #e56a00;
+  text-decoration: none;
+}
+
+.document-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.no-document {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #6c757d;
+  font-size: 12px;
+  font-style: italic;
 }

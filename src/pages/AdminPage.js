@@ -144,12 +144,10 @@ const AdminPage = () => {
             <table className="users-table">
               <thead>
                 <tr>
-                  <th>Nom</th>
-                  <th>Email</th>
-                  <th>Téléphone</th>
+                  <th>Nom et prénom</th>
+                  <th>Fonction</th>
                   <th>Rôle</th>
                   <th>Statut</th>
-                  {/* <th>Gérer</th> */}
                   <th>Gérer</th>
                 </tr>
               </thead>
@@ -157,8 +155,7 @@ const AdminPage = () => {
                 {users.map((user) => (
                   <tr key={user._id}>
                     <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.telephone || "-"}</td>
+                    <td>{user.Fonction || "-"}</td>
                     <td>
                       <span className={`role-badge ${user.role}`}>
                         {user.role}

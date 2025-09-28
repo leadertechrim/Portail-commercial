@@ -147,7 +147,7 @@ export default function SourcesPage() {
                 <button
                   className="edit-btn"
                   onClick={() => handleEditSource(s)}
-                  title="Modifier cette source"
+                  title="Agir"
                 >
                   <i className="fas fa-edit"></i>
                 </button>

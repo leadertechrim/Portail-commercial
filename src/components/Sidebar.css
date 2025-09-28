@@ -130,6 +130,63 @@
 .sidebar-nav {
   flex: 1;
   padding: 20px 0;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 25px;
+}
+
+.sidebar-section-header {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.sidebar-section-header:hover {
+  background: rgba(246, 120, 0, 0.05);
+}
+
+.sidebar-section-title {
+  color: #f67800;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 12px 25px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(246, 120, 0, 0.2);
+  position: relative;
+  flex: 1;
+}
+
+.sidebar-section-title::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: linear-gradient(135deg, #f67800, #e85d04);
+  border-radius: 2px;
+}
+
+.sidebar-section-toggle {
+  color: #f67800;
+  font-size: 0.8rem;
+  margin-right: 25px;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-section-header:hover .sidebar-section-toggle {
+  transform: scale(1.1);
 }
 
 .sidebar-menu {
