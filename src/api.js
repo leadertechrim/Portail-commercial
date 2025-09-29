@@ -1,9 +1,5 @@
 // URL de base pour toutes les APIs (configuration fixe)
-const API_BASE_URL = "https://applesoffres-production.up.railway.app";
-
-// URL de base pour les APIs Flask (configuration fixe)
-const FLASK_API_BASE_URL = "https://applesoffres-production.up.railway.app/api";
-
+export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
   const res = await fetch(`${API_BASE_URL}/login`, {
@@ -1090,7 +1086,7 @@ export const fetchFacturesEtats = async (token) => {
 // Fonction utilitaire pour les appels API Flask
 const apiCall = async (endpoint, options = {}) => {
   try {
-    const response = await fetch(`${FLASK_API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
