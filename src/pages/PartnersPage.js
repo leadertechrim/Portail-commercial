@@ -6,6 +6,7 @@ import {
   updatePartner,
   deletePartner,
 } from "../api";
+import Layout from "../components/Layout";
 import "./PartnersPage.css";
 
 const PartnersPage = () => {
@@ -105,140 +106,144 @@ const PartnersPage = () => {
 
   if (loading) {
     return (
-      <div className="partners-page">
-        <div className="loading">Chargement des partenaires...</div>
-      </div>
+      <Layout>
+        <div className="partners-page">
+          <div className="loading">Chargement des partenaires...</div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="partners-page">
-      <div className="partners-header">
-        <div className="header-left">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <i className="fas fa-arrow-left"></i>
-            Retour
-          </button>
-          {/* <h1>Gestion des Partenaires</h1> */}
+    <Layout>
+      <div className="partners-page">
+        <div className="partners-header">
+          <div className="header-left">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            {/* <h1>Gestion des Partenaires</h1> */}
+          </div>
+          {!isSpectator && (
+            <button
+              className="add-partner-btn"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Ajouter un Partenaire
+            </button>
+          )}
         </div>
-        {!isSpectator && (
-          <button
-            className="add-partner-btn"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <i className="fas fa-plus"></i>
-            Ajouter un Partenaire
-          </button>
+
+        <div className="partners-search">
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Rechercher un partenaire..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="partners-table-container">
+          <table className="partners-table">
+            <thead>
+              <tr>
+                <th>Raison Sociale</th>
+                <th>Nom & Prénom</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>WhatsApp</th>
+                <th>Adresse</th>
+                <th>Gérer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPartners.map((partner) => (
+                <tr key={partner._id}>
+                  <td>{partner.raison_sociale || "-"}</td>
+                  <td>{partner.nom_prenom || "-"}</td>
+                  <td>{partner.telephone || "-"}</td>
+                  <td>{partner.email || "-"}</td>
+                  <td>{partner.whatsapp || "-"}</td>
+                  <td>{partner.adresse || "-"}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="view-btn"
+                      onClick={() => {
+                        setViewingPartner(partner);
+                        setIsViewModalOpen(true);
+                      }}
+                      title="Voir les détails"
+                    >
+                      <i className="fas fa-eye"></i>
+                    </button>
+                    {!isSpectator && (
+                      <>
+                        <button
+                          className="edit-btn"
+                          onClick={() => {
+                            setEditingPartner(partner);
+                            setIsEditModalOpen(true);
+                          }}
+                          title="Modifier"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDeletePartner(partner._id)}
+                          title="Supprimer"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {isAddModalOpen && (
+          <PartnerModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSubmit={handleAddPartner}
+            title="Ajouter un Partenaire"
+          />
+        )}
+
+        {isEditModalOpen && editingPartner && (
+          <PartnerModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingPartner(null);
+            }}
+            onSubmit={handleEditPartner}
+            partner={editingPartner}
+            title="Modifier le Partenaire"
+          />
+        )}
+
+        {isViewModalOpen && viewingPartner && (
+          <PartnerViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => {
+              setIsViewModalOpen(false);
+              setViewingPartner(null);
+            }}
+            partner={viewingPartner}
+            title="Détails du Partenaire"
+          />
         )}
       </div>
-
-      <div className="partners-search">
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Rechercher un partenaire..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="partners-table-container">
-        <table className="partners-table">
-          <thead>
-            <tr>
-              <th>Raison Sociale</th>
-              <th>Nom & Prénom</th>
-              <th>Téléphone</th>
-              <th>Email</th>
-              <th>WhatsApp</th>
-              <th>Adresse</th>
-              <th>Gérer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPartners.map((partner) => (
-              <tr key={partner._id}>
-                <td>{partner.raison_sociale || "-"}</td>
-                <td>{partner.nom_prenom || "-"}</td>
-                <td>{partner.telephone || "-"}</td>
-                <td>{partner.email || "-"}</td>
-                <td>{partner.whatsapp || "-"}</td>
-                <td>{partner.adresse || "-"}</td>
-                <td className="actions-cell">
-                  <button
-                    className="view-btn"
-                    onClick={() => {
-                      setViewingPartner(partner);
-                      setIsViewModalOpen(true);
-                    }}
-                    title="Voir les détails"
-                  >
-                    <i className="fas fa-eye"></i>
-                  </button>
-                  {!isSpectator && (
-                    <>
-                      <button
-                        className="edit-btn"
-                        onClick={() => {
-                          setEditingPartner(partner);
-                          setIsEditModalOpen(true);
-                        }}
-                        title="Modifier"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDeletePartner(partner._id)}
-                        title="Supprimer"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {isAddModalOpen && (
-        <PartnerModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSubmit={handleAddPartner}
-          title="Ajouter un Partenaire"
-        />
-      )}
-
-      {isEditModalOpen && editingPartner && (
-        <PartnerModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingPartner(null);
-          }}
-          onSubmit={handleEditPartner}
-          partner={editingPartner}
-          title="Modifier le Partenaire"
-        />
-      )}
-
-      {isViewModalOpen && viewingPartner && (
-        <PartnerViewModal
-          isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setViewingPartner(null);
-          }}
-          partner={viewingPartner}
-          title="Détails du Partenaire"
-        />
-      )}
-    </div>
+    </Layout>
   );
 };
 

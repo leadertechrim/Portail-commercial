@@ -6,6 +6,7 @@ import {
   updatePersonnel,
   deletePersonnel,
 } from "../api";
+import Layout from "../components/Layout";
 import "./PersonnelPage.css";
 
 const PersonnelPage = () => {
@@ -104,138 +105,142 @@ const PersonnelPage = () => {
 
   if (loading) {
     return (
-      <div className="personnel-page">
-        <div className="loading">Chargement du personnel...</div>
-      </div>
+      <Layout>
+        <div className="personnel-page">
+          <div className="loading">Chargement du personnel...</div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="personnel-page">
-      <div className="personnel-header">
-        <div className="header-left">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <i className="fas fa-arrow-left"></i>
-            Retour
-          </button>
-          {/* <h1>Gestion du Personnel</h1> */}
+    <Layout>
+      <div className="personnel-page">
+        <div className="personnel-header">
+          <div className="header-left">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            {/* <h1>Gestion du Personnel</h1> */}
+          </div>
+          {!isSpectator && (
+            <button
+              className="add-personnel-btn"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Ajouter un Personnel
+            </button>
+          )}
         </div>
-        {!isSpectator && (
-          <button
-            className="add-personnel-btn"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <i className="fas fa-plus"></i>
-            Ajouter un Personnel
-          </button>
+
+        <div className="personnel-search">
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Rechercher un personnel..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="personnel-table-container">
+          <table className="personnel-table">
+            <thead>
+              <tr>
+                <th>Nom & Prénom</th>
+                <th>Téléphone</th>
+                <th>WhatsApp</th>
+                <th>Email</th>
+                <th>Adresse</th>
+                <th>Gérer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPersonnel.map((person) => (
+                <tr key={person._id}>
+                  <td>{person.nom_prenom || "-"}</td>
+                  <td>{person.telephone || "-"}</td>
+                  <td>{person.whatsapp || "-"}</td>
+                  <td>{person.email || "-"}</td>
+                  <td>{person.adresse || "-"}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="view-btn"
+                      onClick={() => {
+                        setViewingPersonnel(person);
+                        setIsViewModalOpen(true);
+                      }}
+                      title="Voir les détails"
+                    >
+                      <i className="fas fa-eye"></i>
+                    </button>
+                    {!isSpectator && (
+                      <>
+                        <button
+                          className="edit-btn"
+                          onClick={() => {
+                            setEditingPersonnel(person);
+                            setIsEditModalOpen(true);
+                          }}
+                          title="Modifier"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDeletePersonnel(person._id)}
+                          title="Supprimer"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {isAddModalOpen && (
+          <PersonnelModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSubmit={handleAddPersonnel}
+            title="Ajouter un Personnel"
+          />
+        )}
+
+        {isEditModalOpen && editingPersonnel && (
+          <PersonnelModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingPersonnel(null);
+            }}
+            onSubmit={handleEditPersonnel}
+            personnel={editingPersonnel}
+            title="Modifier le Personnel"
+          />
+        )}
+
+        {isViewModalOpen && viewingPersonnel && (
+          <PersonnelViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => {
+              setIsViewModalOpen(false);
+              setViewingPersonnel(null);
+            }}
+            personnel={viewingPersonnel}
+            title="Détails du Personnel"
+          />
         )}
       </div>
-
-      <div className="personnel-search">
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Rechercher un personnel..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="personnel-table-container">
-        <table className="personnel-table">
-          <thead>
-            <tr>
-              <th>Nom & Prénom</th>
-              <th>Téléphone</th>
-              <th>WhatsApp</th>
-              <th>Email</th>
-              <th>Adresse</th>
-              <th>Gérer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPersonnel.map((person) => (
-              <tr key={person._id}>
-                <td>{person.nom_prenom || "-"}</td>
-                <td>{person.telephone || "-"}</td>
-                <td>{person.whatsapp || "-"}</td>
-                <td>{person.email || "-"}</td>
-                <td>{person.adresse || "-"}</td>
-                <td className="actions-cell">
-                  <button
-                    className="view-btn"
-                    onClick={() => {
-                      setViewingPersonnel(person);
-                      setIsViewModalOpen(true);
-                    }}
-                    title="Voir les détails"
-                  >
-                    <i className="fas fa-eye"></i>
-                  </button>
-                  {!isSpectator && (
-                    <>
-                      <button
-                        className="edit-btn"
-                        onClick={() => {
-                          setEditingPersonnel(person);
-                          setIsEditModalOpen(true);
-                        }}
-                        title="Modifier"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDeletePersonnel(person._id)}
-                        title="Supprimer"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {isAddModalOpen && (
-        <PersonnelModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSubmit={handleAddPersonnel}
-          title="Ajouter un Personnel"
-        />
-      )}
-
-      {isEditModalOpen && editingPersonnel && (
-        <PersonnelModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingPersonnel(null);
-          }}
-          onSubmit={handleEditPersonnel}
-          personnel={editingPersonnel}
-          title="Modifier le Personnel"
-        />
-      )}
-
-      {isViewModalOpen && viewingPersonnel && (
-        <PersonnelViewModal
-          isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setViewingPersonnel(null);
-          }}
-          personnel={viewingPersonnel}
-          title="Détails du Personnel"
-        />
-      )}
-    </div>
+    </Layout>
   );
 };
 

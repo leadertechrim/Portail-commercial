@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import Layout from "../components/Layout";
 import { quoteStatusesAPI } from "../api";
 import "./QuoteStatusPage.css";
 
@@ -157,136 +157,137 @@ const QuoteStatusPage = () => {
 
   if (loading) {
     return (
-      <div className="quote-status-page">
-        <Sidebar />
-        <div className="loading-container">
-          <div className="loading-spinner">
-            <i className="fas fa-spinner fa-spin"></i>
-            <p>Chargement des états...</p>
+      <Layout>
+        <div className="quote-status-page">
+          <div className="loading-container">
+            <div className="loading-spinner">
+              <i className="fas fa-spinner fa-spin"></i>
+              <p>Chargement des états...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="quote-status-page">
-      <Sidebar />
-
-      <div className="main-content">
-        <div className="status-header">
-          <div className="status-header-left">
-            <h1>Gestion des États de Devis</h1>
-            <p>
-              Configurez les états disponibles pour les devis avec leurs
-              couleurs
-            </p>
+    <Layout>
+      <div className="quote-status-page">
+        <div className="main-content">
+          <div className="status-header">
+            <div className="status-header-left">
+              <h1>Gestion des États de Devis</h1>
+              <p>
+                Configurez les états disponibles pour les devis avec leurs
+                couleurs
+              </p>
+            </div>
+            <div className="status-header-actions">
+              <input
+                type="text"
+                placeholder="Rechercher un état..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              {role === "admin" && (
+                <button
+                  className="add-status-btn"
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  <i className="fas fa-plus"></i>
+                  Nouvel État
+                </button>
+              )}
+            </div>
           </div>
-          <div className="status-header-actions">
-            <input
-              type="text"
-              placeholder="Rechercher un état..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {role === "admin" && (
-              <button
-                className="add-status-btn"
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                <i className="fas fa-plus"></i>
-                Nouvel État
-              </button>
+
+          <div className="status-content">
+            {error && (
+              <div className="error-message">
+                <i className="fas fa-exclamation-triangle"></i>
+                {error}
+              </div>
+            )}
+
+            {filteredStatuses.length === 0 ? (
+              <div className="empty-statuses">
+                <i className="fas fa-clipboard-check"></i>
+                <h3>Aucun état trouvé</h3>
+                <p>Commencez par créer votre premier état de devis</p>
+              </div>
+            ) : (
+              <div className="status-grid">
+                {filteredStatuses.map((status) => (
+                  <div key={status._id} className="status-card">
+                    <div className="status-header">
+                      <div
+                        className="status-color-indicator"
+                        style={{ backgroundColor: status.couleur }}
+                      ></div>
+                      <h3>{status.nom}</h3>
+                      <div className="status-actions">
+                        {role === "admin" && (
+                          <>
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditModal(status)}
+                              title="Modifier"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDeleteStatus(status._id)}
+                              title="Supprimer"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="status-details">
+                      <p className="status-description">{status.description}</p>
+                      <div className="status-meta">
+                        <span className="status-color">
+                          <i className="fas fa-palette"></i>
+                          {status.couleur}
+                        </span>
+                        <span className="status-order">
+                          <i className="fas fa-sort-numeric-up"></i>
+                          Ordre: {status.ordre}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        <div className="status-content">
-          {error && (
-            <div className="error-message">
-              <i className="fas fa-exclamation-triangle"></i>
-              {error}
-            </div>
-          )}
+        {/* Modals */}
+        {isAddModalOpen && (
+          <StatusModal
+            isOpen={isAddModalOpen}
+            onClose={closeModals}
+            onSubmit={handleCreateStatus}
+            title="Nouvel État"
+          />
+        )}
 
-          {filteredStatuses.length === 0 ? (
-            <div className="empty-statuses">
-              <i className="fas fa-clipboard-check"></i>
-              <h3>Aucun état trouvé</h3>
-              <p>Commencez par créer votre premier état de devis</p>
-            </div>
-          ) : (
-            <div className="status-grid">
-              {filteredStatuses.map((status) => (
-                <div key={status._id} className="status-card">
-                  <div className="status-header">
-                    <div
-                      className="status-color-indicator"
-                      style={{ backgroundColor: status.couleur }}
-                    ></div>
-                    <h3>{status.nom}</h3>
-                    <div className="status-actions">
-                      {role === "admin" && (
-                        <>
-                          <button
-                            className="edit-btn"
-                            onClick={() => openEditModal(status)}
-                            title="Modifier"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDeleteStatus(status._id)}
-                            title="Supprimer"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="status-details">
-                    <p className="status-description">{status.description}</p>
-                    <div className="status-meta">
-                      <span className="status-color">
-                        <i className="fas fa-palette"></i>
-                        {status.couleur}
-                      </span>
-                      <span className="status-order">
-                        <i className="fas fa-sort-numeric-up"></i>
-                        Ordre: {status.ordre}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {isEditModalOpen && editingStatus && (
+          <StatusModal
+            isOpen={isEditModalOpen}
+            onClose={closeModals}
+            onSubmit={(data) => handleUpdateStatus(editingStatus._id, data)}
+            status={editingStatus}
+            title="Modifier l'État"
+          />
+        )}
       </div>
-
-      {/* Modals */}
-      {isAddModalOpen && (
-        <StatusModal
-          isOpen={isAddModalOpen}
-          onClose={closeModals}
-          onSubmit={handleCreateStatus}
-          title="Nouvel État"
-        />
-      )}
-
-      {isEditModalOpen && editingStatus && (
-        <StatusModal
-          isOpen={isEditModalOpen}
-          onClose={closeModals}
-          onSubmit={(data) => handleUpdateStatus(editingStatus._id, data)}
-          status={editingStatus}
-          title="Modifier l'État"
-        />
-      )}
-    </div>
+    </Layout>
   );
 };
 

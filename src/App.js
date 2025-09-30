@@ -18,8 +18,6 @@ import InvoiceStatusPage from "./pages/InvoiceStatusPage";
 import OfferCategoriesPage from "./pages/OfferCategoriesPage";
 import LinkCategoriesPage from "./pages/LinkCategoriesPage";
 import SettingsPage from "./pages/SettingsPage";
-import FilestackExample from "./components/FilestackExample";
-import FilestackBackendExample from "./components/FilestackBackendExample";
 import InstallPrompt from "./components/InstallPrompt";
 import { usePWA } from "./hooks/usePWA";
 import "./styles/Responsive.css";
@@ -62,11 +60,6 @@ export default function App() {
           <Route path="/offer-categories" element={<OfferCategoriesPage />} />
           <Route path="/link-categories" element={<LinkCategoriesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/test-filestack" element={<FilestackExample />} />
-          <Route
-            path="/test-backend-format"
-            element={<FilestackBackendExample />}
-          />
           <Route path="*" element={<LoginPage />} />
         </Routes>
 

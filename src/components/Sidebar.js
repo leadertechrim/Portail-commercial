@@ -2,12 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Sidebar.css";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const role = localStorage.getItem("role");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [buttonPosition, setButtonPosition] = useState(() => {
+    const saved = localStorage.getItem("menuButtonPosition");
+    return saved ? JSON.parse(saved) : { top: 25, left: 25 };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   // Charger les états des sections depuis le localStorage ou utiliser les valeurs par défaut
   const [openSections, setOpenSections] = useState(() => {
     const savedSections = localStorage.getItem("sidebarOpenSections");
@@ -21,12 +27,6 @@ const Sidebar = () => {
       "Liens utiles": false,
       Paramétrage: false,
     };
-  });
-  const [buttonPosition] = useState({
-    top: "15px",
-    left: "auto",
-    right: "15px",
-    bottom: "auto",
   });
 
   // Fermer le menu mobile quand on change de page
@@ -220,8 +220,114 @@ const Sidebar = () => {
   };
 
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    if (isMobile) {
+      // Sur mobile : toggle normal
+      setIsMobileMenuOpen(!isMobileMenuOpen);
+    } else {
+      // Sur grands écrans : utiliser la prop isOpen
+      // Le toggle sera géré par le composant parent (Layout)
+      window.dispatchEvent(new CustomEvent("toggleSidebar"));
+    }
   };
+
+  // Fonctions de drag & drop
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - buttonPosition.left,
+      y: e.clientY - buttonPosition.top,
+    });
+    e.preventDefault();
+  };
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragStart({
+      x: touch.clientX - buttonPosition.left,
+      y: touch.clientY - buttonPosition.top,
+    });
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+
+    const newLeft = e.clientX - dragStart.x;
+    const newTop = e.clientY - dragStart.y;
+
+    // Limiter aux limites de l'écran
+    const maxLeft = window.innerWidth - 50; // 50px = largeur du bouton
+    const maxTop = window.innerHeight - 50; // 50px = hauteur du bouton
+
+    const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+
+    setButtonPosition({ left: constrainedLeft, top: constrainedTop });
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+
+    const touch = e.touches[0];
+    const newLeft = touch.clientX - dragStart.x;
+    const newTop = touch.clientY - dragStart.y;
+
+    // Limiter aux limites de l'écran
+    const maxLeft = window.innerWidth - 50;
+    const maxTop = window.innerHeight - 50;
+
+    const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+
+    setButtonPosition({ left: constrainedLeft, top: constrainedTop });
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      // Sauvegarder la position
+      localStorage.setItem(
+        "menuButtonPosition",
+        JSON.stringify(buttonPosition)
+      );
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      // Sauvegarder la position
+      localStorage.setItem(
+        "menuButtonPosition",
+        JSON.stringify(buttonPosition)
+      );
+    }
+  };
+
+  // Ajouter les event listeners pour le drag
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+      });
+      document.addEventListener("touchend", handleTouchEnd);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+      };
+    }
+  }, [
+    isDragging,
+    handleMouseMove,
+    handleMouseUp,
+    handleTouchMove,
+    handleTouchEnd,
+  ]);
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -233,13 +339,33 @@ const Sidebar = () => {
       <button
         className="mobile-menu-toggle"
         onClick={toggleMobileMenu}
-        aria-label="Ouvrir/Fermer le menu"
-        style={isMobile ? buttonPosition : {}}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        aria-label="Ouvrir/Fermer le menu (glisser pour déplacer)"
+        style={{
+          position: "fixed",
+          top: `${buttonPosition.top}px`,
+          left: `${buttonPosition.left}px`,
+          cursor: isDragging ? "grabbing" : "grab",
+          zIndex: 1002,
+          userSelect: "none",
+          touchAction: "none",
+        }}
       >
         <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
       </button>
 
-      <div className={`sidebar ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+      <div
+        className={`sidebar ${
+          isMobile
+            ? isMobileMenuOpen
+              ? "mobile-open"
+              : ""
+            : isOpen
+            ? "mobile-open"
+            : ""
+        }`}
+      >
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <img src="/logo512.png" alt="Logo" className="sidebar-logo-img" />

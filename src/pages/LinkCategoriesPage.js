@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import Layout from "../components/Layout";
 import { linkCategoriesAPI } from "../api";
 import "./LinkCategoriesPage.css";
 
@@ -162,7 +162,6 @@ const LinkCategoriesPage = () => {
   if (loading) {
     return (
       <div className="link-categories-page">
-        <Sidebar />
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
@@ -174,124 +173,124 @@ const LinkCategoriesPage = () => {
   }
 
   return (
-    <div className="link-categories-page">
-      <Sidebar />
-
-      <div className="main-content">
-        <div className="categories-header">
-          <div className="categories-header-left">
-            <h1>Gestion des Catégories de Liens</h1>
-            <p>
-              Organisez vos liens utiles par catégories pour un accès rapide
-            </p>
+    <Layout>
+      <div className="link-categories-page">
+        <div className="main-content">
+          <div className="categories-header">
+            <div className="categories-header-left">
+              <h1>Gestion des Catégories de Liens</h1>
+              <p>
+                Organisez vos liens utiles par catégories pour un accès rapide
+              </p>
+            </div>
+            <div className="categories-header-actions">
+              <input
+                type="text"
+                placeholder="Rechercher une catégorie..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              {role === "admin" && (
+                <button
+                  className="add-category-btn"
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  <i className="fas fa-plus"></i>
+                  Nouvelle Catégorie
+                </button>
+              )}
+            </div>
           </div>
-          <div className="categories-header-actions">
-            <input
-              type="text"
-              placeholder="Rechercher une catégorie..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {role === "admin" && (
-              <button
-                className="add-category-btn"
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                <i className="fas fa-plus"></i>
-                Nouvelle Catégorie
-              </button>
+
+          <div className="categories-content">
+            {error && (
+              <div className="error-message">
+                <i className="fas fa-exclamation-triangle"></i>
+                {error}
+              </div>
+            )}
+
+            {filteredCategories.length === 0 ? (
+              <div className="empty-categories">
+                <i className="fas fa-link"></i>
+                <h3>Aucune catégorie trouvée</h3>
+                <p>Commencez par créer votre première catégorie de lien</p>
+              </div>
+            ) : (
+              <div className="categories-grid">
+                {filteredCategories.map((category) => (
+                  <div key={category._id} className="category-card">
+                    <div className="category-header">
+                      <div
+                        className="category-color-indicator"
+                        style={{ backgroundColor: category.couleur }}
+                      ></div>
+                      <h3>{category.nom}</h3>
+                      <div className="category-actions">
+                        {role === "admin" && (
+                          <>
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditModal(category)}
+                              title="Modifier"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDeleteCategory(category._id)}
+                              title="Supprimer"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="category-details">
+                      <p className="category-description">
+                        {category.description}
+                      </p>
+                      <div className="category-meta">
+                        <span className="category-color">
+                          <i className="fas fa-palette"></i>
+                          {category.couleur}
+                        </span>
+                        <span className="category-order">
+                          <i className="fas fa-sort-numeric-up"></i>
+                          Ordre: {category.ordre}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        <div className="categories-content">
-          {error && (
-            <div className="error-message">
-              <i className="fas fa-exclamation-triangle"></i>
-              {error}
-            </div>
-          )}
+        {/* Modals */}
+        {isAddModalOpen && (
+          <CategoryModal
+            isOpen={isAddModalOpen}
+            onClose={closeModals}
+            onSubmit={handleCreateCategory}
+            title="Nouvelle Catégorie"
+          />
+        )}
 
-          {filteredCategories.length === 0 ? (
-            <div className="empty-categories">
-              <i className="fas fa-link"></i>
-              <h3>Aucune catégorie trouvée</h3>
-              <p>Commencez par créer votre première catégorie de lien</p>
-            </div>
-          ) : (
-            <div className="categories-grid">
-              {filteredCategories.map((category) => (
-                <div key={category._id} className="category-card">
-                  <div className="category-header">
-                    <div
-                      className="category-color-indicator"
-                      style={{ backgroundColor: category.couleur }}
-                    ></div>
-                    <h3>{category.nom}</h3>
-                    <div className="category-actions">
-                      {role === "admin" && (
-                        <>
-                          <button
-                            className="edit-btn"
-                            onClick={() => openEditModal(category)}
-                            title="Modifier"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDeleteCategory(category._id)}
-                            title="Supprimer"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="category-details">
-                    <p className="category-description">
-                      {category.description}
-                    </p>
-                    <div className="category-meta">
-                      <span className="category-color">
-                        <i className="fas fa-palette"></i>
-                        {category.couleur}
-                      </span>
-                      <span className="category-order">
-                        <i className="fas fa-sort-numeric-up"></i>
-                        Ordre: {category.ordre}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {isEditModalOpen && editingCategory && (
+          <CategoryModal
+            isOpen={isEditModalOpen}
+            onClose={closeModals}
+            onSubmit={(data) => handleUpdateCategory(editingCategory._id, data)}
+            category={editingCategory}
+            title="Modifier la Catégorie"
+          />
+        )}
       </div>
-
-      {/* Modals */}
-      {isAddModalOpen && (
-        <CategoryModal
-          isOpen={isAddModalOpen}
-          onClose={closeModals}
-          onSubmit={handleCreateCategory}
-          title="Nouvelle Catégorie"
-        />
-      )}
-
-      {isEditModalOpen && editingCategory && (
-        <CategoryModal
-          isOpen={isEditModalOpen}
-          onClose={closeModals}
-          onSubmit={(data) => handleUpdateCategory(editingCategory._id, data)}
-          category={editingCategory}
-          title="Modifier la Catégorie"
-        />
-      )}
-    </div>
+    </Layout>
   );
 };
 

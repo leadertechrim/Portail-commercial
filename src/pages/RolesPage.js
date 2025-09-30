@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { rolesAPI, API_BASE_URL } from "../api";
 import "./RolesPage.css";
 
 const RolesPage = () => {
@@ -118,18 +119,38 @@ const RolesPage = () => {
   const loadRoles = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulation d'un appel API
-      setTimeout(() => {
-        setRoles(initialRoles);
-        setLoading(false);
-      }, 500);
+      console.log("🔧 loadRoles - Début du chargement");
+
+      const token = localStorage.getItem("token");
+      console.log("🔧 loadRoles - Token:", token ? "Présent" : "Manquant");
+
+      if (!token) {
+        throw new Error("Token manquant");
+      }
+
+      const apiResponse = await rolesAPI.getAll(token);
+      console.log("🔧 loadRoles - Réponse API:", apiResponse);
+
+      const apiRoles = apiResponse?.data || apiResponse || [];
+      console.log("🔧 loadRoles - Rôles extraits:", apiRoles);
+      console.log("🔧 loadRoles - Nombre de rôles:", apiRoles.length);
+
+      if (apiRoles.length === 0) {
+        console.warn("⚠️ Aucun rôle trouvé dans le backend");
+        setError("Aucun rôle trouvé. Commencez par créer votre premier rôle.");
+      } else {
+        setError("");
+      }
+
+      setRoles(apiRoles);
+      setLoading(false);
     } catch (err) {
-      console.error("Erreur lors du chargement des rôles:", err);
+      console.error("❌ Erreur lors du chargement des rôles:", err);
       setError(`Erreur lors du chargement des rôles: ${err.message}`);
       setRoles([]);
       setLoading(false);
     }
-  }, [initialRoles]);
+  }, []);
 
   useEffect(() => {
     if (role !== "admin" && role !== "spectateur") {
@@ -147,43 +168,71 @@ const RolesPage = () => {
 
   const handleCreateRole = async (roleData) => {
     try {
-      const newRole = {
-        _id: Date.now().toString(),
-        ...roleData,
-        ordre: roles.length + 1,
-      };
-      setRoles([...roles, newRole]);
+      console.log("🔧 handleCreateRole - Données:", roleData);
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token manquant");
+      }
+
+      const response = await rolesAPI.create(roleData, token);
+      console.log("🔧 handleCreateRole - Réponse:", response);
+
+      // Recharger les rôles depuis le backend
+      await loadRoles();
+
       setIsAddModalOpen(false);
       alert("Rôle créé avec succès");
     } catch (error) {
-      console.error("Erreur lors de la création du rôle:", error);
-      alert("Erreur lors de la création du rôle");
+      console.error("❌ Erreur lors de la création du rôle:", error);
+      alert(`Erreur lors de la création du rôle: ${error.message}`);
     }
   };
 
   const handleUpdateRole = async (roleId, roleData) => {
     try {
-      setRoles(
-        roles.map((roleItem) =>
-          roleItem._id === roleId ? { ...roleItem, ...roleData } : roleItem
-        )
-      );
+      console.log("🔧 handleUpdateRole - ID:", roleId, "Données:", roleData);
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token manquant");
+      }
+
+      const response = await rolesAPI.update(roleId, roleData, token);
+      console.log("🔧 handleUpdateRole - Réponse:", response);
+
+      // Recharger les rôles depuis le backend
+      await loadRoles();
+
       setIsEditModalOpen(false);
       setEditingRole(null);
       alert("Rôle modifié avec succès");
     } catch (error) {
-      console.error("Erreur lors de la modification du rôle:", error);
-      alert("Erreur lors de la modification du rôle");
+      console.error("❌ Erreur lors de la modification du rôle:", error);
+      alert(`Erreur lors de la modification du rôle: ${error.message}`);
     }
   };
 
   const handleDeleteRole = async (roleId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce rôle ?")) {
       try {
-        setRoles(roles.filter((roleItem) => roleItem._id !== roleId));
+        console.log("🔧 handleDeleteRole - ID:", roleId);
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Token manquant");
+        }
+
+        const response = await rolesAPI.delete(roleId, token);
+        console.log("🔧 handleDeleteRole - Réponse:", response);
+
+        // Recharger les rôles depuis le backend
+        await loadRoles();
+
         alert("Rôle supprimé avec succès");
       } catch (error) {
-        alert("Erreur lors de la suppression du rôle");
+        console.error("❌ Erreur lors de la suppression du rôle:", error);
+        alert(`Erreur lors de la suppression du rôle: ${error.message}`);
       }
     }
   };

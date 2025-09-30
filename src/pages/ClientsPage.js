@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchClients, createClient, updateClient, deleteClient } from "../api";
+import Layout from "../components/Layout";
+import PermissionGuard from "../components/PermissionGuard";
 import "./ClientsPage.css";
 
 const ClientsPage = () => {
@@ -16,7 +18,7 @@ const ClientsPage = () => {
 
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  const isSpectator = role === "spectateur";
+  // const isSpectator = role === "spectateur"; // Non utilisé - remplacé par PermissionGuard
 
   useEffect(() => {
     const loadClients = async () => {
@@ -98,80 +100,82 @@ const ClientsPage = () => {
 
   if (loading) {
     return (
-      <div className="clients-page">
-        <div className="loading">Chargement des clients...</div>
-      </div>
+      <Layout>
+        <div className="clients-page">
+          <div className="loading">Chargement des clients...</div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="clients-page">
-      <div className="clients-header">
-        <div className="header-left">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <i className="fas fa-arrow-left"></i>
-            Retour
-          </button>
-          {/* <h1>Gestion des Clients</h1> */}
+    <Layout>
+      <div className="clients-page">
+        <div className="clients-header">
+          <div className="header-left">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            {/* <h1>Gestion des Clients</h1> */}
+          </div>
+          <PermissionGuard permission="edit_clients" fallback={null}>
+            <button
+              className="add-client-btn"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Ajouter un Client
+            </button>
+          </PermissionGuard>
         </div>
-        {!isSpectator && (
-          <button
-            className="add-client-btn"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <i className="fas fa-plus"></i>
-            Ajouter un Client
-          </button>
-        )}
-      </div>
 
-      <div className="clients-search">
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Rechercher un client..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="clients-search">
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Rechercher un client..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="clients-table-container">
-        <table className="clients-table">
-          <thead>
-            <tr>
-              <th>Raison Sociale</th>
-              <th>Nom & Prénom</th>
-              <th>Téléphone</th>
-              <th>Email</th>
-              <th>WhatsApp</th>
-              <th>Adresse</th>
-              <th>Gérer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredClients.map((client) => (
-              <tr key={client._id}>
-                <td>{client.raison_sociale || "-"}</td>
-                <td>{client.nom_prenom || "-"}</td>
-                <td>{client.telephone || "-"}</td>
-                <td>{client.email || "-"}</td>
-                <td>{client.whatsapp || "-"}</td>
-                <td>{client.adresse || "-"}</td>
-                <td className="actions-cell">
-                  <button
-                    className="view-btn"
-                    onClick={() => {
-                      setViewingClient(client);
-                      setIsViewModalOpen(true);
-                    }}
-                    title="Voir les détails"
-                  >
-                    <i className="fas fa-eye"></i>
-                  </button>
-                  {!isSpectator && (
-                    <>
+        <div className="clients-table-container">
+          <table className="clients-table">
+            <thead>
+              <tr>
+                <th>Raison Sociale</th>
+                <th>Nom & Prénom</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>WhatsApp</th>
+                <th>Adresse</th>
+                <th>Gérer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClients.map((client) => (
+                <tr key={client._id}>
+                  <td>{client.raison_sociale || "-"}</td>
+                  <td>{client.nom_prenom || "-"}</td>
+                  <td>{client.telephone || "-"}</td>
+                  <td>{client.email || "-"}</td>
+                  <td>{client.whatsapp || "-"}</td>
+                  <td>{client.adresse || "-"}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="view-btn"
+                      onClick={() => {
+                        setViewingClient(client);
+                        setIsViewModalOpen(true);
+                      }}
+                      title="Voir les détails"
+                    >
+                      <i className="fas fa-eye"></i>
+                    </button>
+                    <PermissionGuard permission="edit_clients" fallback={null}>
                       <button
                         className="edit-btn"
                         onClick={() => {
@@ -182,6 +186,11 @@ const ClientsPage = () => {
                       >
                         <i className="fas fa-edit"></i>
                       </button>
+                    </PermissionGuard>
+                    <PermissionGuard
+                      permission="delete_clients"
+                      fallback={null}
+                    >
                       <button
                         className="delete-btn"
                         onClick={() => handleDeleteClient(client._id)}
@@ -189,49 +198,49 @@ const ClientsPage = () => {
                       >
                         <i className="fas fa-trash"></i>
                       </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    </PermissionGuard>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {isAddModalOpen && (
+          <ClientModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSubmit={handleAddClient}
+            title="Ajouter un Client"
+          />
+        )}
+
+        {isEditModalOpen && editingClient && (
+          <ClientModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingClient(null);
+            }}
+            onSubmit={handleEditClient}
+            client={editingClient}
+            title="Modifier le Client"
+          />
+        )}
+
+        {isViewModalOpen && viewingClient && (
+          <ClientViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => {
+              setIsViewModalOpen(false);
+              setViewingClient(null);
+            }}
+            client={viewingClient}
+            title="Détails du Client"
+          />
+        )}
       </div>
-
-      {isAddModalOpen && (
-        <ClientModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSubmit={handleAddClient}
-          title="Ajouter un Client"
-        />
-      )}
-
-      {isEditModalOpen && editingClient && (
-        <ClientModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingClient(null);
-          }}
-          onSubmit={handleEditClient}
-          client={editingClient}
-          title="Modifier le Client"
-        />
-      )}
-
-      {isViewModalOpen && viewingClient && (
-        <ClientViewModal
-          isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setViewingClient(null);
-          }}
-          client={viewingClient}
-          title="Détails du Client"
-        />
-      )}
-    </div>
+    </Layout>
   );
 };
 

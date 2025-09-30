@@ -20,8 +20,17 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:prod": "node scripts/build.js production",
+    "build:dev": "node scripts/build.js development",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "clean": "node scripts/cleanup.js all",
+    "clean:build": "node scripts/cleanup.js build",
+    "clean:deps": "node scripts/cleanup.js deps",
+    "clean:logs": "node scripts/cleanup.js logs",
+    "analyze": "node scripts/cleanup.js analyze"
   },
   "browserslist": {
     "production": [

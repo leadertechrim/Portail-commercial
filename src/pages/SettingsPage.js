@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import Layout from "../components/Layout";
 import "./SettingsPage.css";
 
 const SettingsPage = () => {
@@ -268,34 +268,36 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="settings-page">
-      <Sidebar />
-
-      <div className="main-content">
-        <div className="settings-header">
-          <h1>Paramétrage de l'Application</h1>
-          <p>Configurez tous les paramètres de votre application</p>
-        </div>
-
-        <div className="settings-content">
-          <div className="settings-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-                title={tab.description}
-              >
-                <i className={tab.icon}></i>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+    <Layout>
+      <div className="settings-page">
+        <div className="main-content">
+          <div className="settings-header">
+            <h1>Paramétrage de l'Application</h1>
+            <p>Configurez tous les paramètres de votre application</p>
           </div>
 
-          <div className="tab-content">{renderTabContent()}</div>
+          <div className="settings-content">
+            <div className="settings-tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`tab-button ${
+                    activeTab === tab.id ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab(tab.id)}
+                  title={tab.description}
+                >
+                  <i className={tab.icon}></i>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="tab-content">{renderTabContent()}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

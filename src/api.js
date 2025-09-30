@@ -1,5 +1,7 @@
 // URL de base pour toutes les APIs (configuration fixe)
-export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+// export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+export const API_BASE_URL = "http://127.0.0.1:8000";
+
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
   const res = await fetch(`${API_BASE_URL}/login`, {
@@ -87,12 +89,16 @@ export async function deleteSource(token, sourceId) {
 // ---------------- USER MANAGEMENT (ADMIN) ----------------
 
 export async function fetchUsers(token) {
+  console.log("🔍 API fetchUsers - Début");
   const res = await fetch(`${API_BASE_URL}/api/users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  console.log("📡 fetchUsers response status:", res.status);
+
   if (!res.ok) {
     const data = await res.json();
+    console.error("❌ Erreur fetchUsers:", res.status);
     throw new Error(
       data.message || "Erreur lors de la récupération des utilisateurs"
     );
@@ -100,10 +106,40 @@ export async function fetchUsers(token) {
 
   const data = await res.json();
   console.log("🔍 Données utilisateurs reçues du backend:", data);
+  console.log("🔧 Nombre d'utilisateurs:", data.length);
+
   if (Array.isArray(data) && data.length > 0) {
     console.log("📋 Premier utilisateur:", data[0]);
     console.log("🔧 Champ Fonction présent:", "Fonction" in data[0]);
+    console.log("🔧 Valeur Fonction:", data[0].Fonction);
+    console.log("🔧 Champ password présent:", "password" in data[0]);
+    console.log("🔧 Valeur password:", data[0].password);
+    console.log("🔧 Tous les champs:", Object.keys(data[0]));
   }
+  return data;
+}
+
+export async function fetchUserById(userId, token) {
+  console.log("🔍 API fetchUserById - Début pour ID:", userId);
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/with-password`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  console.log("📡 fetchUserById response status:", res.status);
+
+  if (!res.ok) {
+    const data = await res.json();
+    console.error("❌ Erreur fetchUserById:", res.status);
+    throw new Error(
+      data.message || "Erreur lors de la récupération de l'utilisateur"
+    );
+  }
+
+  const data = await res.json();
+  console.log("🔍 Données utilisateur reçues du backend:", data);
+  console.log("🔧 Champ password présent:", "password" in data);
+  console.log("🔧 Valeur password:", data.password);
+  console.log("🔧 Tous les champs:", Object.keys(data));
   return data;
 }
 
@@ -111,6 +147,14 @@ export async function createUser(userData, token) {
   console.log("API createUser - Données reçues:", userData);
   console.log("API createUser - Token:", token ? "Présent" : "Manquant");
   console.log("🔧 Champ Fonction dans userData:", userData.Fonction);
+  console.log("🔧 Tous les champs envoyés:", Object.keys(userData));
+  console.log(
+    "🔧 Valeur complète de userData:",
+    JSON.stringify(userData, null, 2)
+  );
+  console.log("🔧 Type de Fonction:", typeof userData.Fonction);
+  console.log("🔧 Fonction vide?", userData.Fonction === "");
+  console.log("🔧 Fonction undefined?", userData.Fonction === undefined);
 
   const res = await fetch(`${API_BASE_URL}/api/users`, {
     method: "POST",
@@ -134,6 +178,8 @@ export async function createUser(userData, token) {
 
   const result = await res.json();
   console.log("API createUser - Résultat du serveur:", result);
+  console.log("🔧 Champ Fonction dans la réponse:", result.Fonction);
+  console.log("🔧 Tous les champs dans la réponse:", Object.keys(result));
   return result;
 }
 
@@ -141,6 +187,7 @@ export async function updateUser(userId, userData, token) {
   console.log("API updateUser - ID:", userId);
   console.log("API updateUser - Données:", userData);
   console.log("🔧 Champ Fonction dans userData:", userData.Fonction);
+  console.log("🔧 Champ role dans userData:", userData.role);
 
   const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
     method: "PUT",
@@ -151,14 +198,19 @@ export async function updateUser(userId, userData, token) {
     body: JSON.stringify(userData),
   });
 
+  console.log("📡 Status de la réponse:", res.status);
+
   if (!res.ok) {
     const data = await res.json();
+    console.error("❌ Erreur HTTP lors de la mise à jour:", res.status, data);
     throw new Error(
       data.message || "Erreur lors de la mise à jour de l'utilisateur"
     );
   }
 
-  return await res.json();
+  const result = await res.json();
+  console.log("✅ Résultat mise à jour utilisateur:", result);
+  return result;
 }
 
 export async function deleteUser(userId, token) {
@@ -1285,6 +1337,506 @@ export const offerStatusesAPI = {
     apiCall(`/offer-statuses/${id}`, {
       method: "DELETE",
     }),
+};
+
+// ===== GESTION DES RÔLES ET PERMISSIONS =====
+export const rolesAPI = {
+  // Récupérer tous les rôles
+  getAll: async (token) => {
+    try {
+      console.log(
+        "🔧 rolesAPI.getAll - Token:",
+        token ? "Présent" : "Manquant"
+      );
+      console.log("🔧 rolesAPI.getAll - URL:", `${API_BASE_URL}/api/roles`);
+
+      const response = await fetch(`${API_BASE_URL}/api/roles`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("🔧 rolesAPI.getAll - Status:", response.status);
+      console.log("🔧 rolesAPI.getAll - OK:", response.ok);
+
+      if (!response.ok) {
+        console.warn(
+          "❌ Impossible de charger les rôles depuis l'API - Status:",
+          response.status
+        );
+        const errorText = await response.text();
+        console.warn("❌ Erreur détaillée:", errorText);
+        return [];
+      }
+
+      const data = await response.json();
+      console.log("🔧 rolesAPI.getAll - Données reçues:", data);
+      return data;
+    } catch (error) {
+      console.warn("❌ Erreur lors du chargement des rôles:", error);
+      return [];
+    }
+  },
+
+  // Récupérer un rôle par ID
+  getById: async (id, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn(`Rôle avec ID ${id} non trouvé`);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn("Erreur lors du chargement du rôle:", error);
+      return null;
+    }
+  },
+
+  // Créer un nouveau rôle
+  create: async (roleData, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(roleData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(
+          "❌ Erreur HTTP lors de la création:",
+          response.status,
+          errorData
+        );
+        throw new Error(
+          errorData.message || "Erreur lors de la création du rôle"
+        );
+      }
+
+      const result = await response.json();
+      console.log("✅ Réponse création rôle:", result);
+      return result;
+    } catch (error) {
+      console.error("Erreur lors de la création du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Modifier un rôle
+  update: async (id, roleData, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(roleData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la modification du rôle"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de la modification du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Supprimer un rôle
+  delete: async (id, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la suppression du rôle"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de la suppression du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Récupérer les permissions disponibles
+  getAvailablePermissions: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn("Impossible de charger les permissions depuis l'API");
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn("Erreur lors du chargement des permissions:", error);
+      return [];
+    }
+  },
+
+  // Récupérer les permissions d'un utilisateur
+  getUserPermissions: async (userId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${userId}/permissions`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.warn(`Permissions pour l'utilisateur ${userId} non trouvées`);
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn(
+        "Erreur lors du chargement des permissions utilisateur:",
+        error
+      );
+      return [];
+    }
+  },
+
+  // Assigner un rôle à un utilisateur
+  assignRole: async (userId, roleId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${userId}/assign-role`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ roleId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de l'assignation du rôle"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de l'assignation du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Retirer un rôle d'un utilisateur
+  removeRole: async (userId, roleId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${userId}/remove-role`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ roleId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors du retrait du rôle");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors du retrait du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Récupérer les permissions de l'utilisateur actuel
+  getCurrentUserPermissions: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn(
+          "Impossible de charger les permissions de l'utilisateur actuel"
+        );
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn(
+        "Erreur lors du chargement des permissions actuelles:",
+        error
+      );
+      return [];
+    }
+  },
+
+  // Récupérer tous les utilisateurs avec leurs rôles
+  getUsersWithRoles: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users-with-roles`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn("Impossible de charger les utilisateurs avec rôles");
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn(
+        "Erreur lors du chargement des utilisateurs avec rôles:",
+        error
+      );
+      return [];
+    }
+  },
+
+  // Tester une permission spécifique
+  testPermission: async (permissionName, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/test-permission/${permissionName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.warn(`Impossible de tester la permission ${permissionName}`);
+        return false;
+      }
+
+      const data = await response.json();
+      return data.has_permission || false;
+    } catch (error) {
+      console.warn(
+        `Erreur lors du test de la permission ${permissionName}:`,
+        error
+      );
+      return false;
+    }
+  },
+
+  // Initialiser les rôles et permissions par défaut
+  initializeDefaults: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/init`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors de l'initialisation");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'initialisation des rôles et permissions:",
+        error
+      );
+      throw error;
+    }
+  },
+
+  // Test de connexion API
+  testConnection: async (token) => {
+    try {
+      // Test avec une route plus simple d'abord
+      const response = await fetch(`${API_BASE_URL}/api/roles`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors du test de connexion:", error);
+      throw error;
+    }
+  },
+
+  // Ajouter permission à un rôle
+  addPermissionToRole: async (roleId, permissionId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/roles/${roleId}/permissions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ permissionId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de l'ajout de permission"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de permission au rôle:", error);
+      throw error;
+    }
+  },
+
+  // Retirer permission d'un rôle
+  removePermissionFromRole: async (roleId, permissionId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/roles/${roleId}/permissions`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ permissionId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors du retrait de permission"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors du retrait de permission du rôle:", error);
+      throw error;
+    }
+  },
+
+  // Mise à jour en lot des rôles
+  bulkUpdate: async (rolesData, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/bulk-update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ roles: rolesData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la mise à jour en lot"
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour en lot des rôles:", error);
+      throw error;
+    }
+  },
+
+  // Exporter rôles et permissions
+  export: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/export`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de l'export des rôles:", error);
+      throw error;
+    }
+  },
+
+  // Importer rôles et permissions
+  import: async (importData, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/roles/import`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(importData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors de l'import");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur lors de l'import des rôles:", error);
+      throw error;
+    }
+  },
 };
 
 // ===== FONCTIONS UTILITAIRES =====
