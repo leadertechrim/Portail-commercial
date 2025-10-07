@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
+import {
+  fetchUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  API_BASE_URL,
+} from "../api";
 import UserModal from "../components/UserModal";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./AdminPage.css";
@@ -44,14 +50,11 @@ const AdminPage = () => {
 
   const loadRoles = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || "http://127.0.0.1:8000"}/api/roles`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/roles`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setRoles(data.data || data);

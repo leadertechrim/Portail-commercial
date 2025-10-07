@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { rolesAPI } from "../api";
+import { rolesAPI, API_BASE_URL } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./RolesPage.css";
 
@@ -80,16 +80,11 @@ const RolesPage = () => {
   const loadPermissions = useCallback(async () => {
     try {
       console.log("🔄 Chargement des permissions disponibles");
-      const response = await fetch(
-        `${
-          process.env.REACT_APP_API_URL || "http://127.0.0.1:8000"
-        }/api/permissions`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();

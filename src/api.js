@@ -1,6 +1,10 @@
-// URL de base pour toutes les APIs (configuration fixe)
-export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
-// export const API_BASE_URL = "http://127.0.0.1:8000";
+// URL de base pour toutes les APIs
+// Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
+export const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://applesoffres-production.up.railway.app"
+    : "http://127.0.0.1:8000");
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
