@@ -12,8 +12,8 @@ import {
   fetchPersonnel,
   invoiceStatusesAPI,
 } from "../api";
-import Sidebar from "../components/Sidebar";
 import SimpleFilestackUploader from "../components/SimpleFilestackUploader";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./FacturesPage.css";
 import "../components/SimpleFilestackUploader.css";
 
@@ -35,8 +35,8 @@ const FacturesPage = () => {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const isSpectator = role === "spectateur";
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
 
   const loadInvoiceStatuses = useCallback(async () => {
     try {
@@ -75,23 +75,41 @@ const FacturesPage = () => {
       setLoading(true);
       console.log("🔄 Chargement des factures...");
       const data = await fetchFactures(token);
-      console.log("📋 Factures chargées:", data);
+      console.log("📋 Factures chargées brutes:", data);
 
       // Vérifier si data est un tableau ou un objet avec une propriété data
-      const facturesData = Array.isArray(data)
+      let facturesData = Array.isArray(data)
         ? data
         : data.data || data.factures || [];
+
+      console.log("📋 Nombre de factures brutes:", facturesData.length);
+
+      // Filtrer selon les permissions : view_all vs view_owner
+      if (
+        !hasPermission("factures_view_all") &&
+        hasPermission("factures_view")
+      ) {
+        // L'utilisateur ne voit que ses propres factures
+        const currentUserId = localStorage.getItem("userId");
+        console.log("🔐 Filtrage des factures - Mode view_owner uniquement");
+        console.log("👤 userId actuel:", currentUserId);
+        facturesData = facturesData.filter(
+          (f) =>
+            f.responsable_id === currentUserId ||
+            f.user_id === currentUserId ||
+            f.created_by === currentUserId
+        );
+        console.log("📋 Factures filtrées (view_owner):", facturesData.length);
+      } else if (hasPermission("factures_view_all")) {
+        console.log(
+          "✅ Permission factures_view_all - Affichage de toutes les factures"
+        );
+      }
 
       // Enrichir les factures avec les détails complets des clients et offres
       const enrichedFactures = facturesData.map((facture) => {
         const client = clients.find((c) => c._id === facture.client_id);
         const offre = offers.find((o) => o._id === facture.offre_id);
-
-        // Debug: Vérifier les documents
-        console.log(
-          `🔍 Facture ${facture.numero_facture} - Documents:`,
-          facture.document || facture.documents
-        );
 
         return {
           ...facture,
@@ -102,7 +120,7 @@ const FacturesPage = () => {
         };
       });
 
-      console.log("📋 Factures enrichies:", enrichedFactures);
+      console.log("📋 Factures enrichies finales:", enrichedFactures.length);
       setFactures(enrichedFactures);
       setError("");
     } catch (err) {
@@ -112,7 +130,7 @@ const FacturesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, clients, offers]);
+  }, [token, clients, offers, hasPermission]);
 
   const generateNumeroFacture = useCallback(
     (clientId, offreId) => {
@@ -179,10 +197,12 @@ const FacturesPage = () => {
       console.log("👥 Personnel chargé:", personnelData);
       console.log("📊 États chargés:", etatsData);
 
-      // Filtrer les offres pour les utilisateurs simples
+      // Filtrer les offres selon les permissions
       let filteredOffers = Array.isArray(offersData) ? offersData : [];
-      if (role === "user") {
+      if (!hasPermission("factures_view_all")) {
         const currentUserId = localStorage.getItem("userId");
+        console.log("🔍 Filtrage des offres - userId:", currentUserId);
+        console.log("🔍 Total offres avant filtrage:", filteredOffers.length);
         filteredOffers = filteredOffers.filter(
           (offre) =>
             offre.responsable_id === currentUserId ||
@@ -190,8 +210,12 @@ const FacturesPage = () => {
             offre.created_by === currentUserId
         );
         console.log(
-          "🔍 Offres filtrées pour l'utilisateur simple:",
-          filteredOffers
+          "🔍 Offres filtrées pour l'utilisateur:",
+          filteredOffers.length
+        );
+      } else {
+        console.log(
+          "✅ Permission factures_view_all - Affichage de toutes les offres"
         );
       }
 
@@ -216,18 +240,30 @@ const FacturesPage = () => {
       setPersonnel([]);
       setEtats(["A envoyer au client", "En attente de payement", "Payée"]);
     }
-  }, [token, role]);
+  }, [token, hasPermission]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur" && role !== "user") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return; // Attendre le chargement des permissions
+
+    if (
+      !hasPermission("factures_view") &&
+      !hasPermission("factures_view_all")
+    ) {
+      console.log("🔓 FacturesPage - Permission refusée");
+      // navigate("/sources");
+      // return;
     }
     // Charger d'abord les clients et offres, puis les factures
     loadOffersAndClients();
     // Charger les états de factures dynamiques
     loadInvoiceStatuses();
-  }, [navigate, role, loadOffersAndClients, loadInvoiceStatuses]);
+  }, [
+    navigate,
+    hasPermission,
+    permissionsLoading,
+    loadOffersAndClients,
+    loadInvoiceStatuses,
+  ]);
 
   // Synchronisation périodique avec l'API Flask
   useEffect(() => {
@@ -248,16 +284,33 @@ const FacturesPage = () => {
     }
   }, [clients, offers, loadFactures]);
 
-  const filteredFactures = factures.filter(
-    (facture) =>
-      facture.numero_facture
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      facture.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facture.intitule?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facture.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facture.etat?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFactures = factures.filter((facture) => {
+    const search = searchTerm.toLowerCase();
+
+    // Recherche dans les champs texte simples
+    const matchesNumero =
+      facture.numero_facture?.toLowerCase().includes(search) ||
+      facture.numero?.toLowerCase().includes(search);
+    const matchesIntitule = facture.intitule?.toLowerCase().includes(search);
+    const matchesEtat = facture.etat?.toLowerCase().includes(search);
+
+    // Recherche dans le client (gérer objet ou string)
+    let matchesClient = false;
+    if (facture.client) {
+      if (typeof facture.client === "string") {
+        matchesClient = facture.client.toLowerCase().includes(search);
+      } else if (facture.client_id) {
+        const client = clients.find((c) => c._id === facture.client_id);
+        if (client) {
+          matchesClient =
+            client.raison_sociale?.toLowerCase().includes(search) ||
+            client.nom?.toLowerCase().includes(search);
+        }
+      }
+    }
+
+    return matchesNumero || matchesIntitule || matchesEtat || matchesClient;
+  });
 
   const handleCreateFacture = async (factureData) => {
     try {
@@ -528,7 +581,6 @@ const FacturesPage = () => {
   if (loading) {
     return (
       <div className="factures-page">
-        <Sidebar />
         <div className="main-content">
           <div className="loading-container">
             <div className="loading-spinner">
@@ -543,13 +595,9 @@ const FacturesPage = () => {
 
   return (
     <div className="factures-page">
-      <Sidebar />
-
       <div className="main-content">
         <div className="factures-header">
-          <div className="factures-header-left">
-            <h1>Gestion des Factures</h1>
-          </div>
+          <div className="factures-header-left"></div>
           <div className="factures-header-actions">
             <input
               type="text"
@@ -558,7 +606,7 @@ const FacturesPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            {!isSpectator && (
+            {hasPermission("factures_create") && (
               <button
                 className="add-facture-btn"
                 onClick={() => setIsAddModalOpen(true)}
@@ -598,7 +646,7 @@ const FacturesPage = () => {
                     <th>Date d'émission</th>
                     <th>État</th>
                     <th>Documents</th>
-                    {role === "admin" && <th>Responsable</th>}
+                    {hasPermission("factures_view_all") && <th>Responsable</th>}
                     <th>Gérer</th>
                   </tr>
                 </thead>
@@ -661,7 +709,7 @@ const FacturesPage = () => {
                           </div>
                         ) : null}
                       </td>
-                      {role === "admin" && (
+                      {hasPermission("factures_view_all") && (
                         <td>
                           {(() => {
                             // Chercher le nom du responsable
@@ -694,7 +742,7 @@ const FacturesPage = () => {
                         </td>
                       )}
                       <td>
-                        <div className="actions">
+                        <div className="actions-cell">
                           <button
                             className="view-btn"
                             onClick={() => openViewModal(facture)}
@@ -702,23 +750,23 @@ const FacturesPage = () => {
                           >
                             <i className="fas fa-eye"></i>
                           </button>
-                          {!isSpectator && (
-                            <>
-                              <button
-                                className="edit-btn"
-                                onClick={() => openEditModal(facture)}
-                                title="Modifier"
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="delete-btn"
-                                onClick={() => handleDeleteFacture(facture._id)}
-                                title="Supprimer"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </>
+                          {hasPermission("factures_edit") && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditModal(facture)}
+                              title="Modifier"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                          )}
+                          {hasPermission("factures_delete") && (
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDeleteFacture(facture._id)}
+                              title="Supprimer"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
                           )}
                         </div>
                       </td>

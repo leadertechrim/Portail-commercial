@@ -102,11 +102,13 @@ const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="delete-btn" onClick={handleDelete}>
-              <FaTrash /> Supprimer
+            <button type="button" className="Delete-btn" onClick={handleDelete}>
+              <FaTrash />
+              Supprimer
             </button>
             <button type="submit" className="save-btn">
-              <FaSave /> Enregistrer
+              <FaSave />
+              Enregistrer
             </button>
           </div>
         </form>

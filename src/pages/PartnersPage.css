@@ -154,35 +154,40 @@
 .partners-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .partners-table thead {
-  background: linear-gradient(135deg, #f67800, #f67800);
-  color: white;
+  background: linear-gradient(135deg, #e9ecef, #dee2e6);
 }
 
 .partners-table th {
-  padding: 15px 12px;
+  padding: 20px 15px;
   text-align: left;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: #343a40;
+  border-bottom: 2px solid #ced4da;
+  white-space: nowrap;
 }
 
 .partners-table td {
-  padding: 15px 12px;
+  padding: 15px;
   border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
 }
 
-.partners-table tbody tr:hover {
-  background: #f8f9fa;
-}
-
 .partners-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.partners-table tbody tr:hover {
+  background: #f1f3f5;
+  transform: scale(1.005);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .actions-cell {

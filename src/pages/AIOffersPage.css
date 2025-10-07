@@ -1,14 +1,14 @@
 /* AIOffersPage.css */
 .ai-offers-page {
-  display: flex;
-  min-height: 100vh;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
   background: #f8f9fa;
+  min-height: 100vh;
 }
 
 .main-content {
-  flex: 1;
-  margin-left: 250px;
-  padding: 20px;
+  width: 100%;
 }
 
 .ai-offers-container {

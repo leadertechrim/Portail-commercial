@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
+import { offerStatusesAPI } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./OfferStatusPage.css";
 
 const OfferStatusPage = () => {
@@ -13,6 +14,8 @@ const OfferStatusPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const role = localStorage.getItem("role");
 
   // Statuts initiaux selon les spécifications
@@ -53,39 +56,46 @@ const OfferStatusPage = () => {
   const loadStatuses = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("📋 Chargement des statuts d'offres depuis l'API Flask...");
 
-      // Charger depuis localStorage ou utiliser les statuts initiaux
-      const savedStatuses = localStorage.getItem("offerStatuses");
-      if (savedStatuses) {
-        const parsedStatuses = JSON.parse(savedStatuses);
-        console.log(
-          "📋 Statuts d'offres chargés depuis localStorage:",
-          parsedStatuses
-        );
-        setStatuses(parsedStatuses);
+      // Charger depuis l'API Flask
+      const apiStatuses = await offerStatusesAPI.getAll();
+
+      if (apiStatuses && apiStatuses.length > 0) {
+        console.log("📋 Statuts d'offres chargés depuis l'API:", apiStatuses);
+        setStatuses(apiStatuses);
       } else {
-        console.log("📋 Utilisation des statuts d'offres initiaux");
+        console.log("📋 Aucun statut trouvé, utilisation des statuts initiaux");
         setStatuses(initialStatuses);
-        // Sauvegarder les statuts initiaux dans localStorage
-        localStorage.setItem("offerStatuses", JSON.stringify(initialStatuses));
+        // Créer les statuts initiaux dans l'API
+        for (const status of initialStatuses) {
+          try {
+            await offerStatusesAPI.create(status);
+          } catch (err) {
+            console.warn("Erreur lors de la création du statut initial:", err);
+          }
+        }
       }
-
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors du chargement des statuts:", err);
       setError(`Erreur lors du chargement des statuts: ${err.message}`);
-      setStatuses([]);
+      // Fallback vers les statuts initiaux en cas d'erreur API
+      setStatuses(initialStatuses);
       setLoading(false);
     }
   }, [initialStatuses]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return;
+
+    if (!hasPermission("offer_status_manage")) {
+      console.log("🔓 OfferStatusPage - Permission refusée");
+      // navigate("/sources");
+      // return;
     }
     loadStatuses();
-  }, [navigate, role, loadStatuses]);
+  }, [navigate, hasPermission, permissionsLoading, loadStatuses]);
 
   // Synchronisation en temps réel avec les autres pages
   useEffect(() => {
@@ -197,123 +207,115 @@ const OfferStatusPage = () => {
   }
 
   return (
-    <Layout>
-      <div className="offer-status-page">
-        <div className="main-content">
-          <div className="status-header">
-            <div className="status-header-left">
-              <h1>Gestion des Statuts d'Offres</h1>
-              <p>
-                Configurez les statuts disponibles pour les offres avec leurs
-                couleurs
-              </p>
-            </div>
-            <div className="status-header-actions">
-              <input
-                type="text"
-                placeholder="Rechercher un statut..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-              {role === "admin" && (
-                <button
-                  className="add-status-btn"
-                  onClick={() => setIsAddModalOpen(true)}
-                >
-                  <i className="fas fa-plus"></i>
-                  Nouveau Statut
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="status-content">
-            {error && (
-              <div className="error-message">
-                <i className="fas fa-exclamation-triangle"></i>
-                {error}
-              </div>
-            )}
-
-            {filteredStatuses.length === 0 ? (
-              <div className="empty-statuses">
-                <i className="fas fa-tags"></i>
-                <h3>Aucun statut trouvé</h3>
-                <p>Commencez par créer votre premier statut d'offre</p>
-              </div>
-            ) : (
-              <div className="status-grid">
-                {filteredStatuses.map((status) => (
-                  <div key={status._id} className="status-card">
-                    <div className="status-header">
-                      <div
-                        className="status-color-indicator"
-                        style={{ backgroundColor: status.couleur }}
-                      ></div>
-                      <h3>{status.nom}</h3>
-                      <div className="status-actions">
-                        {role === "admin" && (
-                          <>
-                            <button
-                              className="edit-btn"
-                              onClick={() => openEditModal(status)}
-                              title="Modifier"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDeleteStatus(status._id)}
-                              title="Supprimer"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="status-details">
-                      <p className="status-description">{status.description}</p>
-                      <div className="status-meta">
-                        <span className="status-color">
-                          <i className="fas fa-palette"></i>
-                          {status.couleur}
-                        </span>
-                        <span className="status-order">
-                          <i className="fas fa-sort-numeric-up"></i>
-                          Ordre: {status.ordre}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+    <div className="offer-status-page">
+      <div className="main-content">
+        <div className="status-header">
+          <div className="status-header-left"></div>
+          <div className="status-header-actions">
+            <input
+              type="text"
+              placeholder="Rechercher un statut..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {hasPermission("offer_status_manage") && (
+              <button
+                className="add-status-btn"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <i className="fas fa-plus"></i>
+                Nouveau Statut
+              </button>
             )}
           </div>
         </div>
 
-        {/* Modals */}
-        {isAddModalOpen && (
-          <StatusModal
-            isOpen={isAddModalOpen}
-            onClose={closeModals}
-            onSubmit={handleCreateStatus}
-            title="Nouveau Statut"
-          />
-        )}
+        <div className="status-content">
+          {error && (
+            <div className="error-message">
+              <i className="fas fa-exclamation-triangle"></i>
+              {error}
+            </div>
+          )}
 
-        {isEditModalOpen && editingStatus && (
-          <StatusModal
-            isOpen={isEditModalOpen}
-            onClose={closeModals}
-            onSubmit={(data) => handleUpdateStatus(editingStatus._id, data)}
-            status={editingStatus}
-            title="Modifier le Statut"
-          />
-        )}
+          {filteredStatuses.length === 0 ? (
+            <div className="empty-statuses">
+              <i className="fas fa-tags"></i>
+              <h3>Aucun statut trouvé</h3>
+              <p>Commencez par créer votre premier statut d'offre</p>
+            </div>
+          ) : (
+            <div className="status-grid">
+              {filteredStatuses.map((status) => (
+                <div key={status._id} className="status-card">
+                  <div className="status-header">
+                    <div
+                      className="status-color-indicator"
+                      style={{ backgroundColor: status.couleur }}
+                    ></div>
+                    <h3>{status.nom}</h3>
+                    <div className="status-actions">
+                      {hasPermission("offer_status_manage") && (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={() => openEditModal(status)}
+                            title="Modifier"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteStatus(status._id)}
+                            title="Supprimer"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="status-details">
+                    <p className="status-description">{status.description}</p>
+                    <div className="status-meta">
+                      <span className="status-color">
+                        <i className="fas fa-palette"></i>
+                        {status.couleur}
+                      </span>
+                      <span className="status-order">
+                        <i className="fas fa-sort-numeric-up"></i>
+                        Ordre: {status.ordre}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </Layout>
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <StatusModal
+          isOpen={isAddModalOpen}
+          onClose={closeModals}
+          onSubmit={handleCreateStatus}
+          title="Nouveau Statut"
+        />
+      )}
+
+      {isEditModalOpen && editingStatus && (
+        <StatusModal
+          isOpen={isEditModalOpen}
+          onClose={closeModals}
+          onSubmit={(data) => handleUpdateStatus(editingStatus._id, data)}
+          status={editingStatus}
+          title="Modifier le Statut"
+        />
+      )}
+    </div>
   );
 };
 

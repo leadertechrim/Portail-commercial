@@ -6,7 +6,6 @@ import {
   updatePartner,
   deletePartner,
 } from "../api";
-import Layout from "../components/Layout";
 import "./PartnersPage.css";
 
 const PartnersPage = () => {
@@ -106,16 +105,16 @@ const PartnersPage = () => {
 
   if (loading) {
     return (
-      <Layout>
+
         <div className="partners-page">
           <div className="loading">Chargement des partenaires...</div>
         </div>
-      </Layout>
+
     );
   }
 
   return (
-    <Layout>
+
       <div className="partners-page">
         <div className="partners-header">
           <div className="header-left">
@@ -243,7 +242,7 @@ const PartnersPage = () => {
           />
         )}
       </div>
-    </Layout>
+
   );
 };
 

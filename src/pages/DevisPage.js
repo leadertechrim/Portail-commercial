@@ -13,8 +13,8 @@ import {
   fetchPersonnel,
   quoteStatusesAPI,
 } from "../api";
-import Sidebar from "../components/Sidebar";
 import SimpleFilestackUploader from "../components/SimpleFilestackUploader";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./DevisPage.css";
 import "../components/SimpleFilestackUploader.css";
 
@@ -36,9 +36,9 @@ const DevisPage = () => {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
   const currentUserId = localStorage.getItem("userId");
-  const isSpectator = role === "spectateur";
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
 
   const loadQuoteStatuses = useCallback(async () => {
     try {
@@ -75,18 +75,31 @@ const DevisPage = () => {
       setLoading(true);
       console.log("🔄 Chargement des devis...");
       const devisData = await fetchDevis(token);
-      console.log("📋 Devis chargés:", devisData);
+      console.log("📋 Devis chargés bruts:", devisData?.length || 0);
+
+      // Filtrer selon les permissions : view_all vs view_owner
+      let filteredDevisData = Array.isArray(devisData) ? devisData : [];
+
+      if (!hasPermission("devis_view_all") && hasPermission("devis_view")) {
+        // L'utilisateur ne voit que ses propres devis
+        console.log("🔐 Filtrage des devis - Mode view_owner uniquement");
+        filteredDevisData = filteredDevisData.filter(
+          (d) =>
+            d.responsable_id === currentUserId ||
+            d.user_id === currentUserId ||
+            d.created_by === currentUserId
+        );
+        console.log("📋 Devis filtrés (view_owner):", filteredDevisData.length);
+      } else if (hasPermission("devis_view_all")) {
+        console.log(
+          "✅ Permission devis_view_all - Affichage de tous les devis"
+        );
+      }
 
       // Enrichir les devis avec les détails complets des clients et offres
-      const enrichedDevis = devisData.map((devis) => {
+      const enrichedDevis = filteredDevisData.map((devis) => {
         const client = clients.find((c) => c._id === devis.client_id);
         const offre = offers.find((o) => o._id === devis.offre_id);
-
-        // Debug: Vérifier les documents
-        console.log(
-          `🔍 Devis ${devis.numero_devis} - Documents:`,
-          devis.document || devis.documents
-        );
 
         return {
           ...devis,
@@ -97,6 +110,7 @@ const DevisPage = () => {
         };
       });
 
+      console.log("📋 Devis enrichis finaux:", enrichedDevis.length);
       setDevis(enrichedDevis);
       setError("");
     } catch (err) {
@@ -106,7 +120,7 @@ const DevisPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, clients, offers]);
+  }, [token, clients, offers, hasPermission, currentUserId]);
 
   const generateNumeroDevis = useCallback(
     (clientId, offreId) => {
@@ -118,7 +132,10 @@ const DevisPage = () => {
       );
       console.log("🔍 Clients disponibles:", clients.length, clients);
       console.log("🔍 Offres disponibles:", offers.length, offers);
-      console.log("🔍 Role utilisateur:", role);
+      console.log(
+        "🔍 Permissions utilisateur:",
+        hasPermission("view_all_offers") ? "Admin" : "Utilisateur standard"
+      );
       console.log("🔍 Current user ID:", currentUserId);
 
       if (!clientId || !offreId) {
@@ -148,7 +165,7 @@ const DevisPage = () => {
           offers.map((o) => o._id)
         );
         // Pour les utilisateurs simples, vérifier si l'offre est filtrée
-        if (role === "user") {
+        if (!hasPermission("view_all_offers")) {
           console.log("🔍 Vérification du filtrage pour utilisateur simple");
           const allOffres = offers.filter(
             (o) => o.responsable_id === currentUserId
@@ -173,30 +190,77 @@ const DevisPage = () => {
 
       return numeroGenere;
     },
-    [clients, offers, role, currentUserId]
+    [clients, offers, hasPermission, currentUserId]
   );
 
   const loadOffersAndClients = useCallback(async () => {
     try {
       console.log(
-        "🔄 Chargement des offres, clients, utilisateurs, personnel et états..."
+        "🔄 DevisPage - Chargement des offres, clients, utilisateurs, personnel et états..."
       );
+      console.log("🔑 Token présent:", token ? "Oui" : "Non");
+
       const [offersData, clientsData, usersData, personnelData, etatsData] =
         await Promise.all([
-          fetchOffers(token),
-          fetchClients(token),
-          fetchUsers(token),
-          fetchPersonnel(token),
-          fetchDevisEtats(token),
+          fetchOffers(token).catch((err) => {
+            console.error("❌ Erreur fetchOffers:", err);
+            return [];
+          }),
+          fetchClients(token).catch((err) => {
+            console.error("❌ Erreur fetchClients:", err);
+            return [];
+          }),
+          fetchUsers(token).catch((err) => {
+            console.error("❌ Erreur fetchUsers:", err);
+            return [];
+          }),
+          fetchPersonnel(token).catch((err) => {
+            console.error("❌ Erreur fetchPersonnel:", err);
+            return [];
+          }),
+          fetchDevisEtats(token).catch((err) => {
+            console.error("❌ Erreur fetchDevisEtats:", err);
+            return [];
+          }),
         ]);
 
-      console.log("📋 Offres chargées:", offersData);
-      console.log("👥 Clients chargés:", clientsData);
-      console.log("👤 Utilisateurs chargés:", usersData);
-      console.log("👥 Personnel chargé:", personnelData);
-      console.log("📊 États chargés:", etatsData);
+      console.log("📋 Offres chargées:", offersData?.length || 0, offersData);
+      console.log("👥 Clients chargés:", clientsData?.length || 0, clientsData);
+      console.log(
+        "👤 Utilisateurs chargés:",
+        usersData?.length || 0,
+        usersData
+      );
+      console.log(
+        "👥 Personnel chargé:",
+        personnelData?.length || 0,
+        personnelData
+      );
+      console.log("📊 États chargés:", etatsData?.length || 0, etatsData);
 
-      setOffers(Array.isArray(offersData) ? offersData : []);
+      // Filtrer les offres selon les permissions
+      let filteredOffers = Array.isArray(offersData) ? offersData : [];
+      if (!hasPermission("devis_view_all")) {
+        const currentUserId = localStorage.getItem("userId");
+        console.log("🔍 Filtrage des offres - userId:", currentUserId);
+        console.log("🔍 Total offres avant filtrage:", filteredOffers.length);
+        filteredOffers = filteredOffers.filter(
+          (offre) =>
+            offre.responsable_id === currentUserId ||
+            offre.user_id === currentUserId ||
+            offre.created_by === currentUserId
+        );
+        console.log(
+          "🔍 Offres filtrées pour l'utilisateur:",
+          filteredOffers.length
+        );
+      } else {
+        console.log(
+          "✅ Permission devis_view_all - Affichage de toutes les offres"
+        );
+      }
+
+      setOffers(filteredOffers);
       setClients(Array.isArray(clientsData) ? clientsData : []);
       setUsers(Array.isArray(usersData) ? usersData : []);
       setPersonnel(Array.isArray(personnelData) ? personnelData : []);
@@ -220,18 +284,27 @@ const DevisPage = () => {
       setPersonnel([]);
       setEtats(["Validé", "Transformé en facture"]);
     }
-  }, [token]);
+  }, [token, hasPermission]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur" && role !== "user") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return; // Attendre le chargement des permissions
+
+    if (!hasPermission("devis_view") && !hasPermission("devis_view_all")) {
+      console.log("🔓 DevisPage - Mode test sans connexion");
+      // navigate("/sources");
+      // return;
     }
     // Charger d'abord les clients et offres, puis les devis
     loadOffersAndClients();
     // Charger les états de devis dynamiques
     loadQuoteStatuses();
-  }, [navigate, role, loadOffersAndClients, loadQuoteStatuses]);
+  }, [
+    navigate,
+    hasPermission,
+    permissionsLoading,
+    loadOffersAndClients,
+    loadQuoteStatuses,
+  ]);
 
   // Synchronisation périodique avec l'API Flask
   useEffect(() => {
@@ -247,25 +320,54 @@ const DevisPage = () => {
 
   useEffect(() => {
     // Charger les devis seulement après avoir chargé les clients et offres
+    console.log("🔍 Vérification chargement devis:");
+    console.log("  - Clients:", clients.length);
+    console.log("  - Offres:", offers.length);
+
     if (clients.length > 0 && offers.length > 0) {
+      console.log("✅ Conditions remplies, chargement des devis...");
       loadDevis();
+    } else {
+      console.log("⏳ En attente des clients et offres...");
     }
   }, [clients, offers, loadDevis]);
 
-  const filteredDevis = devis.filter(
-    (devis) =>
-      devis.numero_devis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      devis.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      devis.intitule?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      devis.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      devis.etat?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDevis = devis.filter((devis) => {
+    const search = searchTerm.toLowerCase();
+
+    // Recherche dans les champs texte simples
+    const matchesNumero =
+      devis.numero_devis?.toLowerCase().includes(search) ||
+      devis.numero?.toLowerCase().includes(search);
+    const matchesIntitule = devis.intitule?.toLowerCase().includes(search);
+    const matchesEtat = devis.etat?.toLowerCase().includes(search);
+
+    // Recherche dans le client (gérer objet ou string)
+    let matchesClient = false;
+    if (devis.client) {
+      if (typeof devis.client === "string") {
+        matchesClient = devis.client.toLowerCase().includes(search);
+      } else if (devis.client_id) {
+        const client = clients.find((c) => c._id === devis.client_id);
+        if (client) {
+          matchesClient =
+            client.raison_sociale?.toLowerCase().includes(search) ||
+            client.nom?.toLowerCase().includes(search);
+        }
+      }
+    }
+
+    return matchesNumero || matchesIntitule || matchesEtat || matchesClient;
+  });
 
   const handleCreateDevis = async (devisData) => {
     try {
       console.log("🔄 Création d'un devis...");
       console.log("📋 Données reçues:", devisData);
-      console.log("📋 Role utilisateur:", role);
+      console.log(
+        "📋 Permissions utilisateur:",
+        hasPermission("view_all_quotes") ? "Admin" : "Utilisateur standard"
+      );
       console.log("📋 Current user ID:", currentUserId);
 
       // Vérifier et générer le numéro si nécessaire
@@ -552,7 +654,6 @@ const DevisPage = () => {
   if (loading) {
     return (
       <div className="devis-page">
-        <Sidebar />
         <div className="main-content">
           <div className="loading-container">
             <div className="loading-spinner">
@@ -567,12 +668,9 @@ const DevisPage = () => {
 
   return (
     <div className="devis-page">
-      <Sidebar />
       <div className="main-content">
         <div className="devis-header">
-          <div className="devis-header-left">
-            <h1>Gestion des Devis</h1>
-          </div>
+          <div className="devis-header-left"></div>
           <div className="devis-header-actions">
             <input
               type="text"
@@ -581,7 +679,7 @@ const DevisPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            {!isSpectator && (
+            {hasPermission("devis_create") && (
               <button onClick={openAddModal} className="add-devis-btn">
                 <i className="fas fa-plus"></i>
                 Nouveau Devis
@@ -616,7 +714,7 @@ const DevisPage = () => {
                     <th>Date d'émission</th>
                     <th>État</th>
                     <th>Documents</th>
-                    {role === "admin" && <th>Responsable</th>}
+                    {hasPermission("view_all_quotes") && <th>Responsable</th>}
                     <th>Gérer</th>
                   </tr>
                 </thead>
@@ -675,7 +773,7 @@ const DevisPage = () => {
                           </div>
                         ) : null}
                       </td>
-                      {role === "admin" && (
+                      {hasPermission("view_all_quotes") && (
                         <td>
                           {(() => {
                             // Chercher le nom du responsable
@@ -708,7 +806,7 @@ const DevisPage = () => {
                         </td>
                       )}
                       <td>
-                        <div className="actions">
+                        <div className="actions-cell">
                           <button
                             className="view-btn"
                             onClick={() => openViewModal(devis)}
@@ -716,34 +814,35 @@ const DevisPage = () => {
                           >
                             <i className="fas fa-eye"></i>
                           </button>
-                          {!isSpectator && (
-                            <>
+                          {hasPermission("devis_edit") && (
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEditModal(devis)}
+                              title="Modifier"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                          )}
+                          {hasPermission("devis_edit") &&
+                            devis.etat === "Validé" && (
                               <button
-                                className="edit-btn"
-                                onClick={() => openEditModal(devis)}
-                                title="Modifier"
+                                className="transform-btn"
+                                onClick={() =>
+                                  handleTransformToFacture(devis._id)
+                                }
+                                title="Transformer en facture"
                               >
-                                <i className="fas fa-edit"></i>
+                                <i className="fas fa-exchange-alt"></i>
                               </button>
-                              {devis.etat === "Validé" && (
-                                <button
-                                  className="transform-btn"
-                                  onClick={() =>
-                                    handleTransformToFacture(devis._id)
-                                  }
-                                  title="Transformer en facture"
-                                >
-                                  <i className="fas fa-exchange-alt"></i>
-                                </button>
-                              )}
-                              <button
-                                className="delete-btn"
-                                onClick={() => handleDeleteDevis(devis._id)}
-                                title="Supprimer"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </>
+                            )}
+                          {hasPermission("devis_delete") && (
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDeleteDevis(devis._id)}
+                              title="Supprimer"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
                           )}
                         </div>
                       </td>
@@ -765,7 +864,7 @@ const DevisPage = () => {
           offers={offers}
           clients={clients}
           etats={etats}
-          role={role}
+          hasPermission={hasPermission}
           currentUserId={currentUserId}
           generateNumeroDevis={generateNumeroDevis}
           title="Nouveau Devis"
@@ -781,7 +880,7 @@ const DevisPage = () => {
           offers={offers}
           clients={clients}
           etats={etats}
-          role={role}
+          hasPermission={hasPermission}
           currentUserId={currentUserId}
           generateNumeroDevis={generateNumeroDevis}
           title="Modifier le Devis"
@@ -1019,48 +1118,20 @@ const DevisModal = ({
               className={errors.offre_id ? "error" : ""}
             >
               <option value="">Sélectionner une offre</option>
-              {(() => {
-                console.log(
-                  "🔍 Filtrage des offres - role:",
-                  role,
-                  "currentUserId:",
-                  currentUserId
-                );
-                console.log("🔍 Toutes les offres:", offers);
-
-                const filteredOffers = offers.filter((offre) => {
-                  // Pour les utilisateurs simples, ne montrer que leurs offres
-                  if (role === "user") {
-                    const isUserOffre = offre.responsable_id === currentUserId;
-                    console.log(
-                      `🔍 Offre "${offre.intitulee}" - responsable_id: ${offre.responsable_id}, currentUserId: ${currentUserId}, match: ${isUserOffre}`
-                    );
-                    return isUserOffre;
-                  }
-                  // Pour les admins, montrer toutes les offres
-                  return true;
-                });
-
-                console.log("🔍 Offres filtrées:", filteredOffers);
-
-                return filteredOffers.map((offre) => (
-                  <option key={offre._id} value={offre._id}>
-                    {offre.intitulee}
-                  </option>
-                ));
-              })()}
+              {offers.map((offre) => (
+                <option key={offre._id} value={offre._id}>
+                  {offre.intitulee}
+                </option>
+              ))}
             </select>
             {errors.offre_id && (
               <span className="error-message">{errors.offre_id}</span>
             )}
-            {role === "user" &&
-              offers.filter((o) => o.responsable_id === currentUserId)
-                .length === 0 && (
-                <small className="form-help" style={{ color: "#dc3545" }}>
-                  ⚠️ Aucune offre trouvée pour votre compte. Contactez
-                  l'administrateur.
-                </small>
-              )}
+            {offers.length === 0 && (
+              <small className="form-help" style={{ color: "#dc3545" }}>
+                ⚠️ Aucune offre trouvée. Contactez l'administrateur.
+              </small>
+            )}
           </div>
 
           <div className="form-group">

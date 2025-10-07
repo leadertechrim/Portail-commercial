@@ -1,9 +1,10 @@
 /* AdminPage.css */
 .admin-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8f9fa;
   min-height: 100vh;
-  background: #f8f9fa; /* Light grey background for better contrast */
-  padding: 30px;
-  margin-left: 280px; /* Space for always-visible sidebar */
 }
 
 .admin-header {
@@ -13,7 +14,7 @@
   background: #ffffff;
   padding: 20px 30px;
   border-radius: 16px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08); /* Stronger shadow for depth */
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
   margin-bottom: 30px;
   flex-wrap: nowrap;
   gap: 25px;
@@ -21,13 +22,10 @@
 }
 
 .admin-header h1 {
-  color: #f67800;
-  font-size: 1.5rem; /* Larger font size for the title */
-  font-weight: 700;
+  color: #333;
   margin: 0;
-  flex: 1;
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-size: 2rem;
+  font-weight: 600;
 }
 
 .back-btn,
@@ -278,16 +276,22 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-.actions {
+/* Les styles des boutons sont maintenant dans UnifiedButtons.css */
+
+/* ===== BOUTONS D'ACTION EXCELLENTS ===== */
+.admin-page .actions-cell {
   display: flex;
-  gap: 10px; /* Increased gap for better spacing */
+  gap: 10px;
   justify-content: flex-end;
+  white-space: nowrap;
 }
 
-.actions button {
+.admin-page .actions-cell .view-btn,
+.admin-page .actions-cell .edit-btn,
+.admin-page .actions-cell .delete-btn {
   border: 1px solid transparent;
   padding: 6px;
-  border-radius: 8px; /* Slightly more rounded buttons */
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
@@ -300,13 +304,13 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.view-btn {
+.admin-page .actions-cell .view-btn {
   background: #ffffff !important;
   color: #f67800 !important;
   border: 1px solid #dee2e6 !important;
 }
 
-.view-btn:hover {
+.admin-page .actions-cell .view-btn:hover {
   background: #f8f9fa !important;
   color: #ff8c00 !important;
   border-color: #adb5bd !important;
@@ -314,42 +318,28 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
-.edit-btn {
+.admin-page .actions-cell .edit-btn {
   background: #ffffff !important;
   color: #6c757d !important;
   border: 1px solid #dee2e6 !important;
 }
 
-.edit-btn:hover {
-  background: #f8f9fa !important;
-  color: #495057 !important;
-  border-color: #adb5bd !important;
+.admin-page .actions-cell .edit-btn:hover {
+  background: #f67800;
+  color: white;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.4);
 }
 
-.password-btn {
-  color: #ffc107;
-  border-color: #ffc107;
-  background: rgba(255, 193, 7, 0.1);
-}
-
-.password-btn:hover {
-  background: #ffc107;
-  color: #212529;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(255, 193, 7, 0.4);
-}
-
-.delete-btn {
-  color: #dc3545 !important;
+.admin-page .actions-cell .delete-btn {
+  color: #dc3545;
   border-color: #dc3545;
   background: rgba(220, 53, 69, 0.1);
 }
 
-.delete-btn:hover {
+.admin-page .actions-cell .delete-btn:hover {
   background: #dc3545;
-  color: white !important;
+  color: white;
   transform: translateY(-1px);
   box-shadow: 0 3px 8px rgba(220, 53, 69, 0.4);
 }
@@ -390,13 +380,13 @@
     padding: 12px 10px; /* Adjusted padding */
   }
 
-  .actions {
-    flex-direction: row; /* Keep buttons in a row for better touch targets */
-    justify-content: center; /* Center them on mobile */
+  .admin-page .actions-cell {
+    flex-direction: row;
+    justify-content: center;
     gap: 8px;
   }
 
-  .actions button {
+  .admin-page .actions-cell button {
     width: 32px;
     height: 32px;
   }

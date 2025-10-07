@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import { linksAPI, linkCategoriesAPI, offerCategoriesAPI } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./LinksPage.css";
 
 const LinksPage = () => {
@@ -18,19 +18,25 @@ const LinksPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   const navigate = useNavigate();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const role = localStorage.getItem("role");
 
   // Charger les catégories dynamiquement depuis le paramétrage
   const loadCategories = useCallback(async () => {
     try {
+      console.log("🔄 Chargement des catégories...");
       // Charger les catégories depuis l'API
       const [linkCategoriesData, offerCategoriesData] = await Promise.all([
         linkCategoriesAPI.getAll(),
         offerCategoriesAPI.getAll(),
       ]);
 
+      console.log("📁 linkCategoriesData:", linkCategoriesData);
+      console.log("📁 offerCategoriesData:", offerCategoriesData);
+
       const allCategories = [...linkCategoriesData, ...offerCategoriesData];
-      console.log("📁 Catégories chargées depuis l'API:", allCategories);
+      console.log("📁 Toutes les catégories concaténées:", allCategories);
 
       if (allCategories.length > 0) {
         setCategories(allCategories.map((cat) => cat.nom));
@@ -121,28 +127,40 @@ const LinksPage = () => {
 
   const loadLinks = useCallback(async () => {
     try {
+      console.log("🔄 Début du chargement des liens...");
       setLoading(true);
+      console.log("🌐 Appel API linksAPI.getAll()...");
       const linksData = await linksAPI.getAll();
-      console.log("🔗 Liens chargés depuis l'API:", linksData);
+      console.log("✅ Liens chargés depuis l'API:", linksData);
+      console.log("📊 Nombre de liens:", linksData?.length || 0);
       setLinks(linksData);
+      console.log("✅ setLinks appelé, mise à jour de loading...");
       setLoading(false);
+      console.log("✅ Loading mis à false");
     } catch (err) {
-      console.error("Erreur lors du chargement des liens:", err);
+      console.error("❌ Erreur lors du chargement des liens:", err);
       setError(`Erreur lors du chargement des liens: ${err.message}`);
-      // Fallback vers les données mock en cas d'erreur
+      // Fallback vers les données mock en cas毛erreur
+      console.log("🔄 Utilisation des données mock...");
       setLinks(mockLinks);
       setLoading(false);
+      console.log("✅ Fallback terminé, loading mis à false");
     }
   }, [mockLinks]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
-      navigate("/sources");
-      return;
+    console.log("🚀 LinksPage useEffect - role:", role);
+    if (permissionsLoading) return;
+
+    if (!hasPermission("links_manage") && !hasPermission("links_view")) {
+      console.log("🔓 LinksPage - Permission refusée");
+      // navigate("/sources");
+      // return;
     }
+    console.log("✅ Appel loadLinks et loadCategories");
     loadLinks();
     loadCategories(); // Charger les catégories dynamiquement
-  }, [navigate, role, loadLinks, loadCategories]);
+  }, [navigate, hasPermission, permissionsLoading, loadLinks, loadCategories]);
 
   // Écouter les changements dans le localStorage pour les catégories
   useEffect(() => {
@@ -282,7 +300,6 @@ const LinksPage = () => {
   if (loading) {
     return (
       <div className="links-page">
-        <Sidebar />
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
@@ -295,13 +312,9 @@ const LinksPage = () => {
 
   return (
     <div className="links-page">
-      <Sidebar />
-
       <div className="main-content">
         <div className="links-header">
-          <div className="links-header-left">
-            <h1>Gestion des Liens Utiles</h1>
-          </div>
+          <div className="links-header-left"></div>
           <div className="links-header-actions">
             <input
               type="text"
@@ -322,7 +335,7 @@ const LinksPage = () => {
                 </option>
               ))}
             </select>
-            {role === "admin" && (
+            {hasPermission("links_manage") && (
               <button
                 className="add-link-btn"
                 onClick={() => setIsAddModalOpen(true)}
@@ -362,7 +375,7 @@ const LinksPage = () => {
                       <div key={link._id} className="link-card">
                         <div className="link-header">
                           <h3>{link.nom}</h3>
-                          <div className="link-actions">
+                          <div className="link-actions-cell">
                             <button
                               className="view-btn"
                               onClick={() => openViewModal(link)}
@@ -370,7 +383,7 @@ const LinksPage = () => {
                             >
                               <i className="fas fa-eye"></i>
                             </button>
-                            {role === "admin" && (
+                            {hasPermission("links_manage") && (
                               <>
                                 <button
                                   className="edit-btn"

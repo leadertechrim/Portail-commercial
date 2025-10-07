@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./SettingsPage.css";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("quote-status");
 
   const navigate = useNavigate();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const role = localStorage.getItem("role");
 
   // États initiaux pour les devis selon les spécifications
@@ -59,11 +62,15 @@ const SettingsPage = () => {
   );
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
+    if (permissionsLoading) return;
+
+    // Vérifier si l'utilisateur a la permission de gérer les paramètres
+    if (!hasPermission("admin_settings")) {
+      console.log("🔐 Accès refusé à la page paramétrage");
       navigate("/sources");
       return;
     }
-  }, [navigate, role]);
+  }, [navigate, hasPermission, permissionsLoading]);
 
   // États initiaux pour les offres selon les spécifications
   const initialOfferStatuses = useMemo(
@@ -183,44 +190,96 @@ const SettingsPage = () => {
     []
   );
 
-  const tabs = [
-    {
-      id: "quote-status",
-      label: "États Devis",
-      icon: "fas fa-file-invoice",
-      description: "Gérer les états des devis",
-    },
-    {
-      id: "invoice-status",
-      label: "États Factures",
-      icon: "fas fa-file-invoice-dollar",
-      description: "Gérer les états des factures",
-    },
-    {
-      id: "offer-status",
-      label: "États Offres",
-      icon: "fas fa-clipboard-check",
-      description: "Gérer les états des offres",
-    },
-    {
-      id: "roles",
-      label: "Rôles & Permissions",
-      icon: "fas fa-users-cog",
-      description: "Gérer les rôles utilisateurs",
-    },
-    {
-      id: "offer-categories",
-      label: "Catégories Offres",
-      icon: "fas fa-tags",
-      description: "Gérer les catégories d'offres",
-    },
-    {
-      id: "link-categories",
-      label: "Catégories Liens",
-      icon: "fas fa-link",
-      description: "Gérer les catégories de liens",
-    },
-  ];
+  const tabs = useMemo(
+    () => [
+      {
+        id: "quote-status",
+        label: "États Devis",
+        icon: "fas fa-file-invoice",
+        description: "Gérer les états des devis",
+      },
+      {
+        id: "invoice-status",
+        label: "États Factures",
+        icon: "fas fa-file-invoice-dollar",
+        description: "Gérer les états des factures",
+      },
+      {
+        id: "offer-status",
+        label: "États Offres",
+        icon: "fas fa-clipboard-check",
+        description: "Gérer les états des offres",
+      },
+      {
+        id: "users",
+        label: "Utilisateurs",
+        icon: "fas fa-users",
+        description: "Gérer les utilisateurs",
+        permission: "users_manage",
+      },
+      {
+        id: "roles",
+        label: "Rôles & Permissions",
+        icon: "fas fa-users-cog",
+        description: "Gérer les rôles utilisateurs",
+        permission: "roles_manage",
+      },
+      {
+        id: "offer-categories",
+        label: "Catégories Offres",
+        icon: "fas fa-tags",
+        description: "Gérer les catégories d'offres",
+      },
+      {
+        id: "link-categories",
+        label: "Catégories Liens",
+        icon: "fas fa-link",
+        description: "Gérer les catégories de liens",
+      },
+    ],
+    []
+  );
+
+  // Filtrer les onglets selon les permissions - recalculer quand les permissions changent
+  const visibleTabs = useMemo(() => {
+    console.log("🔄 SettingsPage - Recalcul des onglets visibles");
+    console.log("  - permissionsLoading:", permissionsLoading);
+
+    if (permissionsLoading) {
+      console.log(
+        "⏳ SettingsPage - Permissions en cours de chargement, affichage de tous les onglets"
+      );
+      return tabs;
+    }
+
+    console.log(
+      "🔐 SettingsPage - Filtrage des onglets selon les permissions:"
+    );
+    const filtered = tabs.filter((tab) => {
+      if (!tab.permission) {
+        console.log(
+          `  ✅ "${tab.label}" - Pas de permission requise → VISIBLE`
+        );
+        return true;
+      }
+      const hasAccess = hasPermission(tab.permission);
+      console.log(
+        `  ${hasAccess ? "✅" : "❌"} "${tab.label}" - Permission "${
+          tab.permission
+        }" → ${hasAccess ? "VISIBLE" : "MASQUÉ"}`
+      );
+      return hasAccess;
+    });
+
+    console.log(
+      `📊 SettingsPage - Résultat: ${filtered.length}/${tabs.length} onglets visibles`
+    );
+    console.log(
+      "📋 Onglets visibles:",
+      filtered.map((t) => t.label)
+    );
+    return filtered;
+  }, [tabs, hasPermission, permissionsLoading]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -248,8 +307,35 @@ const SettingsPage = () => {
         return (
           <OfferStatusManagement initialOfferStatuses={initialOfferStatuses} />
         );
+      case "users":
+        return (
+          <div className="redirect-message">
+            <i className="fas fa-users"></i>
+            <h3>Gestion des Utilisateurs</h3>
+            <p>
+              La gestion des utilisateurs est disponible dans une page dédiée
+            </p>
+            <button className="redirect-btn" onClick={() => navigate("/admin")}>
+              <i className="fas fa-arrow-right"></i>
+              Accéder à la gestion des utilisateurs
+            </button>
+          </div>
+        );
       case "roles":
-        return <RolesManagement initialRoles={initialRoles} />;
+        return (
+          <div className="redirect-message">
+            <i className="fas fa-users-cog"></i>
+            <h3>Gestion des Rôles & Permissions</h3>
+            <p>
+              La gestion des rôles et permissions est disponible dans une page
+              dédiée
+            </p>
+            <button className="redirect-btn" onClick={() => navigate("/roles")}>
+              <i className="fas fa-arrow-right"></i>
+              Accéder à la gestion des rôles
+            </button>
+          </div>
+        );
       case "offer-categories":
         return (
           <OfferCategoriesManagement
@@ -278,7 +364,7 @@ const SettingsPage = () => {
 
           <div className="settings-content">
             <div className="settings-tabs">
-              {tabs.map((tab) => (
+              {visibleTabs.map((tab) => (
                 <button
                   key={tab.id}
                   className={`tab-button ${

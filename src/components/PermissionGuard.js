@@ -1,5 +1,5 @@
 // import React from "react"; // Non utilisé
-import { usePermissions } from "../hooks/usePermissions";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 
 /**
  * Composant de garde pour les permissions
@@ -14,7 +14,7 @@ const PermissionGuard = ({
   requireAdmin = false,
 }) => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, isAdmin } =
-    usePermissions();
+    usePermissionsImproved();
 
   // Si l'admin est requis et que l'utilisateur n'est pas admin
   if (requireAdmin && !isAdmin) {
@@ -59,7 +59,7 @@ export const ModulePermissionGuard = ({
   action,
   fallback = null,
 }) => {
-  const { canPerformAction } = usePermissions();
+  const { canPerformAction } = usePermissionsImproved();
 
   if (canPerformAction(module, action)) {
     return children;
@@ -73,7 +73,7 @@ export const ModulePermissionGuard = ({
  * Affiche le contenu uniquement si l'utilisateur a le rôle requis
  */
 export const RoleGuard = ({ children, role, roles = [], fallback = null }) => {
-  const { userRole } = usePermissions();
+  const { userRole } = usePermissionsImproved();
 
   // Vérification d'un rôle unique
   if (role) {
@@ -100,7 +100,7 @@ export const RoleGuard = ({ children, role, roles = [], fallback = null }) => {
  * Affiche le contenu uniquement si l'utilisateur est admin
  */
 export const AdminGuard = ({ children, fallback = null }) => {
-  const { isAdmin } = usePermissions();
+  const { isAdmin } = usePermissionsImproved();
 
   if (isAdmin) {
     return children;
@@ -114,7 +114,7 @@ export const AdminGuard = ({ children, fallback = null }) => {
  * Affiche le contenu si l'utilisateur n'est pas spectateur
  */
 export const NonSpectatorGuard = ({ children, fallback = null }) => {
-  const { userRole } = usePermissions();
+  const { userRole } = usePermissionsImproved();
 
   if (userRole !== "spectateur") {
     return children;

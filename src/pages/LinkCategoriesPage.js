@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
 import { linkCategoriesAPI } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./LinkCategoriesPage.css";
 
 const LinkCategoriesPage = () => {
@@ -14,6 +14,8 @@ const LinkCategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const role = localStorage.getItem("role");
 
   // Catégories initiales pour les liens
@@ -67,26 +69,36 @@ const LinkCategoriesPage = () => {
 
   const loadCategories = useCallback(async () => {
     try {
+      console.log("🔄 Début du chargement des catégories de liens...");
       setLoading(true);
+      console.log("🌐 Appel linkCategoriesAPI.getAll()...");
       const categoriesData = await linkCategoriesAPI.getAll();
+      console.log("✅ Catégories chargées depuis l'API:", categoriesData);
+      console.log("📊 Nombre de catégories:", categoriesData?.length || 0);
       setCategories(categoriesData);
       setLoading(false);
+      console.log("✅ Loading mis à false - Catégories");
     } catch (err) {
-      console.error("Erreur lors du chargement des catégories:", err);
+      console.error("❌ Erreur lors du chargement des catégories:", err);
       setError(`Erreur lors du chargement des catégories: ${err.message}`);
       // Fallback vers les données locales en cas d'erreur
+      console.log("🔄 Utilisation des catégories initiales...");
       setCategories(initialCategories);
       setLoading(false);
+      console.log("✅ Fallback terminé - Catégories");
     }
   }, [initialCategories]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return;
+
+    if (!hasPermission("link_categories_manage")) {
+      console.log("🔓 LinkCategoriesPage - Permission refusée");
+      // navigate("/sources");
+      // return;
     }
     loadCategories();
-  }, [navigate, role, loadCategories]);
+  }, [navigate, hasPermission, permissionsLoading, loadCategories]);
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -173,124 +185,117 @@ const LinkCategoriesPage = () => {
   }
 
   return (
-    <Layout>
-      <div className="link-categories-page">
-        <div className="main-content">
-          <div className="categories-header">
-            <div className="categories-header-left">
-              <h1>Gestion des Catégories de Liens</h1>
-              <p>
-                Organisez vos liens utiles par catégories pour un accès rapide
-              </p>
-            </div>
-            <div className="categories-header-actions">
-              <input
-                type="text"
-                placeholder="Rechercher une catégorie..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-              {role === "admin" && (
-                <button
-                  className="add-category-btn"
-                  onClick={() => setIsAddModalOpen(true)}
-                >
-                  <i className="fas fa-plus"></i>
-                  Nouvelle Catégorie
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="categories-content">
-            {error && (
-              <div className="error-message">
-                <i className="fas fa-exclamation-triangle"></i>
-                {error}
-              </div>
-            )}
-
-            {filteredCategories.length === 0 ? (
-              <div className="empty-categories">
-                <i className="fas fa-link"></i>
-                <h3>Aucune catégorie trouvée</h3>
-                <p>Commencez par créer votre première catégorie de lien</p>
-              </div>
-            ) : (
-              <div className="categories-grid">
-                {filteredCategories.map((category) => (
-                  <div key={category._id} className="category-card">
-                    <div className="category-header">
-                      <div
-                        className="category-color-indicator"
-                        style={{ backgroundColor: category.couleur }}
-                      ></div>
-                      <h3>{category.nom}</h3>
-                      <div className="category-actions">
-                        {role === "admin" && (
-                          <>
-                            <button
-                              className="edit-btn"
-                              onClick={() => openEditModal(category)}
-                              title="Modifier"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDeleteCategory(category._id)}
-                              title="Supprimer"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="category-details">
-                      <p className="category-description">
-                        {category.description}
-                      </p>
-                      <div className="category-meta">
-                        <span className="category-color">
-                          <i className="fas fa-palette"></i>
-                          {category.couleur}
-                        </span>
-                        <span className="category-order">
-                          <i className="fas fa-sort-numeric-up"></i>
-                          Ordre: {category.ordre}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+    <div className="link-categories-page">
+      <div className="main-content">
+        <div className="categories-header">
+          <div className="categories-header-left"></div>
+          <div className="categories-header-actions">
+            <input
+              type="text"
+              placeholder="Rechercher une catégorie..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {hasPermission("link_categories_manage") && (
+              <button
+                className="add-category-btn"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <i className="fas fa-plus"></i>
+                Nouvelle Catégorie
+              </button>
             )}
           </div>
         </div>
 
-        {/* Modals */}
-        {isAddModalOpen && (
-          <CategoryModal
-            isOpen={isAddModalOpen}
-            onClose={closeModals}
-            onSubmit={handleCreateCategory}
-            title="Nouvelle Catégorie"
-          />
-        )}
+        <div className="categories-content">
+          {error && (
+            <div className="error-message">
+              <i className="fas fa-exclamation-triangle"></i>
+              {error}
+            </div>
+          )}
 
-        {isEditModalOpen && editingCategory && (
-          <CategoryModal
-            isOpen={isEditModalOpen}
-            onClose={closeModals}
-            onSubmit={(data) => handleUpdateCategory(editingCategory._id, data)}
-            category={editingCategory}
-            title="Modifier la Catégorie"
-          />
-        )}
+          {filteredCategories.length === 0 ? (
+            <div className="empty-categories">
+              <i className="fas fa-link"></i>
+              <h3>Aucune catégorie trouvée</h3>
+              <p>Commencez par créer votre première catégorie de lien</p>
+            </div>
+          ) : (
+            <div className="categories-grid">
+              {filteredCategories.map((category) => (
+                <div key={category._id} className="category-card">
+                  <div className="category-header">
+                    <div
+                      className="category-color-indicator"
+                      style={{ backgroundColor: category.couleur }}
+                    ></div>
+                    <h3>{category.nom}</h3>
+                    <div className="category-actions">
+                      {hasPermission("link_categories_manage") && (
+                        <>
+                          <button
+                            className="edit-btn"
+                            onClick={() => openEditModal(category)}
+                            title="Modifier"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteCategory(category._id)}
+                            title="Supprimer"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="category-details">
+                    <p className="category-description">
+                      {category.description}
+                    </p>
+                    <div className="category-meta">
+                      <span className="category-color">
+                        <i className="fas fa-palette"></i>
+                        {category.couleur}
+                      </span>
+                      <span className="category-order">
+                        <i className="fas fa-sort-numeric-up"></i>
+                        Ordre: {category.ordre}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </Layout>
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <CategoryModal
+          isOpen={isAddModalOpen}
+          onClose={closeModals}
+          onSubmit={handleCreateCategory}
+          title="Nouvelle Catégorie"
+        />
+      )}
+
+      {isEditModalOpen && editingCategory && (
+        <CategoryModal
+          isOpen={isEditModalOpen}
+          onClose={closeModals}
+          onSubmit={(data) => handleUpdateCategory(editingCategory._id, data)}
+          category={editingCategory}
+          title="Modifier la Catégorie"
+        />
+      )}
+    </div>
   );
 };
 

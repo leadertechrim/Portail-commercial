@@ -23,7 +23,9 @@ export default function LoginPage() {
       localStorage.setItem("role", data.role);
       localStorage.setItem("userName", data.name);
       localStorage.setItem("userId", data.user_id || data.id);
-      navigate("/sources");
+
+      // Redirection vers la page principale (qui affichera sources par défaut)
+      navigate("/");
     } catch (err) {
       setError(err.message);
       setLoading(false);

@@ -1,6 +1,6 @@
 // URL de base pour toutes les APIs (configuration fixe)
-// export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
-export const API_BASE_URL = "http://127.0.0.1:8000";
+export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+// export const API_BASE_URL = "http://127.0.0.1:8000";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -36,6 +36,12 @@ export async function addSource(token, source) {
     },
     body: JSON.stringify(source),
   });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+  }
+
   return await res.json();
 }
 

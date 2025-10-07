@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
 import "./AIOffersPage.css";
 
 const AIOffersPage = () => {
@@ -11,7 +10,7 @@ const AIOffersPage = () => {
   };
 
   return (
-    <Layout>
+
       <div className="ai-offers-page">
         <div className="main-content">
           <div className="ai-offers-container">
@@ -67,7 +66,7 @@ const AIOffersPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+
   );
 };
 

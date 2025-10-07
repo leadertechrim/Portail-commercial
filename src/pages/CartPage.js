@@ -11,7 +11,7 @@ import {
 } from "../api";
 import AddCallForTenderModal from "../components/AddCallForTenderModal";
 import EditCallForTenderModal from "../components/EditCallForTenderModal";
-import Sidebar from "../components/Sidebar";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./CartPage.css";
 
 const CartPage = () => {
@@ -179,8 +179,9 @@ const CartPage = () => {
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const isSpectator = role === "spectateur";
+  const currentUserId = localStorage.getItem("userId");
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
 
   const loadOffers = useCallback(async () => {
     try {
@@ -189,7 +190,7 @@ const CartPage = () => {
 
       console.log("🔍 Chargement des offres...");
       console.log("🔑 Token utilisé:", token ? "Présent" : "Absent");
-      console.log("👤 Rôle utilisateur:", role);
+      console.log("👤 Utilisateur connecté:", currentUserId);
       console.log(
         "🌐 URL API:",
         `${
@@ -211,13 +212,9 @@ const CartPage = () => {
         console.log("⚠️ Structure des données:", offersData);
       }
 
-      // Charger les utilisateurs si c'est un admin ou un spectateur
-      if (role === "admin" || role === "spectateur") {
-        console.log(
-          "👑 Chargement des utilisateurs pour " +
-            (role === "admin" ? "l'admin" : "le spectateur") +
-            "..."
-        );
+      // Charger les utilisateurs si l'utilisateur a la permission de voir tous les utilisateurs
+      if (hasPermission("admin_settings")) {
+        console.log("👑 Chargement des utilisateurs pour l'admin...");
         const usersData = await fetchUsers(token);
         setUsers(usersData);
         console.log("👥 Utilisateurs chargés:", usersData.length);
@@ -246,8 +243,8 @@ const CartPage = () => {
 
         // Filtrer les offres selon le rôle de l'utilisateur
         let filteredOffers = offersData;
-        if (role === "user") {
-          // Les utilisateurs normaux ne voient que leurs offres
+        if (!hasPermission("cart_view_all")) {
+          // Les utilisateurs normaux ne voient que leurs offres dans leur panier
           let currentUserId =
             localStorage.getItem("userId") || localStorage.getItem("user_id");
 
@@ -263,7 +260,12 @@ const CartPage = () => {
           }
 
           console.log("🔍 ID utilisateur actuel:", currentUserId);
-          console.log("🔍 Rôle utilisateur:", role);
+          console.log(
+            "🔍 Permissions utilisateur:",
+            hasPermission("cart_view_all")
+              ? "Admin - Voir tous les paniers"
+              : "Utilisateur - Voir son panier uniquement"
+          );
 
           if (currentUserId) {
             console.log(
@@ -303,7 +305,7 @@ const CartPage = () => {
               userId: localStorage.getItem("userId"),
               user_id: localStorage.getItem("user_id"),
               token: localStorage.getItem("token") ? "Présent" : "Absent",
-              role: localStorage.getItem("role"),
+              userId: localStorage.getItem("userId"),
             });
             console.log("🔍 Token décodé:", token ? "Présent" : "Absent");
             if (token) {
@@ -317,12 +319,10 @@ const CartPage = () => {
             // Si pas d'ID utilisateur, ne pas afficher d'offres
             filteredOffers = [];
           }
-        } else if (role === "admin" || role === "spectateur") {
-          // L'admin et le spectateur voient toutes les offres
+        } else if (hasPermission("cart_view_all")) {
+          // L'admin voit toutes les offres de tous les utilisateurs
           console.log(
-            "👑 " +
-              (role === "admin" ? "Admin" : "Spectateur") +
-              " - Affichage de toutes les offres"
+            "👑 Admin - Affichage de toutes les offres (tous les paniers)"
           );
         }
 
@@ -359,7 +359,7 @@ const CartPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, role]);
+  }, [token, hasPermission]);
 
   useEffect(() => {
     if (!token) {
@@ -584,7 +584,6 @@ const CartPage = () => {
   if (loading) {
     return (
       <div className="cart-page">
-        <Sidebar />
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
@@ -597,8 +596,6 @@ const CartPage = () => {
 
   return (
     <div className="cart-page">
-      <Sidebar />
-
       <div className="cart-header">
         <div className="cart-header-left">
           <button className="back-btn" onClick={() => navigate("/sources")}>
@@ -608,7 +605,7 @@ const CartPage = () => {
           {/* <h1>Mon Panier - Appels d'Offres</h1> */}
         </div>
         <div className="cart-header-actions">
-          {!isSpectator && (
+          {hasPermission("cart_add") && (
             <button
               className="add-offer-btn"
               onClick={() => setIsAddModalOpen(true)}
@@ -688,7 +685,7 @@ const CartPage = () => {
             <i className="fas fa-shopping-basket"></i>
             <h3>Votre panier est vide</h3>
             <p>Commencez par ajouter votre première offre</p>
-            {role === "user" && (
+            {hasPermission("sources_create") && (
               <div
                 style={{
                   marginTop: "15px",
@@ -845,7 +842,7 @@ const CartPage = () => {
                 }}
                 style={{
                   padding: "10px 20px",
-                  backgroundColor: "#28a745",
+                  backgroundColor: "#f67800",
                   color: "white",
                   border: "none",
                   borderRadius: "5px",
@@ -868,7 +865,7 @@ const CartPage = () => {
                   console.log("👤 Utilisateur actuel:", {
                     userId: localStorage.getItem("userId"),
                     user_id: localStorage.getItem("user_id"),
-                    role: localStorage.getItem("role"),
+                    userId: localStorage.getItem("userId"),
                     token: localStorage.getItem("token") ? "Présent" : "Absent",
                   });
 
@@ -944,7 +941,7 @@ const CartPage = () => {
                 }}
                 style={{
                   padding: "10px 20px",
-                  backgroundColor: "#28a745",
+                  backgroundColor: "#f67800",
                   color: "white",
                   border: "none",
                   borderRadius: "5px",
@@ -998,12 +995,12 @@ const CartPage = () => {
               >
                 🧪 Test Demain (J-1)
               </button>
-              {role === "user" && (
+              {hasPermission("edit_offers") && (
                 <button
                   onClick={() => {
                     console.log("🔍 Debug Utilisateur Simple:");
                     console.log("🔑 Token:", token ? "Présent" : "Absent");
-                    console.log("👤 Rôle:", role);
+                    console.log("👤 Utilisateur:", currentUserId);
                     console.log(
                       "🆔 ID utilisateur:",
                       localStorage.getItem("userId") ||
@@ -1053,12 +1050,12 @@ const CartPage = () => {
                   🔍 Debug Utilisateur
                 </button>
               )}
-              {role === "user" && (
+              {hasPermission("sources_create") && (
                 <button
                   onClick={async () => {
                     console.log("🧪 Test API Direct pour Utilisateur Simple:");
                     console.log("🔑 Token:", token ? "Présent" : "Absent");
-                    console.log("👤 Rôle:", role);
+                    console.log("👤 Utilisateur:", currentUserId);
                     console.log(
                       "🌐 URL API:",
                       `${
@@ -1102,7 +1099,7 @@ const CartPage = () => {
                     }
                   }}
                   style={{
-                    backgroundColor: "#28a745",
+                    backgroundColor: "#f67800",
                     color: "white",
                     border: "none",
                     padding: "10px 15px",
@@ -1115,7 +1112,7 @@ const CartPage = () => {
                 </button>
               )}
             </div>
-            {!isSpectator && (
+            {hasPermission("sources_create") && (
               <button
                 className="add-first-call-btn"
                 onClick={() => setIsAddModalOpen(true)}
@@ -1147,7 +1144,7 @@ const CartPage = () => {
                 </div>
 
                 {/* Filtre Responsable (pour admin) */}
-                {(role === "admin" || role === "spectateur") && (
+                {hasPermission("cart_view_all") && (
                   <div className="filter-group">
                     <label htmlFor="filter-responsable">Responsable</label>
                     <select
@@ -1290,9 +1287,7 @@ const CartPage = () => {
                     <th>Lien</th>
                     <th>Client</th>
                     <th>Partenaire</th>
-                    {(role === "admin" || role === "spectateur") && (
-                      <th>Responsable</th>
-                    )}
+                    {hasPermission("cart_view_all") && <th>Responsable</th>}
                     <th>Date limite</th>
                     <th>Catégorie</th>
                     <th>Statut</th>
@@ -1339,7 +1334,7 @@ const CartPage = () => {
                         <td>{offer.Partenaire || offer.partenaire || "-"}</td>
 
                         {/* Responsable - visible pour l'admin et le spectateur */}
-                        {(role === "admin" || role === "spectateur") && (
+                        {hasPermission("cart_view_all") && (
                           <td className="responsable-cell">
                             {(() => {
                               const responsable = users.find(
@@ -1485,32 +1480,31 @@ const CartPage = () => {
 
                         {/* Gérer */}
                         <td>
-                          <div className="actions">
-                            {isSpectator ? (
+                          <div className="actions-cell">
+                            <button
+                              className="view-btn"
+                              onClick={() => handleViewItem(offer)}
+                              title="Voir les détails"
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            {hasPermission("cart_add") && (
                               <button
-                                className="view-btn"
-                                onClick={() => handleViewItem(offer)}
-                                title="Voir les détails"
+                                className="edit-btn"
+                                onClick={() => handleEditItem(offer)}
+                                title="Modifier"
                               >
-                                <i className="fas fa-eye"></i>
+                                <i className="fas fa-edit"></i>
                               </button>
-                            ) : (
-                              <>
-                                <button
-                                  className="edit-btn"
-                                  onClick={() => handleEditItem(offer)}
-                                  title="Modifier"
-                                >
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                  className="delete-btn"
-                                  onClick={() => handleDeleteOffer(offer._id)}
-                                  title="Supprimer"
-                                >
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                              </>
+                            )}
+                            {hasPermission("cart_remove") && (
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDeleteOffer(offer._id)}
+                                title="Supprimer"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
                             )}
                           </div>
                         </td>
@@ -1577,7 +1571,7 @@ const CartPage = () => {
                         "Non défini"}
                     </span>
                   </div>
-                  {(role === "admin" || role === "spectateur") && (
+                  {hasPermission("cart_view_all") && (
                     <div className="view-item">
                       <label>Responsable :</label>
                       <span>

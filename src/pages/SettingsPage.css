@@ -1,19 +1,77 @@
 /* SettingsPage.css */
 
 .settings-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8f9fa;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+}
+
+/* Style pour les messages de redirection */
+.redirect-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.redirect-message i {
+  font-size: 64px;
+  color: #f67800;
+  margin-bottom: 20px;
+}
+
+.redirect-message h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.redirect-message p {
+  font-size: 16px;
+  color: #6c757d;
+  margin-bottom: 30px;
+  max-width: 500px;
+}
+
+.redirect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #f67800, #ff8c1a);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(246, 120, 0, 0.3);
+}
+
+.redirect-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(246, 120, 0, 0.4);
+}
+
+.redirect-btn:active {
+  transform: translateY(0);
+}
+
+.redirect-btn i {
+  font-size: 16px;
 }
 
 .main-content {
-  flex: 1;
-  padding-left: 250px;
-  display: flex;
-  flex-direction: column;
-  max-width: 1400px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -355,7 +413,7 @@
 }
 
 .edit-btn {
-  background: linear-gradient(135deg, #28a745, #20c997);
+  background: linear-gradient(135deg, #f67800, #e85d04);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }

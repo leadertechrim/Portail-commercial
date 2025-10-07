@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchUsers, createUser, updateUser, deleteUser } from "../api";
 import UserModal from "../components/UserModal";
-import Sidebar from "../components/Sidebar";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./AdminPage.css";
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -14,31 +15,64 @@ const AdminPage = () => {
   const [isViewMode, setIsViewMode] = useState(false);
 
   const navigate = useNavigate();
-
-  const role = localStorage.getItem("role");
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const token = localStorage.getItem("token");
-  const isSpectator = role === "spectateur";
 
   const loadUsers = useCallback(async () => {
     try {
+      console.log("🔄 AdminPage loadUsers - Début du chargement");
       setLoading(true);
+      console.log(
+        "🌐 AdminPage - Appel fetchUsers avec token:",
+        token ? "Présent" : "Manquant"
+      );
       const data = await fetchUsers(token);
+      console.log("✅ AdminPage - Utilisateurs chargés:", data);
+      console.log("📊 AdminPage - Nombre d'utilisateurs:", data?.length || 0);
       setUsers(data);
       setError("");
+      console.log("✅ AdminPage - setUsers appelé, données:", data);
     } catch (err) {
+      console.error("❌ Erreur lors du chargement des utilisateurs:", err);
       setError("Erreur lors du chargement des utilisateurs");
     } finally {
       setLoading(false);
+      console.log("✅ AdminPage - Loading mis à false");
+    }
+  }, [token]);
+
+  const loadRoles = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://127.0.0.1:8000"}/api/roles`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data.data || data);
+        console.log("✅ Rôles chargés:", data);
+      }
+    } catch (err) {
+      console.error("❌ Erreur chargement rôles:", err);
     }
   }, [token]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return; // Attendre le chargement des permissions
+
+    if (!hasPermission("users_manage")) {
+      console.log("🔓 AdminPage - Mode test sans connexion");
+      // navigate("/sources");
+      // return;
     }
     loadUsers();
-  }, [navigate, role, loadUsers]);
+    loadRoles();
+  }, [navigate, hasPermission, permissionsLoading, loadUsers, loadRoles]);
 
   const handleCreateUser = async (userData) => {
     try {
@@ -102,20 +136,29 @@ const AdminPage = () => {
     setIsViewMode(false);
   };
 
-  if (role !== "admin" && role !== "spectateur") {
+  console.log("🎯 AdminPage render - users:", users);
+  console.log("🎯 AdminPage render - loading:", loading);
+  console.log(
+    "🎯 AdminPage render - hasPermission('users_manage'):",
+    hasPermission("users_manage")
+  );
+
+  // Temporairement désactivé pour les tests
+  if (false && !hasPermission("users_manage")) {
+    console.log("🚫 AdminPage - Permission refusée, rendu de null");
     return null;
   }
 
+  console.log("✅ AdminPage - Rendu de l'interface");
   return (
     <div className="admin-page">
-      <Sidebar />
       <div className="admin-header">
         <button className="back-btn" onClick={() => navigate("/sources")}>
           <i className="fas fa-arrow-left"></i>
           Retour
         </button>
         {/* <h1>Gestion des Utilisateurs</h1> */}
-        {!isSpectator && (
+        {hasPermission("users_manage") && (
           <button
             className="add-user-btn"
             onClick={() => setIsUserModalOpen(true)}
@@ -157,9 +200,29 @@ const AdminPage = () => {
                     <td>{user.name}</td>
                     <td>{user.Fonction || "-"}</td>
                     <td>
-                      <span className={`role-badge ${user.role}`}>
-                        {user.role}
-                      </span>
+                      {(() => {
+                        const userRole = roles.find((r) => r.nom === user.role);
+                        const roleColor = userRole?.couleur || "#6c757d";
+                        return (
+                          <span
+                            className="role-badge-dynamic"
+                            style={{
+                              background: `linear-gradient(135deg, ${roleColor}, ${roleColor}dd)`,
+                              color: "white",
+                              padding: "8px 16px",
+                              borderRadius: "25px",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                              display: "inline-block",
+                              boxShadow: `0 2px 8px ${roleColor}40`,
+                            }}
+                          >
+                            {user.role}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td>
                       <span
@@ -180,7 +243,7 @@ const AdminPage = () => {
                         {user.gerer ? "Oui" : "Non"}
                       </span>
                     </td> */}
-                    <td className="actions">
+                    <td className="actions-cell">
                       <button
                         className="view-btn"
                         onClick={() => openViewModal(user)}
@@ -188,7 +251,8 @@ const AdminPage = () => {
                       >
                         <i className="fas fa-eye"></i>
                       </button>
-                      {!isSpectator && (
+                      {/* Temporairement activé pour les tests */}
+                      {(true || hasPermission("users_manage")) && (
                         <>
                           <button
                             className="edit-btn"

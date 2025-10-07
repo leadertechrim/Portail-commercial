@@ -7,9 +7,9 @@ import {
   deleteSource,
 } from "../api";
 import { useCart } from "../hooks/useCart";
+import { usePermissionsImproved as usePermissions } from "../hooks/usePermissionsImproved";
 import RecentlyVisited from "../components/RecentlyVisited";
 import EditSourceModal from "../components/EditSourceModal";
-import Sidebar from "../components/Sidebar";
 import "./../styles/SourcesPage.css";
 
 export default function SourcesPage() {
@@ -18,70 +18,119 @@ export default function SourcesPage() {
   const [filteredNat, setFilteredNat] = useState([]);
   const [filteredInt, setFilteredInt] = useState([]);
   const [q, setQ] = useState("");
-  const [role] = useState(localStorage.getItem("role") || "user");
-  const [token] = useState(localStorage.getItem("token") || "");
   const [nomEntite, setNomEntite] = useState("");
   const [url, setUrl] = useState("");
   const [categorie, setCategorie] = useState("Nationale");
   const [order, setOrder] = useState(1);
   const [editingSource, setEditingSource] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
 
   const loadSources = useCallback(async () => {
     console.log("Chargement des sources...");
-    const data = await fetchSourcesGrouped(token);
+    const currentToken = localStorage.getItem("token");
+    console.log("Token actuel:", currentToken);
+    const data = await fetchSourcesGrouped(currentToken);
     console.log("Sources chargées:", data);
     setSourcesNat(data.nationale || []);
     setSourcesInt(data.internationale || []);
     setFilteredNat(data.nationale || []);
     setFilteredInt(data.internationale || []);
-  }, [token]);
+  }, []); // Removed token dependency
 
   useEffect(() => {
-    if (!token) navigate("/login");
-    else loadSources();
-  }, [token, navigate, loadSources]);
+    const currentToken = localStorage.getItem("token");
+    console.log("🔐 Vérification token:", currentToken);
+    if (!currentToken) {
+      console.log("❌ Pas de token, redirection vers login");
+      navigate("/login");
+    } else {
+      console.log("✅ Token trouvé, chargement des sources");
+      loadSources();
+    }
+  }, [navigate, loadSources]); // Token checked directly in effect
+
+  // Debug permissions
+  useEffect(() => {
+    if (!permissionsLoading) {
+      console.log("🔐 SourcesPage - Permissions chargées:");
+      console.log("  - edit:", hasPermission("sources_edit"));
+      console.log("  - delete:", hasPermission("sources_delete"));
+      console.log("  - create:", hasPermission("sources_create"));
+      console.log("  - view:", hasPermission("sources_view"));
+    }
+  }, [permissionsLoading, hasPermission]);
 
   const handleSearch = (e) => {
-    const query = e.target.value.toLowerCase();
+    const query = e.target.value.toLowerCase().trim();
     setQ(query);
+
     if (!query) {
       setFilteredNat(sourcesNat);
       setFilteredInt(sourcesInt);
       return;
     }
-    const fn = (arr) =>
-      arr.filter(
-        (s) =>
-          (s.nom_entite || "").toLowerCase().includes(query) ||
-          (s.categorie || "").toLowerCase().includes(query)
-      );
-    setFilteredNat(fn(sourcesNat));
-    setFilteredInt(fn(sourcesInt));
+
+    // Recherche améliorée : nom d'entité, catégorie, URL, et mots-clés
+    const searchInSource = (source) => {
+      const searchFields = [
+        source.nom_entite || "",
+        source.categorie || "",
+        source.url || "",
+        // Ajouter des mots-clés basés sur le contenu
+        source.nom_entite?.toLowerCase().includes("ministère")
+          ? "ministère"
+          : "",
+        source.nom_entite?.toLowerCase().includes("banque") ? "banque" : "",
+        source.nom_entite?.toLowerCase().includes("union") ? "union" : "",
+        source.nom_entite?.toLowerCase().includes("international")
+          ? "international"
+          : "",
+        source.nom_entite?.toLowerCase().includes("national") ? "national" : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchFields.includes(query);
+    };
+
+    setFilteredNat(sourcesNat.filter(searchInSource));
+    setFilteredInt(sourcesInt.filter(searchInSource));
   };
 
-  const handleAddSource = async (e) => {
-    e.preventDefault();
-    if (!nomEntite || !url || !categorie)
-      return alert("Remplis tous les champs");
+  const handleAddSource = async (sourceData) => {
+    try {
+      const currentToken = localStorage.getItem("token");
+      console.log("Tentative d'ajout de source:", sourceData);
+      console.log("Token utilisé:", currentToken ? "Présent" : "Manquant");
 
-    const data = await addSource(token, {
-      nom_entite: nomEntite,
-      url,
-      categorie,
-      order: parseInt(order) || 1,
-    });
-    if (data.message === "Source ajoutée") {
-      setNomEntite("");
-      setUrl("");
-      setCategorie("Nationale");
-      setOrder(1);
+      const newSource = await addSource(currentToken, sourceData);
+      console.log("Source ajoutée avec succès:", newSource);
+      setIsAddModalOpen(false);
       loadSources();
-    } else {
-      alert(data.message || "Erreur ajout");
+    } catch (error) {
+      console.error("Erreur détaillée lors de l'ajout de la source:", error);
+
+      // Afficher un message d'erreur plus informatif
+      let errorMessage = "Erreur lors de l'ajout de la source.";
+
+      if (error.message.includes("403")) {
+        errorMessage =
+          "Accès refusé. Seuls les administrateurs peuvent ajouter des sources.";
+      } else if (error.message.includes("401")) {
+        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+      } else if (error.message.includes("400")) {
+        errorMessage =
+          "Données invalides. Vérifiez que tous les champs sont remplis.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
     }
   };
 
@@ -92,7 +141,8 @@ export default function SourcesPage() {
 
   const handleSaveSource = async (sourceId, data) => {
     console.log("SourcesPage handleSaveSource - ID:", sourceId, "Data:", data);
-    const result = await updateSource(token, sourceId, data);
+    const currentToken = localStorage.getItem("token");
+    const result = await updateSource(currentToken, sourceId, data);
     console.log("SourcesPage handleSaveSource - Result:", result);
     if (result.message === "Source mise à jour") {
       setIsEditModalOpen(false);
@@ -104,7 +154,8 @@ export default function SourcesPage() {
   };
 
   const handleDeleteSource = async (sourceId) => {
-    const result = await deleteSource(token, sourceId);
+    const currentToken = localStorage.getItem("token");
+    const result = await deleteSource(currentToken, sourceId);
     if (result.message === "Source supprimée") {
       setIsEditModalOpen(false);
       setEditingSource(null);
@@ -142,7 +193,7 @@ export default function SourcesPage() {
               {/* <p className="category">{s.categorie}</p> */}
             </a>
 
-            {role === "admin" && (
+            {hasPermission("sources_edit") && (
               <div className="admin-actions">
                 <button
                   className="edit-btn"
@@ -161,8 +212,6 @@ export default function SourcesPage() {
 
   return (
     <div className="sources-page">
-      <Sidebar />
-
       <header className="header">
         <div className="header-left">
           <div className="logo">
@@ -171,17 +220,25 @@ export default function SourcesPage() {
           </div>
         </div>
         <div className="header-right">
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            value={q}
-            onChange={handleSearch}
-            className="search-input"
-          />
-          <button className="logout-btn" onClick={handleLogout}>
-            <i className="fas fa-sign-out-alt"></i>
-            {/* <span>Se déconnecter</span> */}
-          </button>
+          <div className="search-container">
+            <i className="fas fa-search search-icon"></i>
+            <input
+              type="text"
+              placeholder="Rechercher par nom d'entité, catégorie ou URL..."
+              value={q}
+              onChange={handleSearch}
+              className="search-input-enhanced"
+            />
+            {q && (
+              <button
+                className="clear-search-btn"
+                onClick={() => setQ("")}
+                title="Effacer la recherche"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -195,32 +252,12 @@ export default function SourcesPage() {
           items={filteredInt}
         />
 
-        {/* <section className="tools-section">
-          <div className="tool-cards">
-            <div className="tool-card">
-              <i className="fas fa-bell tool-icon"></i>
-              <h3>Alertes</h3>
-              <p>Recevez des notifications pour les nouvelles opportunités.</p>
-            </div>
-            <div className="tool-card">
-              <i className="fas fa-tasks tool-icon"></i>
-              <h3>Gestion de Cycle</h3>
-              <p>Suivez le statut de vos candidatures.</p>
-            </div>
-            <div className="tool-card">
-              <i className="fas fa-chart-line tool-icon"></i>
-              <h3>Surveillance IA</h3>
-              <p>Notre système collecte les données quotidiennement.</p>
-            </div>
-          </div>
-        </section> */}
-
         <RecentlyVisited
           recentlyVisited={recentlyVisited}
           clearHistory={clearHistory}
         />
 
-        {role === "admin" && (
+        {hasPermission("sources_create") && (
           <section className="admin-section">
             <h2>Gérer les Sources</h2>
             <div className="admin-info">
@@ -231,7 +268,19 @@ export default function SourcesPage() {
                 détermine la position d'affichage dans la liste.
               </p>
             </div>
-            <form onSubmit={handleAddSource} className="add-source-form">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const sourceData = {
+                  nom_entite: nomEntite,
+                  url: url,
+                  categorie: categorie,
+                  order: order,
+                };
+                handleAddSource(sourceData);
+              }}
+              className="add-source-form"
+            >
               <input
                 placeholder="Nom entité"
                 value={nomEntite}
@@ -266,10 +315,6 @@ export default function SourcesPage() {
         )}
       </main>
 
-      <footer className="footer">
-        <p>&copy; 2025 Portail des Appels d'Offres - LEADERTECH-SOLUTIONS</p>
-      </footer>
-
       <EditSourceModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -277,6 +322,17 @@ export default function SourcesPage() {
         onSave={handleSaveSource}
         onDelete={handleDeleteSource}
       />
+
+      {/* Modal pour ajouter une nouvelle offre */}
+      {isAddModalOpen && (
+        <EditSourceModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          source={null}
+          onSave={handleAddSource}
+          onDelete={null}
+        />
+      )}
     </div>
   );
 }

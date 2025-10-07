@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import { invoiceStatusesAPI } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./InvoiceStatusPage.css";
 
 const InvoiceStatusPage = () => {
@@ -14,6 +14,8 @@ const InvoiceStatusPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
   const role = localStorage.getItem("role");
 
   // États initiaux pour les factures selon les spécifications
@@ -78,12 +80,15 @@ const InvoiceStatusPage = () => {
   }, [initialStatuses]);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "spectateur") {
-      navigate("/sources");
-      return;
+    if (permissionsLoading) return;
+
+    if (!hasPermission("invoice_status_manage")) {
+      console.log("🔓 InvoiceStatusPage - Permission refusée");
+      // navigate("/sources");
+      // return;
     }
     loadStatuses();
-  }, [navigate, role, loadStatuses]);
+  }, [navigate, hasPermission, permissionsLoading, loadStatuses]);
 
   const filteredStatuses = statuses.filter(
     (status) =>
@@ -168,7 +173,6 @@ const InvoiceStatusPage = () => {
   if (loading) {
     return (
       <div className="invoice-status-page">
-        <Sidebar />
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
@@ -181,17 +185,9 @@ const InvoiceStatusPage = () => {
 
   return (
     <div className="invoice-status-page">
-      <Sidebar />
-
       <div className="main-content">
         <div className="status-header">
-          <div className="status-header-left">
-            <h1>Gestion des États de Factures</h1>
-            <p>
-              Configurez les états disponibles pour les factures avec leurs
-              couleurs
-            </p>
-          </div>
+          <div className="status-header-left"></div>
           <div className="status-header-actions">
             <input
               type="text"
@@ -200,7 +196,7 @@ const InvoiceStatusPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            {role === "admin" && (
+            {hasPermission("invoice_status_manage") && (
               <button
                 className="add-status-btn"
                 onClick={() => setIsAddModalOpen(true)}
@@ -237,7 +233,7 @@ const InvoiceStatusPage = () => {
                     ></div>
                     <h3>{status.nom}</h3>
                     <div className="status-actions">
-                      {role === "admin" && (
+                      {hasPermission("invoice_status_manage") && (
                         <>
                           <button
                             className="edit-btn"

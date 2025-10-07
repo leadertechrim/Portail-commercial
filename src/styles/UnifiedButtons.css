@@ -1,0 +1,450 @@
+/* ===== BOUTONS D'ACTION UNIFIÉS ===== */
+
+/* Conteneur des actions */
+.actions,
+.status-actions,
+.role-actions,
+.link-actions,
+.category-actions {
+  display: flex !important;
+  gap: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  min-width: 140px !important;
+}
+
+/* Style commun pour tous les boutons d'action */
+.actions button,
+.status-actions button,
+.role-actions button,
+.link-actions button,
+.category-actions button {
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  background: transparent;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Effet hover commun */
+.actions button:hover,
+.status-actions button:hover,
+.role-actions button:hover,
+.link-actions button:hover,
+.category-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== BOUTON VOIR (ORANGE) ===== */
+.view-btn,
+.admin-page .actions-cell .view-btn,
+.users-table .actions-cell .view-btn,
+table .actions-cell .view-btn,
+tbody .actions-cell .view-btn {
+  background: #ffffff !important;
+  color: #f67800 !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  font-size: 0.9rem !important;
+}
+
+.view-btn:hover {
+  background: #f8f9fa !important;
+  color: #ff8c00 !important;
+  border-color: #adb5bd !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ===== BOUTON MODIFIER (STYLE EXCELLENT) ===== */
+.edit-btn,
+.admin-page .actions-cell .edit-btn,
+.users-table .actions-cell .edit-btn,
+table .actions-cell .edit-btn,
+tbody .actions-cell .edit-btn {
+  background: #ffffff !important;
+  color: #6c757d !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  font-size: 0.9rem !important;
+}
+
+.edit-btn:hover {
+  background: #f67800 !important;
+  color: white !important;
+  border-color: #f67800 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.4) !important;
+}
+
+.edit-btn:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 6px rgba(246, 120, 0, 0.3) !important;
+}
+
+.edit-btn i {
+  font-size: 14px !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* ===== BOUTON SUPPRIMER (ROUGE) ===== */
+.delete-btn,
+.admin-page .actions-cell .delete-btn,
+.users-table .actions-cell .delete-btn,
+table .actions-cell .delete-btn,
+tbody .actions-cell .delete-btn {
+  background: rgba(220, 53, 69, 0.1) !important;
+  color: #dc3545 !important;
+  border: 1px solid #dc3545 !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  font-size: 0.9rem !important;
+}
+
+.delete-btn:hover {
+  background: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* ===== BOUTON AJOUTER (VERT) ===== */
+.add-btn,
+.add-user-btn,
+.add-client-btn,
+.add-partner-btn,
+.add-personnel-btn,
+.add-devis-btn,
+.add-facture-btn,
+.add-link-btn,
+.add-category-btn,
+.add-role-btn,
+.add-offer-btn {
+  background: linear-gradient(135deg, #f67800, #e85d04) !important;
+  color: white !important;
+  border: none !important;
+  padding: 12px 20px !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 3px 12px rgba(246, 120, 0, 0.25) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  min-width: 120px !important;
+  justify-content: center !important;
+}
+
+.add-btn::before,
+.add-user-btn::before,
+.add-client-btn::before,
+.add-partner-btn::before,
+.add-personnel-btn::before,
+.add-devis-btn::before,
+.add-facture-btn::before,
+.add-link-btn::before,
+.add-category-btn::before,
+.add-role-btn::before,
+.add-offer-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.add-btn:hover::before,
+.add-user-btn:hover::before,
+.add-client-btn:hover::before,
+.add-partner-btn:hover::before,
+.add-personnel-btn:hover::before,
+.add-devis-btn:hover::before,
+.add-facture-btn:hover::before,
+.add-link-btn:hover::before,
+.add-category-btn:hover::before,
+.add-role-btn:hover::before,
+.add-offer-btn:hover::before {
+  left: 100%;
+}
+
+.add-btn:hover,
+.add-user-btn:hover,
+.add-client-btn:hover,
+.add-partner-btn:hover,
+.add-personnel-btn:hover,
+.add-devis-btn:hover,
+.add-facture-btn:hover,
+.add-link-btn:hover,
+.add-category-btn:hover,
+.add-role-btn:hover,
+.add-offer-btn:hover {
+  background: linear-gradient(135deg, #e85d04, #d35400) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(246, 120, 0, 0.4) !important;
+}
+
+/* ===== RESPONSIVE POUR BOUTONS AJOUTER ===== */
+@media (max-width: 768px) {
+  .add-btn,
+  .add-user-btn,
+  .add-client-btn,
+  .add-partner-btn,
+  .add-personnel-btn,
+  .add-devis-btn,
+  .add-facture-btn,
+  .add-link-btn,
+  .add-category-btn,
+  .add-role-btn,
+  .add-offer-btn {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    min-width: 100px !important;
+    gap: 6px !important;
+    border-radius: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-btn,
+  .add-user-btn,
+  .add-client-btn,
+  .add-partner-btn,
+  .add-personnel-btn,
+  .add-devis-btn,
+  .add-facture-btn,
+  .add-link-btn,
+  .add-category-btn,
+  .add-role-btn,
+  .add-offer-btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    min-width: 80px !important;
+    gap: 4px !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* ===== BOUTON TRANSFORMER ===== */
+.transform-btn {
+  background: #ffc107 !important;
+  color: #212529 !important;
+  border: 1px solid #ffc107 !important;
+}
+
+.transform-btn:hover {
+  background: #e0a800 !important;
+  color: #212529 !important;
+  border-color: #e0a800 !important;
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+}
+
+/* ===== BOUTON PASSWORD ===== */
+.password-btn {
+  background: #17a2b8 !important;
+  color: white !important;
+  border: 1px solid #17a2b8 !important;
+}
+
+.password-btn:hover {
+  background: #138496 !important;
+  color: white !important;
+  border-color: #138496 !important;
+  box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
+}
+
+/* ===== ICÔNES ===== */
+.actions button i,
+.status-actions button i,
+.role-actions button i,
+.link-actions button i,
+.category-actions button i {
+  font-size: 14px;
+  width: auto;
+  height: auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .actions,
+  .status-actions,
+  .role-actions,
+  .link-actions,
+  .category-actions {
+    gap: 6px;
+  }
+
+  .actions button,
+  .status-actions button,
+  .role-actions button,
+  .link-actions button,
+  .category-actions button {
+    min-width: 36px;
+    height: 36px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  /* Bouton Modifier responsive */
+  .edit-btn,
+  .admin-page .actions-cell .edit-btn,
+  .users-table .actions-cell .edit-btn,
+  table .actions-cell .edit-btn,
+  tbody .actions-cell .edit-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    border-radius: 6px !important;
+  }
+
+  .edit-btn i {
+    font-size: 12px !important;
+  }
+
+  .actions button i,
+  .status-actions button i,
+  .role-actions button i,
+  .link-actions button i,
+  .category-actions button i {
+    font-size: 12px;
+  }
+
+  .add-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Bouton Modifier pour très petits écrans */
+  .edit-btn,
+  .admin-page .actions-cell .edit-btn,
+  .users-table .actions-cell .edit-btn,
+  table .actions-cell .edit-btn,
+  tbody .actions-cell .edit-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    border-radius: 6px !important;
+  }
+
+  .edit-btn i {
+    font-size: 11px !important;
+  }
+
+  .edit-btn:hover {
+    transform: translateY(-1px) scale(1.02) !important;
+  }
+}
+
+/* ===== CAS SPÉCIAUX POUR CERTAINES PAGES ===== */
+
+/* Page AdminPage - garder le style existant spécifique */
+.admin-page .actions button {
+  width: 38px;
+  height: 38px;
+  padding: 6px;
+}
+
+/* Page FacturesPage - garder le style existant spécifique */
+.factures-page .actions button {
+  padding: 12px 14px;
+}
+
+/* Page PersonnelPage - garder le style existant spécifique */
+.personnel-page .actions-cell .view-btn,
+.personnel-page .actions-cell .edit-btn,
+.personnel-page .actions-cell .delete-btn {
+  width: 38px;
+  height: 38px;
+}
+
+/* ===== TRANSITIONS ===== */
+@keyframes buttonPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.actions button:active,
+.status-actions button:active,
+.role-actions button:active,
+.link-actions button:active,
+.category-actions button:active {
+  animation: buttonPulse 0.2s ease;
+}

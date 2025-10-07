@@ -1,329 +1,154 @@
+/* Fichier: EditSourceModal.css */
+
+/* --- Overlay du Modèle --- */
 .modal-overlay {
+  /* Positionnement pour couvrir toute la fenêtre (modal) */
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  /* Arrière-plan semi-transparent pour l'effet de superposition */
+  background-color: rgba(0, 0, 0, 0.6);
+  /* Assure que la modale est au-dessus de tout */
+  z-index: 1000;
+  /* Centrage du contenu (la modale elle-même) */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
 }
 
+/* --- Conteneur de la Modale --- */
 .edit-modal {
-  background: white;
-  border-radius: 12px;
+  background-color: white; /* Arrière-plan blanc pour le corps de la modale */
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px; /* Taille maximale raisonnable */
+  /* Animation légère */
+  transform: scale(1);
+  transition: transform 0.3s ease-out;
 }
 
+/* --- Entête de la Modale --- */
 .modal-header {
-  background: var(--primary-color);
-  color: white;
-  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 12px 12px 0 0;
+  /* Couleur de fond pour le titre (gris clair) */
+  background-color: #f0f0f0;
+  padding: 10px 15px;
+  margin: -25px -25px 20px -25px; /* Déborde pour couvrir l'entête */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom: 1px solid #ddd;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.3rem;
+  color: #333;
+  font-size: 1.2em;
 }
 
+/* Bouton de Fermeture */
 .close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 1.5rem;
+  font-size: 1.5em;
   cursor: pointer;
+  color: #666;
   padding: 5px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  transition: color 0.2s;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  color: #000;
 }
 
+/* --- Formulaire --- */
 .edit-form {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-group label {
-  display: block;
   margin-bottom: 5px;
-  font-weight: 600;
-  color: #333;
+  font-weight: bold;
+  color: #555;
+  font-size: 0.95em;
 }
 
-.form-group input,
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="number"],
 .form-group select {
-  width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input:focus,
 .form-group select:focus {
+  border-color: #f68700; /* Met en évidence l'élément sélectionné */
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(246, 120, 0, 0.1);
+  box-shadow: 0 0 5px rgba(246, 135, 0, 0.3);
 }
 
 .form-group small {
-  display: block;
   margin-top: 5px;
-  color: #666;
-  font-size: 0.8rem;
+  color: #777;
+  font-size: 0.85em;
 }
 
+/* --- Actions du Formulaire (Boutons) --- */
 .form-actions {
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 30px;
-  padding-top: 20px;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 15px;
   border-top: 1px solid #eee;
 }
 
+.form-actions button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.form-actions button:hover {
+  opacity: 0.9;
+}
+
+.form-actions button:active {
+  transform: translateY(1px);
+}
+
+/* Bouton Enregistrer (Save) */
 .save-btn {
-  background: var(--primary-color);
+  /* Couleur spécifiée: F68700 */
+  background-color: #f68700;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.2s;
 }
 
-.save-btn:hover {
-  background: var(--secondary-color);
-}
-
-.delete-btn {
-  background: #e74c3c;
+/* Bouton Supprimer (Delete) */
+.Delete-btn {
+  /* Couleur spécifiée: Rouge */
+  background-color: red !important;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.2s;
-}
-
-.delete-btn:hover {
-  background: #c0392b;
-}
-
-@media (max-width: 768px) {
-  .edit-modal {
-    width: 95%;
-    margin: 10px;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-}
-
-/* Boutons orange modernes */
-.edit-mode-btn {
-  background: linear-gradient(135deg, #f67800, #f68215);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.3);
-}
-
-.edit-mode-btn:hover {
-  background: linear-gradient(135deg, #e66a00, #e67e22);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 12px rgba(246, 120, 0, 0.4);
-}
-
-.delete-btn {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white !important;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
-}
-
-.delete-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 12px rgba(231, 76, 60, 0.4);
-}
-
-.save-btn {
-  background: linear-gradient(135deg, #f67800, #f68215);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 8px rgba(246, 120, 0, 0.3);
-}
-
-.save-btn:hover {
-  background: linear-gradient(135deg, #e66a00, #e67e22);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 12px rgba(246, 120, 0, 0.4);
-}
-
-.cancel-btn {
-  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 8px rgba(149, 165, 166, 0.3);
-}
-
-.cancel-btn:hover {
-  background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 12px rgba(149, 165, 166, 0.4);
-}
-
-/* Amélioration du modal */
-.edit-modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(246, 120, 0, 0.1);
-}
-
-.modal-header {
-  background: linear-gradient(135deg, #f67800, #f68215);
-  color: white;
-  padding: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 16px 16px 0 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-/* Amélioration des champs de formulaire */
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #f67800;
-  background: white;
-  box-shadow: 0 0 0 4px rgba(246, 120, 0, 0.1);
-}
-
-/* Amélioration des actions */
-.view-actions,
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid #f8f9fa;
-}
-
-@media (max-width: 768px) {
-  .edit-modal {
-    width: 95%;
-    margin: 10px;
-  }
-
-  .view-actions,
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .edit-mode-btn,
-  .delete-btn,
-  .save-btn,
-  .cancel-btn {
-    width: 100%;
-    justify-content: center;
-  }
 }

@@ -6,7 +6,6 @@ import {
   updatePersonnel,
   deletePersonnel,
 } from "../api";
-import Layout from "../components/Layout";
 import "./PersonnelPage.css";
 
 const PersonnelPage = () => {
@@ -105,16 +104,16 @@ const PersonnelPage = () => {
 
   if (loading) {
     return (
-      <Layout>
+
         <div className="personnel-page">
           <div className="loading">Chargement du personnel...</div>
         </div>
-      </Layout>
+
     );
   }
 
   return (
-    <Layout>
+
       <div className="personnel-page">
         <div className="personnel-header">
           <div className="header-left">
@@ -240,7 +239,7 @@ const PersonnelPage = () => {
           />
         )}
       </div>
-    </Layout>
+
   );
 };
 
