@@ -85,8 +85,8 @@ const QuoteStatusPage = () => {
 
   const filteredStatuses = statuses.filter(
     (status) =>
-      status.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      status.description.toLowerCase().includes(searchTerm.toLowerCase())
+      status.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      status.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateStatus = async (statusData) => {

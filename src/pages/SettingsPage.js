@@ -432,8 +432,8 @@ const StatusManagement = ({
 
   const filteredStatuses = statuses.filter(
     (status) =>
-      status.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      status.description.toLowerCase().includes(searchTerm.toLowerCase())
+      status.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      status.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateStatus = async (statusData) => {
@@ -989,8 +989,8 @@ const RolesManagementComponent = ({
 
   const filteredRoles = roles.filter(
     (role) =>
-      role.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchTerm.toLowerCase())
+      role.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateRole = async (roleData) => {
@@ -1220,8 +1220,8 @@ const CategoriesManagement = ({
 
   const filteredCategories = categories.filter(
     (category) =>
-      category.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase())
+      category.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateCategory = async (categoryData) => {

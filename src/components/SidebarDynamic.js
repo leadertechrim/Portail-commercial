@@ -56,11 +56,17 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
           icon: <FaBoxOpen />,
           permission: "menu_view_sources",
         },
+        // {
+        //   id: "aiOffers",
+        //   label: "Offres IA (ancienne)",
+        //   icon: <FaRobot />,
+        //   permission: "menu_view_sources",
+        // },
         {
-          id: "aiOffers",
+          id: "offresIA",
           label: "Offres IA",
           icon: <FaRobot />,
-          permission: "menu_view_sources", // Même permission que sources
+          permission: "menu_view_offres_ia",
         },
         {
           id: "cart",

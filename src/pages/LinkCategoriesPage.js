@@ -102,8 +102,8 @@ const LinkCategoriesPage = () => {
 
   const filteredCategories = categories.filter(
     (category) =>
-      category.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchTerm.toLowerCase())
+      category.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateCategory = async (categoryData) => {

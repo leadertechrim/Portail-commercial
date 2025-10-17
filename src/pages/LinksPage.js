@@ -218,9 +218,9 @@ const LinksPage = () => {
 
   const filteredLinks = links.filter((link) => {
     const matchesSearch =
-      link.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.categorie.toLowerCase().includes(searchTerm.toLowerCase());
+      link.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.categorie?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       !selectedCategory || link.categorie === selectedCategory;
     return matchesSearch && matchesCategory;

@@ -1,10 +1,14 @@
 // URL de base pour toutes les APIs
 // Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
-export const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === "production"
-    ? "https://applesoffres-production.up.railway.app"
-    : "http://127.0.0.1:8000");
+// TEMPORAIREMENT EN LOCAL POUR TESTS
+// export const API_BASE_URL = "http://127.0.0.1:8000";
+export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+
+// export const API_BASE_URL =
+//   process.env.REACT_APP_API_URL ||
+//   (process.env.NODE_ENV === "production"
+//     ? "https://applesoffres-production.up.railway.app"
+//     : "http://127.0.0.1:8000");
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -131,7 +135,7 @@ export async function fetchUsers(token) {
 
 export async function fetchUserById(userId, token) {
   console.log("🔍 API fetchUserById - Début pour ID:", userId);
-  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/with-password`, {
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -147,9 +151,30 @@ export async function fetchUserById(userId, token) {
 
   const data = await res.json();
   console.log("🔍 Données utilisateur reçues du backend:", data);
-  console.log("🔧 Champ password présent:", "password" in data);
-  console.log("🔧 Valeur password:", data.password);
-  console.log("🔧 Tous les champs:", Object.keys(data));
+  return data;
+}
+
+export async function fetchUserDecryptedPassword(userId, token) {
+  console.log("🔍 API fetchUserDecryptedPassword - Début pour ID:", userId);
+  const res = await fetch(
+    `${API_BASE_URL}/api/users/${userId}/decrypt-password`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  console.log("📡 fetchUserDecryptedPassword response status:", res.status);
+
+  if (!res.ok) {
+    const data = await res.json();
+    console.error("❌ Erreur fetchUserDecryptedPassword:", res.status);
+    throw new Error(
+      data.message || "Erreur lors du déchiffrement du mot de passe"
+    );
+  }
+
+  const data = await res.json();
+  console.log("🔍 Mot de passe déchiffré reçu");
   return data;
 }
 
@@ -1845,6 +1870,130 @@ export const rolesAPI = {
     } catch (error) {
       console.error("Erreur lors de l'import des rôles:", error);
       throw error;
+    }
+  },
+};
+
+// ===== APPELS D'OFFRES IA =====
+export const offresIAAPI = {
+  // Récupérer les statistiques
+  getStats: async (token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/offres-ia/statistiques`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur chargement stats offres IA:", error);
+      return { total: 0, informatique: 0, masques: 0 };
+    }
+  },
+
+  // Récupérer tous les appels d'offres informatiques
+  getAll: async (token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/offres-ia/informatique`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur chargement offres IA:", error);
+      return [];
+    }
+  },
+
+  // Masquer un appel d'offres (faux positif)
+  masquer: async (url, token) => {
+    try {
+      console.log("Tentative de masquage pour URL:", url);
+
+      const response = await fetch(`${API_BASE_URL}/api/offres-ia/masquer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      console.log("Statut de la réponse:", response.status);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log("Données reçues:", data);
+      } catch (parseError) {
+        console.error("Erreur parsing JSON:", parseError);
+        throw new Error(
+          `Erreur serveur: ${response.status} - Impossible de parser la réponse`
+        );
+      }
+
+      if (!response.ok) {
+        const errorMessage =
+          data.message || data.error || `Erreur HTTP ${response.status}`;
+        console.error("Erreur du serveur:", errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Erreur masquage offre IA:", error);
+      console.error("Type d'erreur:", typeof error);
+      console.error("Message:", error.message);
+      throw error;
+    }
+  },
+
+  // Démasquer un appel d'offres
+  demasquer: async (url, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/offres-ia/demasquer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || `Erreur ${response.status}`
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Erreur démasquage offre IA:", error);
+      throw error;
+    }
+  },
+
+  // Récupérer les offres masquées
+  getMasques: async (token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/offres-ia/masques`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur chargement offres masquées:", error);
+      return [];
     }
   },
 };

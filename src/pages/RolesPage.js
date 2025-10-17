@@ -163,8 +163,8 @@ const RolesPage = () => {
 
   const filteredRoles = roles.filter(
     (role) =>
-      role.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchTerm.toLowerCase())
+      role.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddRole = async () => {

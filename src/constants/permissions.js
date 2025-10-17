@@ -12,6 +12,7 @@ export const PERMISSIONS_MENU = {
   VIEW_CART: "menu_view_cart",
   VIEW_LINKS: "menu_view_links",
   VIEW_ADMIN: "menu_view_admin",
+  VIEW_OFFRES_IA: "menu_view_offres_ia",  // 🆕 Menu Appels d'Offres IA
 };
 
 // ===== PERMISSIONS OFFRE/SOURCES =====
@@ -90,6 +91,13 @@ export const PERMISSIONS_LINKS = {
   MANAGE: "links_manage",
 };
 
+// ===== PERMISSIONS APPELS D'OFFRES IA =====
+export const PERMISSIONS_OFFRES_IA = {
+  VIEW: "offres_ia_view",
+  MASQUER: "offres_ia_masquer",  // Seul permission pour masquer les faux positifs
+  VIEW_STATS: "offres_ia_view_stats",
+};
+
 // ===== REGROUPEMENT PAR MODULE =====
 export const PERMISSIONS_BY_MODULE = {
   MENU: PERMISSIONS_MENU,
@@ -103,6 +111,7 @@ export const PERMISSIONS_BY_MODULE = {
   ADMIN: PERMISSIONS_ADMIN,
   PARAMETRAGE: PERMISSIONS_PARAMETRAGE,
   LINKS: PERMISSIONS_LINKS,
+  OFFRES_IA: PERMISSIONS_OFFRES_IA,  // 🆕
 };
 
 // ===== REGROUPEMENT POUR ROLE ADMIN =====
@@ -118,6 +127,7 @@ export const ADMIN_PERMISSIONS = [
   ...Object.values(PERMISSIONS_ADMIN),
   ...Object.values(PERMISSIONS_PARAMETRAGE),
   ...Object.values(PERMISSIONS_LINKS),
+  ...Object.values(PERMISSIONS_OFFRES_IA),  // 🆕
 ];
 
 // ===== ROLE PERMISSIONS PAR DÉFAUT =====

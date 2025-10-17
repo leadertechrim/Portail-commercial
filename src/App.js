@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import SourcesPage from "./pages/SourcesPage";
 import AIOffersPage from "./pages/AIOffersPage";
 import CartPage from "./pages/CartPage";
+import OffresIAPage from "./pages/OffresIAPage";
 
 // Gestion clientèle
 import ClientsPage from "./pages/ClientsPage";
@@ -85,6 +86,7 @@ function App() {
         {/* Gestion des offres */}
         {selectedMenu === "sources" && <SourcesPage />}
         {selectedMenu === "aiOffers" && <AIOffersPage />}
+        {selectedMenu === "offresIA" && <OffresIAPage />}
         {selectedMenu === "cart" && <CartPage />}
 
         {/* Gestion clientèle */}

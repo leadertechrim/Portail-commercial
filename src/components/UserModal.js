@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { fetchPersonnel, rolesAPI, fetchUserById } from "../api";
+import {
+  fetchPersonnel,
+  rolesAPI,
+  fetchUserById,
+  fetchUserDecryptedPassword,
+} from "../api";
 import "./UserModal.css";
 
 const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
@@ -18,51 +23,25 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [personnel, setPersonnel] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [actualPassword, setActualPassword] = useState(""); // Stocker le vrai mot de passe
+  const [decryptedPassword, setDecryptedPassword] = useState(""); // Mot de passe déchiffré
+  const [loadingPassword, setLoadingPassword] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
-        console.log("🔧 UserModal - User reçu:", user);
-        console.log("🔧 UserModal - user.password:", user.password);
-        console.log(
-          "🔧 UserModal - Type de user.password:",
-          typeof user.password
-        );
-
-        // Essayer de récupérer l'utilisateur complet avec le mot de passe
-        try {
-          const token = localStorage.getItem("token");
-          const fullUserData = await fetchUserById(user._id || user.id, token);
-          console.log(
-            "🔧 UserModal - Données complètes récupérées:",
-            fullUserData
-          );
-          console.log(
-            "🔧 UserModal - Mot de passe complet:",
-            fullUserData.password
-          );
-
-          setActualPassword(fullUserData.password || ""); // Stocker le vrai mot de passe
-        } catch (error) {
-          console.log(
-            "⚠️ Impossible de récupérer le mot de passe complet:",
-            error.message
-          );
-          setActualPassword(user.password || ""); // Utiliser le mot de passe disponible
-        }
-
+        // Mode édition : ne jamais afficher le mot de passe
         setFormData({
           name: user.name || "",
           Fonction: user.Fonction || "",
           email: user.email || "",
-          password: "••••••••", // Afficher des points par défaut
+          password: "", // VIDE lors de l'édition (sécurité)
           confirmPassword: "",
           role: user.role || "user",
           telephone: user.telephone || "",
           statut: user.statut || "actif",
         });
       } else {
+        // Mode création : tous les champs vides
         setFormData({
           name: "",
           Fonction: "",
@@ -167,8 +146,7 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
     // Validation de la confirmation de mot de passe
     if (
       formData.password &&
-      formData.password !== "••••••••" &&
-      formData.password !== "" &&
+      formData.password.trim() !== "" &&
       formData.password !== formData.confirmPassword
     ) {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
@@ -202,16 +180,14 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
       };
 
       // Pour un nouvel utilisateur, le mot de passe est obligatoire
-      // Pour la modification, le mot de passe est optionnel (seulement si différent des points et non vide)
+      // Pour la modification, le mot de passe est optionnel (seulement si non vide)
       if (!user) {
         userData.password = formData.password.trim();
-      } else if (
-        formData.password.trim() &&
-        formData.password !== "••••••••" &&
-        formData.password !== ""
-      ) {
+      } else if (formData.password.trim() !== "") {
+        // Si on modifie et qu'un mot de passe est saisi, on l'inclut
         userData.password = formData.password.trim();
       }
+      // Sinon, on n'envoie pas le champ password = le backend ne modifiera pas le mot de passe
 
       await onSave(userData);
     } catch (error) {
@@ -426,7 +402,15 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
 
           {!isViewMode && (
             <div className="form-group">
-              <label htmlFor="password">Mot de passe {!user && "*"}</label>
+              <label htmlFor="password">
+                Mot de passe {!user && "*"}
+                {user && (
+                  <small style={{ color: "#666", fontWeight: "normal" }}>
+                    {" "}
+                    (laisser vide pour ne pas changer)
+                  </small>
+                )}
+              </label>
               <div className="password-input-container">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -435,91 +419,110 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
                   value={formData.password}
                   onChange={handleChange}
                   className={errors.password ? "error" : ""}
-                  placeholder="Mot de passe"
+                  placeholder={
+                    user ? "Nouveau mot de passe (optionnel)" : "Mot de passe"
+                  }
                   readOnly={isViewMode}
                 />
                 <button
                   type="button"
                   className="password-toggle-btn"
-                  onClick={() => {
-                    console.log("🔧 Clic œil - user:", !!user);
-                    console.log(
-                      "🔧 Clic œil - formData.password:",
-                      formData.password
-                    );
-                    console.log(
-                      "🔧 Clic œil - actualPassword:",
-                      actualPassword
-                    );
-                    console.log("🔧 Clic œil - showPassword:", showPassword);
-
-                    if (user && formData.password === "••••••••") {
-                      // Afficher le vrai mot de passe si disponible
-                      console.log(
-                        "🔧 Affichage du mot de passe:",
-                        actualPassword
-                      );
-                      if (actualPassword) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          password: actualPassword,
-                        }));
-                        setShowPassword(true);
-                      } else {
-                        // Si pas de mot de passe disponible, permettre la saisie
-                        console.log(
-                          "🔧 Passage en mode saisie pour modification"
+                  onClick={async () => {
+                    if (user && !showPassword && !decryptedPassword) {
+                      // Récupérer le mot de passe déchiffré
+                      setLoadingPassword(true);
+                      try {
+                        const token = localStorage.getItem("token");
+                        const result = await fetchUserDecryptedPassword(
+                          user._id || user.id,
+                          token
                         );
-                        setFormData((prev) => ({
-                          ...prev,
-                          password: "",
-                        }));
-                        setShowPassword(true);
+                        if (result.password) {
+                          setDecryptedPassword(result.password);
+                          setFormData((prev) => ({
+                            ...prev,
+                            password: result.password,
+                          }));
+                          setShowPassword(true);
+                        } else {
+                          // Ancien utilisateur sans password_encrypted
+                          const genererPassword = window.confirm(
+                            "⚠️ Ce mot de passe ne peut pas être affiché (ancien utilisateur).\n\n" +
+                              "Voulez-vous générer un NOUVEAU mot de passe aléatoire ?\n\n" +
+                              "Le nouveau mot de passe sera affiché et vous pourrez le copier."
+                          );
+
+                          if (genererPassword) {
+                            // Générer un mot de passe aléatoire
+                            const chars =
+                              "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+                            let newPassword = "";
+                            for (let i = 0; i < 12; i++) {
+                              newPassword += chars.charAt(
+                                Math.floor(Math.random() * chars.length)
+                              );
+                            }
+
+                            setDecryptedPassword(newPassword);
+                            setFormData((prev) => ({
+                              ...prev,
+                              password: newPassword,
+                              confirmPassword: newPassword,
+                            }));
+                            setShowPassword(true);
+
+                            alert(
+                              "✅ Nouveau mot de passe généré : " +
+                                newPassword +
+                                "\n\n" +
+                                "Copiez-le et sauvegardez le formulaire pour l'appliquer."
+                            );
+                          }
+                        }
+                      } catch (error) {
+                        alert(
+                          "❌ Erreur lors de la récupération du mot de passe"
+                        );
+                        console.error(error);
+                      } finally {
+                        setLoadingPassword(false);
                       }
-                    } else if (user && formData.password === actualPassword) {
-                      // Remettre les points
-                      console.log("🔧 Retour aux points");
+                    } else if (user && showPassword && decryptedPassword) {
+                      // Masquer le mot de passe
                       setFormData((prev) => ({
                         ...prev,
-                        password: "••••••••",
+                        password: "",
                       }));
                       setShowPassword(false);
                     } else {
-                      // Basculer normalement
-                      console.log("🔧 Basculement normal");
+                      // Basculer normalement pour nouveau user
                       setShowPassword(!showPassword);
                     }
                   }}
-                  title={
-                    showPassword
-                      ? "Masquer le mot de passe"
-                      : "Afficher le mot de passe"
-                  }
+                  title={showPassword ? "Masquer" : "Afficher le mot de passe"}
+                  disabled={loadingPassword}
                 >
-                  <i
-                    className={`fas ${
-                      showPassword ? "fa-eye-slash" : "fa-eye"
-                    }`}
-                  ></i>
+                  {loadingPassword ? (
+                    <i className="fas fa-spinner fa-spin"></i>
+                  ) : (
+                    <i
+                      className={`fas ${
+                        showPassword ? "fa-eye-slash" : "fa-eye"
+                      }`}
+                    ></i>
+                  )}
                 </button>
               </div>
               {errors.password && (
                 <span className="error-message">{errors.password}</span>
               )}
-              {user && (
-                <small className="password-help">
-                  💡 Cliquez sur l'œil pour voir le mot de passe actuel de la
-                  base de données ou tapez un nouveau mot de passe pour le
-                  changer.
-                </small>
-              )}
             </div>
           )}
 
-          {!isViewMode && (
+          {!isViewMode && formData.password && (
             <div className="form-group">
               <label htmlFor="confirmPassword">
-                Confirmation mot de passe {!user && "*"}
+                Confirmation mot de passe *
               </label>
               <div className="password-input-container">
                 <input
@@ -536,11 +539,7 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
                   type="button"
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  title={
-                    showPassword
-                      ? "Masquer le mot de passe"
-                      : "Afficher le mot de passe"
-                  }
+                  title={showPassword ? "Masquer" : "Afficher"}
                 >
                   <i
                     className={`fas ${

@@ -27,7 +27,11 @@ export const usePermissions = () => {
 
       // Essayer de récupérer les permissions depuis l'API
       const userPermissions = await rolesAPI.getCurrentUserPermissions(token);
-      setPermissions(userPermissions);
+      // S'assurer que c'est bien un tableau
+      const permissionsArray = Array.isArray(userPermissions)
+        ? userPermissions
+        : [];
+      setPermissions(permissionsArray);
     } catch (err) {
       console.warn(
         "Impossible de charger les permissions depuis l'API, utilisation des permissions par défaut:",
@@ -56,11 +60,20 @@ export const usePermissions = () => {
     (permission) => {
       if (!permission) return false;
 
-      // Si l'utilisateur est admin ou directeur, il a toutes les permissions
-      if (role === "admin" || role === "directeur") return true;
+      // Si l'utilisateur est admin, SupAdmin, Admin ou directeur, il a toutes les permissions
+      const adminRoles = [
+        "admin",
+        "Admin",
+        "SupAdmin",
+        "directeur",
+        "Superviseur",
+      ];
+      if (adminRoles.includes(role)) return true;
 
       // Vérifier si la permission est dans la liste des permissions de l'utilisateur
-      return permissions.includes(permission);
+      // S'assurer que permissions est bien un tableau
+      const permissionsArray = Array.isArray(permissions) ? permissions : [];
+      return permissionsArray.includes(permission);
     },
     [permissions, role]
   );
@@ -74,11 +87,20 @@ export const usePermissions = () => {
     (permissionList) => {
       if (!permissionList || !Array.isArray(permissionList)) return false;
 
-      // Si l'utilisateur est admin ou directeur, il a toutes les permissions
-      if (role === "admin" || role === "directeur") return true;
+      // Si l'utilisateur est admin, SupAdmin, Admin ou directeur, il a toutes les permissions
+      const adminRoles = [
+        "admin",
+        "Admin",
+        "SupAdmin",
+        "directeur",
+        "Superviseur",
+      ];
+      if (adminRoles.includes(role)) return true;
 
+      // S'assurer que permissions est bien un tableau
+      const permissionsArray = Array.isArray(permissions) ? permissions : [];
       return permissionList.some((permission) =>
-        permissions.includes(permission)
+        permissionsArray.includes(permission)
       );
     },
     [permissions, role]
@@ -93,11 +115,20 @@ export const usePermissions = () => {
     (permissionList) => {
       if (!permissionList || !Array.isArray(permissionList)) return false;
 
-      // Si l'utilisateur est admin ou directeur, il a toutes les permissions
-      if (role === "admin" || role === "directeur") return true;
+      // Si l'utilisateur est admin, SupAdmin, Admin ou directeur, il a toutes les permissions
+      const adminRoles = [
+        "admin",
+        "Admin",
+        "SupAdmin",
+        "directeur",
+        "Superviseur",
+      ];
+      if (adminRoles.includes(role)) return true;
 
+      // S'assurer que permissions est bien un tableau
+      const permissionsArray = Array.isArray(permissions) ? permissions : [];
       return permissionList.every((permission) =>
-        permissions.includes(permission)
+        permissionsArray.includes(permission)
       );
     },
     [permissions, role]
@@ -133,7 +164,13 @@ export const usePermissions = () => {
     hasAllPermissions,
     canPerformAction,
     refreshPermissions,
-    isAdmin: role === "admin" || role === "directeur",
+    isAdmin: [
+      "admin",
+      "Admin",
+      "SupAdmin",
+      "directeur",
+      "Superviseur",
+    ].includes(role),
     userRole: role,
   };
 };
