@@ -41,11 +41,29 @@ const OffresIAPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsData, offresData] = await Promise.all([
-        offresIAAPI.getStats(token),
-        offresIAAPI.getAll(token),
-      ]);
+      // Toujours charger les stats
+      const statsData = await offresIAAPI.getStats(token);
+      console.log("📊 Statistiques:", statsData);
       setStats(statsData);
+
+      // Charger les offres en fonction du filtre actif
+      let offresData;
+      if (filter === "masques") {
+        console.log("🔄 Chargement des offres MASQUÉES");
+        // Si le filtre "masqués" est actif, charger les offres masquées
+        offresData = await offresIAAPI.getMasques(token);
+        console.log("✅ Offres masquées chargées:", offresData?.length || 0);
+      } else {
+        console.log("🔄 Chargement des offres INFORMATIQUES");
+        // Sinon, charger les offres informatiques (non masquées)
+        offresData = await offresIAAPI.getAll(token);
+        console.log(
+          "✅ Offres informatiques chargées:",
+          offresData?.length || 0
+        );
+      }
+
+      console.log("📋 Exemple d'offre chargée:", offresData[0]);
       setOffres(offresData);
     } catch (error) {
       console.error("Erreur chargement données:", error);
@@ -59,7 +77,7 @@ const OffresIAPage = () => {
     // Rafraîchir toutes les 60 secondes
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [filter]); // Recharger quand le filtre change
 
   // Masquer un appel d'offres
   const handleMasquer = async (url, titre) => {
@@ -79,15 +97,20 @@ const OffresIAPage = () => {
     try {
       console.log("=== DÉBUT MASQUAGE ===");
       console.log("URL à masquer:", url);
-      console.log("Token présent:", !!token);
+      console.log("Statistiques AVANT masquage:", stats);
+      console.log("Nombre d'offres AVANT:", offres.length);
 
       const result = await offresIAAPI.masquer(url, token);
 
-      console.log("Résultat masquage:", result);
-      console.log("=== FIN MASQUAGE RÉUSSI ===");
+      console.log("✅ Résultat masquage:", result);
 
       alert("✅ Appel d'offres masqué avec succès");
-      loadData();
+
+      console.log("🔄 Rechargement des données...");
+      await loadData();
+      console.log("✅ Statistiques APRÈS rechargement:", stats);
+      console.log("✅ Nombre d'offres APRÈS:", offres.length);
+      console.log("=== FIN MASQUAGE ===");
     } catch (error) {
       console.error("=== ERREUR MASQUAGE ===");
       console.error("Type:", typeof error);
@@ -111,12 +134,21 @@ const OffresIAPage = () => {
     }
 
     try {
+      console.log("=== DÉBUT DÉMASQUAGE ===");
+      console.log("URL à démasquer:", url);
+      console.log("Statistiques AVANT démasquage:", stats);
+      console.log("Nombre d'offres AVANT:", offres.length);
+
       const result = await offresIAAPI.demasquer(url, token);
-      console.log("Résultat démasquage:", result);
+      console.log("✅ Résultat démasquage:", result);
+
       alert("✅ Appel d'offres démasqué");
-      loadData();
+
+      console.log("🔄 Rechargement des données...");
+      await loadData();
+      console.log("=== FIN DÉMASQUAGE ===");
     } catch (error) {
-      console.error("Détails de l'erreur:", error);
+      console.error("❌ Erreur démasquage:", error);
       alert(`❌ Erreur lors du démasquage: ${error.message || error}`);
     }
   };
@@ -137,45 +169,36 @@ const OffresIAPage = () => {
     }
 
     try {
-      const result = await offresIAAPI.masquer(url, token, {
-        raison: "Mis en corbeille par l'utilisateur",
-      });
-      console.log("Résultat corbeille:", result);
+      console.log("🗑️ Mise en corbeille:", url);
+
+      // Appeler l'API de masquage (le backend gère en_corbeille)
+      // Note: Le backend doit mettre en_corbeille=True au lieu de juste masque=True
+      const result = await offresIAAPI.masquer(url, token);
+
+      console.log("✅ Résultat corbeille:", result);
       alert("✅ Lien mis en corbeille");
       loadData();
     } catch (error) {
-      console.error("Erreur corbeille:", error);
+      console.error("❌ Erreur corbeille:", error);
       const errorMessage =
         error?.response?.data?.message || error?.message || "Erreur inconnue";
       alert(`❌ Erreur:\n${errorMessage}`);
     }
   };
 
-  // Calculer les statistiques réelles depuis les données chargées
-  const nombreCorbeille = offres.filter((o) => o.en_corbeille === true).length;
-  const nombreMasques = offres.filter(
-    (o) => o.est_masque === true && !o.en_corbeille
+  // Calculer le nombre de masqués depuis les stats backend
+  // Si stats backend = 0 mais qu'on a des offres masquées localement, recalculer
+  const nombreMasquesBackend = stats.masques || 0;
+  const nombreMasquesLocal = offres.filter(
+    (o) => o.est_masque && !o.en_corbeille
   ).length;
-  const nombreNonMasques = offres.filter(
-    (o) => !o.est_masque && !o.en_corbeille
-  ).length;
-  const nombreAvecPdf = offres.filter(
-    (o) => !o.est_masque && !o.en_corbeille && (o.nb_pdf || 0) > 0
-  ).length;
-  const totalOffres = offres.filter((o) => !o.en_corbeille).length;
+  const nombreMasques =
+    nombreMasquesBackend > 0 ? nombreMasquesBackend : nombreMasquesLocal;
 
-  // Filtrer les offres
+  // Filtrer les offres (par recherche seulement, le filtre masqué/non masqué est géré par l'API)
   const getFilteredOffres = () => {
-    let filtered = offres;
-
-    // Filtre par type (toujours exclure la corbeille)
-    if (filter === "masques") {
-      // Seulement masqués (mais pas corbeille)
-      filtered = filtered.filter((o) => o.est_masque && !o.en_corbeille);
-    } else {
-      // Tous sauf masqués et corbeille
-      filtered = filtered.filter((o) => !o.est_masque && !o.en_corbeille);
-    }
+    // TOUJOURS exclure les offres en corbeille
+    let filtered = offres.filter((o) => !o.en_corbeille);
 
     // Filtre par terme de recherche
     if (searchTerm) {
@@ -274,24 +297,24 @@ const OffresIAPage = () => {
       <div className="stats-container">
         <div className="stat-card">
           <FiLayers className="stat-icon" />
-          <div className="stat-number">{totalOffres}</div>
+          <div className="stat-number">{stats.total}</div>
           <div className="stat-label">Total Appels d'Offres</div>
         </div>
         <div className="stat-card informatique">
           <FiCpu className="stat-icon" />
-          <div className="stat-number">{nombreNonMasques}</div>
+          <div className="stat-number">{stats.informatique}</div>
           <div className="stat-label">Informatique (IA)</div>
         </div>
         {canMasquer && (
           <div className="stat-card masques">
             <FiEyeOff className="stat-icon" />
-            <div className="stat-number">{nombreMasques}</div>
+            <div className="stat-number">{stats.masques}</div>
             <div className="stat-label">Masqués</div>
           </div>
         )}
         <div className="stat-card pdf">
           <HiOutlineDocumentText className="stat-icon" />
-          <div className="stat-number">{nombreAvecPdf}</div>
+          <div className="stat-number">{stats.avec_pdf || 0}</div>
           <div className="stat-label">Avec PDF</div>
         </div>
       </div>
@@ -452,6 +475,7 @@ const OffresIAPage = () => {
                   <FiExternalLink /> Voir l'annonce complète
                 </a>
 
+                {/* Bouton Masquer : visible si NON masqué */}
                 {canMasquer && !offre.est_masque && !offre.en_corbeille && (
                   <button
                     className="btn btn-masquer"
@@ -461,6 +485,7 @@ const OffresIAPage = () => {
                   </button>
                 )}
 
+                {/* Boutons Démasquer et Corbeille : visibles si MASQUÉ */}
                 {canMasquer && offre.est_masque && !offre.en_corbeille && (
                   <>
                     <button
@@ -476,7 +501,7 @@ const OffresIAPage = () => {
                       }
                       title="Supprimer définitivement (corbeille)"
                     >
-                      <BsTrash />
+                      <BsTrash /> Corbeille
                     </button>
                   </>
                 )}

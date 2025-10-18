@@ -2,13 +2,8 @@
 // Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
 // TEMPORAIREMENT EN LOCAL POUR TESTS
 // export const API_BASE_URL = "http://127.0.0.1:8000";
+// export const API_BASE_URL = "http://localhost:8080";
 export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
-
-// export const API_BASE_URL =
-//   process.env.REACT_APP_API_URL ||
-//   (process.env.NODE_ENV === "production"
-//     ? "https://applesoffres-production.up.railway.app"
-//     : "http://127.0.0.1:8000");
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -1905,7 +1900,18 @@ export const offresIAAPI = {
       );
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      return await response.json();
+
+      const data = await response.json();
+      console.log("📊 Offres informatiques reçues:", data?.length || 0);
+
+      // Filtrer les offres en corbeille (au cas où le backend les retourne)
+      const offresFiltrees = data.filter((offre) => !offre.en_corbeille);
+      console.log(
+        "📊 Offres informatiques (hors corbeille):",
+        offresFiltrees.length
+      );
+
+      return offresFiltrees;
     } catch (error) {
       console.error("Erreur chargement offres IA:", error);
       return [];
@@ -1990,7 +1996,24 @@ export const offresIAAPI = {
       });
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      return await response.json();
+
+      const data = await response.json();
+      console.log("📊 Offres masquées reçues:", data?.length || 0);
+
+      // S'assurer que toutes les offres ont est_masque: true
+      // et filtrer celles qui sont en corbeille
+      const offresAvecFlag = data
+        .filter((offre) => !offre.en_corbeille) // Exclure corbeille
+        .map((offre) => ({
+          ...offre,
+          est_masque: true, // Forcer le flag car ce sont des offres masquées
+        }));
+
+      console.log(
+        "📊 Offres masquées (hors corbeille):",
+        offresAvecFlag.length
+      );
+      return offresAvecFlag;
     } catch (error) {
       console.error("Erreur chargement offres masquées:", error);
       return [];
