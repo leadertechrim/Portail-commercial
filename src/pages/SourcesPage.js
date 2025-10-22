@@ -25,6 +25,7 @@ export default function SourcesPage() {
   const [editingSource, setEditingSource] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isReorganizing, setIsReorganizing] = useState(false); // Loader réorganisation
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
@@ -108,8 +109,95 @@ export default function SourcesPage() {
       console.log("Tentative d'ajout de source:", sourceData);
       console.log("Token utilisé:", currentToken ? "Présent" : "Manquant");
 
+      // Vérifier si l'URL existe déjà
+      const allSources = [...sourcesNat, ...sourcesInt];
+      const urlExists = allSources.some(
+        (source) =>
+          source.url.trim().toLowerCase() ===
+          sourceData.url.trim().toLowerCase()
+      );
+
+      if (urlExists) {
+        alert(
+          "⚠️ Cette URL existe déjà dans la base de données.\n\nVeuillez vérifier la liste des sources existantes."
+        );
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Vérifier si l'ordre existe déjà et décaler les ordres si nécessaire
+      const newOrder = parseInt(sourceData.order);
+      const sourcesInSameCategory =
+        sourceData.categorie === "Nationale" ? sourcesNat : sourcesInt;
+
+      const orderExists = sourcesInSameCategory.some(
+        (source) => parseInt(source.order) === newOrder
+      );
+
+      if (orderExists) {
+        // Demander confirmation pour le décalage
+        const confirmer = window.confirm(
+          `⚠️ L'ordre ${newOrder} existe déjà.\n\n` +
+            `Si vous continuez, toutes les sources à partir de l'ordre ${newOrder} ` +
+            `seront décalées d'une position.\n\n` +
+            `Voulez-vous continuer ?`
+        );
+
+        if (!confirmer) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        // Afficher le loader de réorganisation
+        setIsReorganizing(true);
+
+        // Décaler tous les ordres >= newOrder de la même catégorie
+        console.log(
+          `🔄 Décalage des ordres >= ${newOrder} dans catégorie ${sourceData.categorie}`
+        );
+
+        try {
+          for (const source of sourcesInSameCategory) {
+            if (parseInt(source.order) >= newOrder) {
+              const nouvelOrdre = parseInt(source.order) + 1;
+              console.log(
+                `  Décalage: ${source.nom_entite} ordre ${source.order} → ${nouvelOrdre}`
+              );
+
+              // Créer un objet sans _id pour la mise à jour
+              const { _id, ...sourceWithoutId } = source;
+              await updateSource(currentToken, source._id, {
+                ...sourceWithoutId,
+                order: nouvelOrdre,
+              });
+            }
+          }
+        } finally {
+          setIsReorganizing(false);
+        }
+      }
+
       const newSource = await addSource(currentToken, sourceData);
       console.log("Source ajoutée avec succès:", newSource);
+
+      // Message de succès
+      if (orderExists) {
+        alert(
+          "✅ Source ajoutée avec succès !\n\nLes autres sources ont été décalées automatiquement."
+        );
+      } else {
+        alert("✅ Source ajoutée avec succès !");
+      }
+
+      // Réinitialiser le formulaire
+      setNomEntite("");
+      setUrl("");
+      setCategorie("Nationale");
+      setOrder(1);
+
+      // Scroller vers le haut
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
       setIsAddModalOpen(false);
       loadSources();
     } catch (error) {
@@ -130,7 +218,8 @@ export default function SourcesPage() {
         errorMessage = error.message;
       }
 
-      alert(errorMessage);
+      alert(`❌ ${errorMessage}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -212,6 +301,17 @@ export default function SourcesPage() {
 
   return (
     <div className="sources-page">
+      {/* Loader de réorganisation */}
+      {isReorganizing && (
+        <div className="reorganization-overlay">
+          <div className="reorganization-loader">
+            <div className="spinner-orange"></div>
+            <p> Réorganisation des ordres en cours...</p>
+            <p className="loader-subtitle">Veuillez patienter</p>
+          </div>
+        </div>
+      )}
+
       <header className="header">
         <div className="header-left">
           <div className="logo">

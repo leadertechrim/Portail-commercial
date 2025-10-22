@@ -1,9 +1,9 @@
 // URL de base pour toutes les APIs
 // Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
 // TEMPORAIREMENT EN LOCAL POUR TESTS
-// export const API_BASE_URL = "http://127.0.0.1:8000";
+export const API_BASE_URL = "http://127.0.0.1:8000";
 // export const API_BASE_URL = "http://localhost:8080";
-export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+// export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
