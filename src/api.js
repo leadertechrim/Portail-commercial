@@ -1,10 +1,8 @@
 // URL de base pour toutes les APIs
-// Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
-export const API_BASE_URL = 
-  process.env.REACT_APP_API_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? "https://applesoffres-production.up.railway.app" 
-    : "http://127.0.0.1:8000");
+// Utilise la variable d'environnement si définie, sinon Railway par défaut
+export const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://applesoffres-production.up.railway.app";
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -1171,12 +1169,12 @@ const apiCall = async (endpoint, options = {}) => {
   try {
     // Récupérer le token depuis localStorage
     const token = localStorage.getItem("token");
-    
+
     // Préparer les headers avec le token si disponible
     const headers = {
-        "Content-Type": "application/json",
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
+      ...options.headers,
     };
 
     const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
