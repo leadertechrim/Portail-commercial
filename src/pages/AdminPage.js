@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   fetchUsers,
@@ -9,16 +9,32 @@ import {
 } from "../api";
 import UserModal from "../components/UserModal";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
+import logger from "../utils/logger";
+import notify from "../utils/notifications";
 import "./AdminPage.css";
 
 const AdminPage = () => {
-  const [users, setUsers] = useState([]);
+  // Charger les utilisateurs depuis localStorage en premier pour affichage immédiat
+  const [users, setUsers] = useState(() => {
+    const cached = localStorage.getItem("users");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        logger.log("📦 Utilisateurs chargés depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        logger.warn("Erreur lors du parsing des utilisateurs en cache:", e);
+      }
+    }
+    return [];
+  });
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les utilisateurs en cache
   const [error, setError] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [isViewMode, setIsViewMode] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   const navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
@@ -26,25 +42,44 @@ const AdminPage = () => {
   const token = localStorage.getItem("token");
 
   const loadUsers = useCallback(async () => {
+    // Vérifier si on a déjà des utilisateurs en cache dans localStorage
+    const cached = localStorage.getItem("users");
+    const hasCachedUsers = cached && cached.length > 0;
+    
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+    
     try {
-      console.log("🔄 AdminPage loadUsers - Début du chargement");
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des utilisateurs en cache
+      if (!hasCachedUsers) {
       setLoading(true);
-      console.log(
+        logger.log("📋 Chargement des utilisateurs depuis l'API Flask...");
+      }
+
+      logger.log(
         "🌐 AdminPage - Appel fetchUsers avec token:",
         token ? "Présent" : "Manquant"
       );
       const data = await fetchUsers(token);
-      console.log("✅ AdminPage - Utilisateurs chargés:", data);
-      console.log("📊 AdminPage - Nombre d'utilisateurs:", data?.length || 0);
+      logger.log("📋 Utilisateurs chargés depuis l'API:", data);
+      logger.log("📊 AdminPage - Nombre d'utilisateurs:", data?.length || 0);
       setUsers(data);
+      // Sauvegarder dans localStorage pour la synchronisation
+      localStorage.setItem("users", JSON.stringify(data));
       setError("");
-      console.log("✅ AdminPage - setUsers appelé, données:", data);
-    } catch (err) {
-      console.error("❌ Erreur lors du chargement des utilisateurs:", err);
-      setError("Erreur lors du chargement des utilisateurs");
-    } finally {
       setLoading(false);
-      console.log("✅ AdminPage - Loading mis à false");
+    } catch (err) {
+      logger.error("❌ Erreur lors du chargement des utilisateurs:", err);
+      // En cas d'erreur, garder les utilisateurs en cache si disponibles
+      if (!hasCachedUsers) {
+      setError("Erreur lors du chargement des utilisateurs");
+        setUsers([]);
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
+      setLoading(false);
     }
   }, [token]);
 
@@ -58,10 +93,10 @@ const AdminPage = () => {
       if (response.ok) {
         const data = await response.json();
         setRoles(data.data || data);
-        console.log("✅ Rôles chargés:", data);
+        logger.log("✅ Rôles chargés:", data);
       }
     } catch (err) {
-      console.error("❌ Erreur chargement rôles:", err);
+      logger.error("❌ Erreur chargement rôles:", err);
     }
   }, [token]);
 
@@ -69,36 +104,73 @@ const AdminPage = () => {
     if (permissionsLoading) return; // Attendre le chargement des permissions
 
     if (!hasPermission("users_manage")) {
-      console.log("🔓 AdminPage - Mode test sans connexion");
+      logger.log("🔓 AdminPage - Mode test sans connexion");
       // navigate("/sources");
       // return;
     }
     loadUsers();
     loadRoles();
-  }, [navigate, hasPermission, permissionsLoading, loadUsers, loadRoles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
+
+  // Synchronisation en temps réel avec les autres pages
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // Seulement si c'est un changement de users
+      if (e && e.key === "users") {
+        logger.log(
+          "🔄 Synchronisation des utilisateurs depuis localStorage..."
+        );
+        loadUsers();
+      }
+    };
+
+    // Écouter les changements dans localStorage (entre onglets)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Écouter les événements personnalisés (même onglet)
+    const handleCustomEvent = () => {
+      loadUsers();
+    };
+    window.addEventListener("usersUpdated", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("usersUpdated", handleCustomEvent);
+    };
+  }, [loadUsers]);
 
   const handleCreateUser = async (userData) => {
     try {
-      console.log("Données utilisateur à créer:", userData);
-      console.log("Token:", token ? "Présent" : "Manquant");
+      logger.log("Données utilisateur à créer:", userData);
+      logger.log("Token:", token ? "Présent" : "Manquant");
 
       const result = await createUser(userData, token);
-      console.log("Résultat de création:", result);
+      logger.log("Résultat de création:", result);
 
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
       await loadUsers();
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("usersUpdated"));
       setIsUserModalOpen(false);
       setError("");
-      alert("Utilisateur créé avec succès");
+      notify.success("Utilisateur créé avec succès");
     } catch (err) {
-      console.error("Erreur détaillée:", err);
+      logger.error("Erreur détaillée:", err);
       setError(`Erreur lors de la création de l'utilisateur: ${err.message}`);
+      notify.error(`Erreur lors de la création de l'utilisateur: ${err.message}`);
     }
   };
 
   const handleUpdateUser = async (userId, userData) => {
     try {
       await updateUser(userId, userData, token);
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
       await loadUsers();
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("usersUpdated"));
       setIsUserModalOpen(false);
       setEditingUser(null);
       setError("");
@@ -108,12 +180,15 @@ const AdminPage = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (
-      window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")
-    ) {
+    const confirmed = await notify.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?");
+    if (confirmed) {
       try {
         await deleteUser(userId, token);
+        // Recharger depuis l'API pour avoir les données à jour
+        hasLoadedRef.current = false;
         await loadUsers();
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("usersUpdated"));
         setError("");
       } catch (err) {
         setError("Erreur lors de la suppression de l'utilisateur");
@@ -139,20 +214,17 @@ const AdminPage = () => {
     setIsViewMode(false);
   };
 
-  console.log("🎯 AdminPage render - users:", users);
-  console.log("🎯 AdminPage render - loading:", loading);
-  console.log(
-    "🎯 AdminPage render - hasPermission('users_manage'):",
-    hasPermission("users_manage")
-  );
-
-  // Temporairement désactivé pour les tests
-  if (false && !hasPermission("users_manage")) {
-    console.log("🚫 AdminPage - Permission refusée, rendu de null");
-    return null;
+  // Afficher un loader pendant le chargement des permissions ou des données
+  if (permissionsLoading || loading) {
+    return (
+      <div className="admin-page">
+        <div className="loading">
+          {permissionsLoading ? "Chargement des permissions..." : "Chargement des utilisateurs..."}
+        </div>
+      </div>
+    );
   }
 
-  console.log("✅ AdminPage - Rendu de l'interface");
   return (
     <div className="admin-page">
       <div className="admin-header">

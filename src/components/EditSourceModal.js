@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaTimes, FaSave, FaTrash } from "react-icons/fa";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./EditSourceModal.css";
 
 const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
+  const { hasPermission } = usePermissionsImproved();
+  const canDelete = hasPermission("sources_delete");
+  
   const [formData, setFormData] = useState({
     nom_entite: "",
     url: "",
@@ -102,10 +106,12 @@ const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="Delete-btn" onClick={handleDelete}>
-              <FaTrash />
-              Supprimer
-            </button>
+            {canDelete && onDelete && (
+              <button type="button" className="Delete-btn" onClick={handleDelete}>
+                <FaTrash />
+                Supprimer
+              </button>
+            )}
             <button type="submit" className="save-btn">
               <FaSave />
               Enregistrer

@@ -69,6 +69,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userPermissions"); // Nettoyer le cache des permissions
     localStorage.removeItem("userName");
     localStorage.removeItem("userPrenom");
     localStorage.removeItem("userRole");

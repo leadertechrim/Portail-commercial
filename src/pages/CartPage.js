@@ -12,6 +12,7 @@ import {
 import AddCallForTenderModal from "../components/AddCallForTenderModal";
 import EditCallForTenderModal from "../components/EditCallForTenderModal";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
+import { PERMISSIONS_CART } from "../constants/permissions";
 import "./CartPage.css";
 
 const CartPage = () => {
@@ -212,9 +213,11 @@ const CartPage = () => {
         console.log("⚠️ Structure des données:", offersData);
       }
 
-      // Charger les utilisateurs si l'utilisateur a la permission de voir tous les utilisateurs
-      if (hasPermission("admin_settings")) {
-        console.log("👑 Chargement des utilisateurs pour l'admin...");
+      // Charger les utilisateurs si l'utilisateur a la permission de voir tous les paniers
+      if (hasPermission(PERMISSIONS_CART.VIEW_ALL)) {
+        console.log(
+          "👑 Chargement des utilisateurs pour afficher les responsables..."
+        );
         const usersData = await fetchUsers(token);
         setUsers(usersData);
         console.log("👥 Utilisateurs chargés:", usersData.length);
@@ -243,7 +246,7 @@ const CartPage = () => {
 
         // Filtrer les offres selon le rôle de l'utilisateur
         let filteredOffers = offersData;
-        if (!hasPermission("cart_view_all")) {
+        if (!hasPermission(PERMISSIONS_CART.VIEW_ALL)) {
           // Les utilisateurs normaux ne voient que leurs offres dans leur panier
           let currentUserId =
             localStorage.getItem("userId") || localStorage.getItem("user_id");
@@ -262,7 +265,7 @@ const CartPage = () => {
           console.log("🔍 ID utilisateur actuel:", currentUserId);
           console.log(
             "🔍 Permissions utilisateur:",
-            hasPermission("cart_view_all")
+            hasPermission(PERMISSIONS_CART.VIEW_ALL)
               ? "Admin - Voir tous les paniers"
               : "Utilisateur - Voir son panier uniquement"
           );
@@ -305,7 +308,6 @@ const CartPage = () => {
               userId: localStorage.getItem("userId"),
               user_id: localStorage.getItem("user_id"),
               token: localStorage.getItem("token") ? "Présent" : "Absent",
-              userId: localStorage.getItem("userId"),
             });
             console.log("🔍 Token décodé:", token ? "Présent" : "Absent");
             if (token) {
@@ -319,7 +321,7 @@ const CartPage = () => {
             // Si pas d'ID utilisateur, ne pas afficher d'offres
             filteredOffers = [];
           }
-        } else if (hasPermission("cart_view_all")) {
+        } else if (hasPermission(PERMISSIONS_CART.VIEW_ALL)) {
           // L'admin voit toutes les offres de tous les utilisateurs
           console.log(
             "👑 Admin - Affichage de toutes les offres (tous les paniers)"
@@ -359,7 +361,8 @@ const CartPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, hasPermission]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, hasPermission, currentUserId]);
 
   useEffect(() => {
     if (!token) {
@@ -373,24 +376,50 @@ const CartPage = () => {
 
   // Synchronisation en temps réel avec OfferStatusPage
   useEffect(() => {
-    const handleStorageChange = () => {
-      console.log(
-        "🔄 Synchronisation des états d'offres depuis OfferStatusPage..."
-      );
-      loadOfferStatuses();
+    const handleStorageChange = (e) => {
+      // Seulement si c'est un changement de offerStatuses
+      if (e && e.key === "offerStatuses") {
+        console.log(
+          "🔄 Synchronisation des états d'offres depuis OfferStatusPage..."
+        );
+        loadOfferStatuses();
+      }
     };
 
-    // Écouter les changements dans localStorage
+    // Écouter les changements dans localStorage (entre onglets)
     window.addEventListener("storage", handleStorageChange);
 
-    // Vérification périodique pour les changements dans le même onglet
-    const interval = setInterval(handleStorageChange, 1000);
+    // Écouter les événements personnalisés (même onglet)
+    const handleCustomEvent = () => {
+      loadOfferStatuses();
+    };
+    window.addEventListener("offerStatusesUpdated", handleCustomEvent);
+
+    // Vérification périodique réduite (30 secondes au lieu de 1 seconde)
+    const interval = setInterval(() => {
+      const savedStatuses = localStorage.getItem("offerStatuses");
+      if (savedStatuses) {
+        try {
+          const statuses = JSON.parse(savedStatuses);
+          // Vérifier si les statuts ont vraiment changé avant de recharger
+          const currentStatusesStr = JSON.stringify(offerStatuses);
+          const newStatusesStr = JSON.stringify(statuses);
+          if (currentStatusesStr !== newStatusesStr) {
+            console.log("🔄 Changement détecté dans les statuts d'offres");
+            loadOfferStatuses();
+          }
+        } catch (err) {
+          console.warn("Erreur lors de la vérification des statuts:", err);
+        }
+      }
+    }, 30000); // 30 secondes au lieu de 1 seconde
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("offerStatusesUpdated", handleCustomEvent);
       clearInterval(interval);
     };
-  }, [loadOfferStatuses]);
+  }, [loadOfferStatuses, offerStatuses]);
 
   const handleCreateOffer = async (offerData) => {
     try {
@@ -581,13 +610,18 @@ const CartPage = () => {
     return defaultColors[state] || "#6c757d"; // Couleur par défaut
   };
 
-  if (loading) {
+  // Afficher un loader pendant le chargement des permissions ou des données
+  if (permissionsLoading || loading) {
     return (
       <div className="cart-page">
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
-            <p>Chargement des appels d'offres...</p>
+            <p>
+              {permissionsLoading
+                ? "Chargement des permissions..."
+                : "Chargement des appels d'offres..."}
+            </p>
           </div>
         </div>
       </div>
@@ -605,7 +639,7 @@ const CartPage = () => {
           {/* <h1>Mon Panier - Appels d'Offres</h1> */}
         </div>
         <div className="cart-header-actions">
-          {hasPermission("cart_add") && (
+          {hasPermission(PERMISSIONS_CART.ADD) && (
             <button
               className="add-offer-btn"
               onClick={() => setIsAddModalOpen(true)}
@@ -683,444 +717,9 @@ const CartPage = () => {
         {offers.length === 0 ? (
           <div className="empty-cart">
             <i className="fas fa-shopping-basket"></i>
-            <h3>Votre panier est vide</h3>
-            <p>Commencez par ajouter votre première offre</p>
-            {hasPermission("sources_create") && (
-              <div
-                style={{
-                  marginTop: "15px",
-                  fontSize: "0.9rem",
-                  color: "#6c757d",
-                }}
-              >
-                <strong>💡 Pour les utilisateurs simples :</strong>
-                <br />
-                • Vous ne voyez que vos propres offres
-                <br />
-                • Vérifiez que vous êtes bien connecté
-                <br />
-                • Utilisez "🔍 Debug Utilisateur" pour diagnostiquer
-                <br />
-                • Utilisez "🧪 Test API Direct" pour tester l'API
-                <br />
-                <strong style={{ color: "#dc3545" }}>
-                  ⚠️ Si aucune donnée ne s'affiche, vérifiez la console (F12)
-                </strong>
-              </div>
-            )}
-            <div
-              style={{
-                backgroundColor: "#f8f9fa",
-                padding: "15px",
-                borderRadius: "8px",
-                marginTop: "15px",
-                fontSize: "14px",
-                color: "#6c757d",
-              }}
-            >
-              <strong>🔧 Mode Debug :</strong>
-              <br />
-              1. Vérifiez que le backend est démarré sur{" "}
-              {process.env.REACT_APP_API_URL ||
-                "https://applesoffres-production.up.railway.app"}
-              <br />
-              2. Cliquez sur "Test Backend" pour vérifier la connectivité
-              <br />
-              3. Cliquez sur "Tester l'API" pour voir les données reçues
-              <br />
-              4. Cliquez sur "Créer Test" pour ajouter une offre de test
-              <br />
-              5. Cliquez sur "Test Filtrage" pour vérifier le localStorage
-              <br />
-              6. Cliquez sur "Créer Tests Alertes" pour tester les alertes
-              <br />
-              7. Cliquez sur "Test Demain (J-1)" pour tester une alerte demain
-              <br />
-              8. Ouvrez la console (F12) pour voir les logs détaillés
-            </div>
-            {error && (
-              <div
-                style={{
-                  color: "red",
-                  marginTop: "10px",
-                  padding: "10px",
-                  backgroundColor: "#ffe6e6",
-                  borderRadius: "5px",
-                }}
-              >
-                <strong>Erreur:</strong> {error}
-              </div>
-            )}
-            <div style={{ marginTop: "20px" }}>
-              <button
-                onClick={async () => {
-                  console.log("🧪 Test de l'API...");
-                  console.log("🔑 Token:", token ? "Présent" : "Absent");
-                  console.log(
-                    "🌐 URL:",
-                    process.env.REACT_APP_API_URL
-                      ? `${process.env.REACT_APP_API_URL}/api/offres`
-                      : "https://applesoffres-production.up.railway.app/api/offres"
-                  );
-
-                  try {
-                    const data = await fetchOffers(token);
-                    console.log("📡 Données reçues:", data);
-                  } catch (err) {
-                    console.error("💥 Erreur de fetch:", err);
-                  }
-
-                  loadOffers();
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#f67800",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                🧪 Tester l'API
-              </button>
-              <button
-                onClick={async () => {
-                  console.log("🔍 Test de connectivité backend...");
-                  try {
-                    // Test de connectivité simple
-                    const response = await fetch(
-                      `${
-                        process.env.REACT_APP_API_URL ||
-                        "https://applesoffres-production.up.railway.app"
-                      }/`,
-                      {
-                        method: "GET",
-                      }
-                    );
-                    console.log("🌐 Backend accessible:", response.ok);
-                    console.log("📡 Status:", response.status);
-                  } catch (err) {
-                    console.error("❌ Backend inaccessible:", err);
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#17a2b8",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                🔍 Test Backend
-              </button>
-              <button
-                onClick={async () => {
-                  console.log("📝 Création d'une offre de test...");
-                  const testOffer = {
-                    intitulee:
-                      "Test d'offre - " + new Date().toLocaleTimeString(),
-                    lien: "https://example.com/test",
-                    client: "Client Test",
-                    date_limite: new Date(
-                      Date.now() + 30 * 24 * 60 * 60 * 1000
-                    ).toISOString(),
-                    statut: "En préparation",
-                    note_commentaire: "Offre de test créée automatiquement",
-                    documents: ["test.pdf", "test2.docx"],
-                  };
-
-                  try {
-                    const result = await addOffer(testOffer, token);
-                    console.log("✅ Offre de test créée:", result);
-                    loadOffers(); // Recharger les offres
-                  } catch (error) {
-                    console.error("❌ Erreur création offre test:", error);
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#f67800",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                📝 Créer Test
-              </button>
-              <button
-                onClick={() => {
-                  console.log("🔍 Test du localStorage et filtrage:");
-                  console.log(
-                    "📋 Toutes les offres:",
-                    offers.map((o) => ({
-                      intitulee: o.intitulee,
-                      responsable_id: o.responsable_id,
-                    }))
-                  );
-                  console.log("👤 Utilisateur actuel:", {
-                    userId: localStorage.getItem("userId"),
-                    user_id: localStorage.getItem("user_id"),
-                    userId: localStorage.getItem("userId"),
-                    token: localStorage.getItem("token") ? "Présent" : "Absent",
-                  });
-
-                  const currentUserId =
-                    localStorage.getItem("userId") ||
-                    localStorage.getItem("user_id");
-                  if (currentUserId) {
-                    const userOffers = offers.filter(
-                      (offer) =>
-                        String(offer.responsable_id) === String(currentUserId)
-                    );
-                    console.log(
-                      "🎯 Offres de l'utilisateur:",
-                      userOffers.length,
-                      "offres"
-                    );
-                  } else {
-                    console.log("❌ Pas d'ID utilisateur trouvé");
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#e83e8c",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                🔍 Test Filtrage
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const today = new Date();
-                    const testDates = [
-                      new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), // J-1
-                      new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000), // J-3
-                      new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), // J-7
-                      new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000), // J-14
-                      new Date(today.getTime() + 21 * 24 * 60 * 60 * 1000), // J-21
-                    ];
-
-                    for (let i = 0; i < testDates.length; i++) {
-                      const testOffer = {
-                        intitulee: `Test Alerte J-${[1, 3, 7, 14, 21][i]}`,
-                        lien: "https://example.com/test",
-                        client: "Client Test",
-                        statut: "En préparation",
-                        date_limite: testDates[i].toISOString().split("T")[0],
-                        note_commentaire: `Test d'alerte pour J-${
-                          [1, 3, 7, 14, 21][i]
-                        }`,
-                        documents: [],
-                      };
-
-                      console.log(
-                        `🧪 Création offre test J-${[1, 3, 7, 14, 21][i]}:`,
-                        testOffer
-                      );
-                      await addOffer(testOffer, token);
-                    }
-
-                    alert(
-                      "Offres de test créées ! Rechargez la page pour voir les alertes."
-                    );
-                    loadOffers();
-                  } catch (error) {
-                    console.error("Erreur création test:", error);
-                    alert("Erreur lors de la création des offres de test");
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#f67800",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                🧪 Créer Tests Alertes
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-
-                    const testOffer = {
-                      intitulee: "Test Demain (J-1)",
-                      lien: "https://example.com/test-demain",
-                      client: "Client Test Demain",
-                      statut: "En préparation",
-                      date_limite: tomorrow.toISOString().split("T")[0],
-                      note_commentaire: "Test d'alerte pour demain (J-1)",
-                      documents: [],
-                    };
-
-                    console.log("🧪 Création offre test demain:", testOffer);
-                    console.log(
-                      "📅 Date demain:",
-                      tomorrow.toISOString().split("T")[0]
-                    );
-
-                    await addOffer(testOffer, token);
-                    alert(
-                      "Offre de test pour demain créée ! Rechargez la page pour voir l'alerte J-1."
-                    );
-                    loadOffers();
-                  } catch (error) {
-                    console.error("Erreur création test demain:", error);
-                    alert("Erreur lors de la création de l'offre de test");
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#ffc107",
-                  color: "black",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                }}
-              >
-                🧪 Test Demain (J-1)
-              </button>
-              {hasPermission("edit_offers") && (
-                <button
-                  onClick={() => {
-                    console.log("🔍 Debug Utilisateur Simple:");
-                    console.log("🔑 Token:", token ? "Présent" : "Absent");
-                    console.log("👤 Utilisateur:", currentUserId);
-                    console.log(
-                      "🆔 ID utilisateur:",
-                      localStorage.getItem("userId") ||
-                        localStorage.getItem("user_id")
-                    );
-
-                    if (token) {
-                      try {
-                        const tokenPayload = JSON.parse(
-                          atob(token.split(".")[1])
-                        );
-                        console.log("🔍 Payload du token:", tokenPayload);
-                        console.log(
-                          "🆔 ID depuis token:",
-                          tokenPayload.user_id || tokenPayload.id
-                        );
-                      } catch (e) {
-                        console.log("❌ Impossible de décoder le token:", e);
-                      }
-                    }
-
-                    console.log("📊 Nombre d'offres totales:", offers.length);
-                    console.log(
-                      "📋 Offres avec responsable_id:",
-                      offers.filter((offer) => offer.responsable_id).length
-                    );
-                    console.log(
-                      "🔍 Offres détaillées:",
-                      offers.map((offer) => ({
-                        id: offer._id,
-                        intitulee: offer.intitulee,
-                        responsable_id: offer.responsable_id,
-                        responsable_nom: offer.responsable_nom,
-                      }))
-                    );
-                  }}
-                  style={{
-                    backgroundColor: "#17a2b8",
-                    color: "white",
-                    border: "none",
-                    padding: "10px 15px",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    marginRight: "10px",
-                  }}
-                >
-                  🔍 Debug Utilisateur
-                </button>
-              )}
-              {hasPermission("sources_create") && (
-                <button
-                  onClick={async () => {
-                    console.log("🧪 Test API Direct pour Utilisateur Simple:");
-                    console.log("🔑 Token:", token ? "Présent" : "Absent");
-                    console.log("👤 Utilisateur:", currentUserId);
-                    console.log(
-                      "🌐 URL API:",
-                      `${
-                        process.env.REACT_APP_API_URL ||
-                        "https://applesoffres-production.up.railway.app"
-                      }/api/offres`
-                    );
-
-                    try {
-                      const response = await fetch(
-                        `${
-                          process.env.REACT_APP_API_URL ||
-                          "https://applesoffres-production.up.railway.app"
-                        }/api/offres`,
-                        {
-                          method: "GET",
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }
-                      );
-
-                      console.log("📡 Status de la réponse:", response.status);
-                      console.log("📡 OK:", response.ok);
-
-                      if (response.ok) {
-                        const data = await response.json();
-                        console.log("📦 Données brutes de l'API:", data);
-                        console.log("📊 Type:", typeof data);
-                        console.log("📋 Est un tableau:", Array.isArray(data));
-                        if (Array.isArray(data)) {
-                          console.log("✅ Nombre d'offres:", data.length);
-                          console.log("🔍 Toutes les offres:", data);
-                        }
-                      } else {
-                        const errorText = await response.text();
-                        console.log("❌ Erreur API:", errorText);
-                      }
-                    } catch (err) {
-                      console.error("💥 Erreur de fetch:", err);
-                    }
-                  }}
-                  style={{
-                    backgroundColor: "#f67800",
-                    color: "white",
-                    border: "none",
-                    padding: "10px 15px",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    marginRight: "10px",
-                  }}
-                >
-                  🧪 Test API Direct
-                </button>
-              )}
-            </div>
-            {hasPermission("sources_create") && (
-              <button
-                className="add-first-call-btn"
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                <i className="fas fa-plus"></i>
-                Ajouter ma première offre
-              </button>
-            )}
+            <h3>Panier vide</h3>
+            <p>Aucune offre n’a encore été ajoutée.</p>
+            {/* Bouton d'ajout disponible uniquement dans l'entête */}
           </div>
         ) : (
           <>
@@ -1143,8 +742,8 @@ const CartPage = () => {
                   </select>
                 </div>
 
-                {/* Filtre Responsable (pour admin) */}
-                {hasPermission("cart_view_all") && (
+                {/* Filtre Responsable (pour ceux qui voient tous les paniers) */}
+                {hasPermission(PERMISSIONS_CART.VIEW_ALL) && (
                   <div className="filter-group">
                     <label htmlFor="filter-responsable">Responsable</label>
                     <select
@@ -1287,7 +886,9 @@ const CartPage = () => {
                     <th>Lien</th>
                     <th>Client</th>
                     <th>Partenaire</th>
-                    {hasPermission("cart_view_all") && <th>Responsable</th>}
+                    {hasPermission(PERMISSIONS_CART.VIEW_ALL) && (
+                      <th>Responsable</th>
+                    )}
                     <th>Date limite</th>
                     <th>Catégorie</th>
                     <th>Statut</th>
@@ -1333,8 +934,8 @@ const CartPage = () => {
                         {/* Partenaire */}
                         <td>{offer.Partenaire || offer.partenaire || "-"}</td>
 
-                        {/* Responsable - visible pour l'admin et le spectateur */}
-                        {hasPermission("cart_view_all") && (
+                        {/* Responsable - visible pour ceux qui ont la permission de voir tous les paniers */}
+                        {hasPermission(PERMISSIONS_CART.VIEW_ALL) && (
                           <td className="responsable-cell">
                             {(() => {
                               const responsable = users.find(
@@ -1488,7 +1089,7 @@ const CartPage = () => {
                             >
                               <i className="fas fa-eye"></i>
                             </button>
-                            {hasPermission("cart_add") && (
+                            {hasPermission(PERMISSIONS_CART.ADD) && (
                               <button
                                 className="edit-btn"
                                 onClick={() => handleEditItem(offer)}
@@ -1497,7 +1098,7 @@ const CartPage = () => {
                                 <i className="fas fa-edit"></i>
                               </button>
                             )}
-                            {hasPermission("cart_remove") && (
+                            {hasPermission(PERMISSIONS_CART.REMOVE) && (
                               <button
                                 className="delete-btn"
                                 onClick={() => handleDeleteOffer(offer._id)}
@@ -1571,7 +1172,7 @@ const CartPage = () => {
                         "Non défini"}
                     </span>
                   </div>
-                  {hasPermission("cart_view_all") && (
+                  {hasPermission(PERMISSIONS_CART.VIEW_ALL) && (
                     <div className="view-item">
                       <label>Responsable :</label>
                       <span>

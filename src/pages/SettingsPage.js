@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
@@ -404,6 +410,7 @@ const StatusManagement = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   const loadStatuses = useCallback(async () => {
     try {
@@ -427,8 +434,16 @@ const StatusManagement = ({
   }, [initialStatuses, storageKey]);
 
   useEffect(() => {
+    if (hasLoadedRef.current) return; // Éviter le double chargement
+    hasLoadedRef.current = true;
     loadStatuses();
-  }, [loadStatuses]);
+
+    // Réinitialiser le flag au démontage
+    return () => {
+      hasLoadedRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger une seule fois au montage
 
   const filteredStatuses = statuses.filter(
     (status) =>
@@ -1194,6 +1209,7 @@ const CategoriesManagement = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -1215,8 +1231,16 @@ const CategoriesManagement = ({
   }, [initialCategories, storageKey]);
 
   useEffect(() => {
+    if (hasLoadedRef.current) return; // Éviter le double chargement
+    hasLoadedRef.current = true;
     loadCategories();
-  }, [loadCategories]);
+
+    // Réinitialiser le flag au démontage
+    return () => {
+      hasLoadedRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger une seule fois au montage
 
   const filteredCategories = categories.filter(
     (category) =>

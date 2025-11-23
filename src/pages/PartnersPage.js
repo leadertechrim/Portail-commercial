@@ -6,6 +6,7 @@ import {
   updatePartner,
   deletePartner,
 } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./PartnersPage.css";
 
 const PartnersPage = () => {
@@ -20,10 +21,21 @@ const PartnersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const isSpectator = role === "spectateur";
+  const { hasPermission, loading: permissionsLoading } = usePermissionsImproved();
+  
+  // Permissions spécifiques
+  const canView = hasPermission("partners_view");
+  const canCreate = hasPermission("partners_create");
+  const canManage = hasPermission("partners_manage");
 
   useEffect(() => {
+    if (permissionsLoading) return;
+    
+    if (!canView) {
+      navigate("/sources");
+      return;
+    }
+
     const loadPartners = async () => {
       try {
         setLoading(true);
@@ -39,7 +51,7 @@ const PartnersPage = () => {
     };
 
     loadPartners();
-  }, [token]);
+  }, [token, canView, permissionsLoading, navigate]);
 
   const handleAddPartner = async (partnerData) => {
     try {
@@ -103,13 +115,14 @@ const PartnersPage = () => {
       partner.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  // Afficher un loader pendant le chargement des permissions ou des données
+  if (permissionsLoading || loading) {
     return (
-
-        <div className="partners-page">
-          <div className="loading">Chargement des partenaires...</div>
+      <div className="partners-page">
+        <div className="loading">
+          {permissionsLoading ? "Chargement des permissions..." : "Chargement des partenaires..."}
         </div>
-
+      </div>
     );
   }
 
@@ -124,7 +137,7 @@ const PartnersPage = () => {
             </button>
             {/* <h1>Gestion des Partenaires</h1> */}
           </div>
-          {!isSpectator && (
+          {canCreate && (
             <button
               className="add-partner-btn"
               onClick={() => setIsAddModalOpen(true)}
@@ -180,7 +193,7 @@ const PartnersPage = () => {
                     >
                       <i className="fas fa-eye"></i>
                     </button>
-                    {!isSpectator && (
+                    {canManage && (
                       <>
                         <button
                           className="edit-btn"

@@ -6,14 +6,16 @@ const SimpleFilestackUploader = ({
   onUploadError,
   multiple = false,
   accept = ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt",
-  maxFiles = 10,
+  maxFiles: _maxFiles = 10,
   className = "",
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // Configuration Filestack avec votre API key
-  const client = filestack.init("AdaPuMcdXS7inEIbiDgO2z");
+  // Configuration Filestack avec API key depuis les variables d'environnement
+  const FILESTACK_API_KEY =
+    process.env.REACT_APP_FILESTACK_API_KEY || "AJOUNH2oSuidEE40RQHN3z";
+  const client = filestack.init(FILESTACK_API_KEY);
 
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
@@ -155,5 +157,3 @@ const SimpleFilestackUploader = ({
 };
 
 export default SimpleFilestackUploader;
-
-

@@ -106,10 +106,14 @@ const FacturesPage = () => {
         );
       }
 
+      // OPTIMISATION: Utiliser Map pour O(1) au lieu de O(n) avec find()
+      const clientsMap = new Map(clients.map(c => [c._id, c]));
+      const offersMap = new Map(offers.map(o => [o._id, o]));
+
       // Enrichir les factures avec les détails complets des clients et offres
       const enrichedFactures = facturesData.map((facture) => {
-        const client = clients.find((c) => c._id === facture.client_id);
-        const offre = offers.find((o) => o._id === facture.offre_id);
+        const client = clientsMap.get(facture.client_id);
+        const offre = offersMap.get(facture.offre_id);
 
         return {
           ...facture,
@@ -134,28 +138,18 @@ const FacturesPage = () => {
 
   const generateNumeroFacture = useCallback(
     (clientId, offreId) => {
-      console.log(
-        "🔍 Génération numéro facture - clientId:",
-        clientId,
-        "offreId:",
-        offreId
-      );
-      console.log("🔍 Clients disponibles:", clients);
-      console.log("🔍 Offres disponibles:", offers);
-
       if (!clientId || !offreId) {
-        console.log("❌ clientId ou offreId manquant");
         return "";
       }
 
-      const client = clients.find((c) => c._id === clientId);
-      const offre = offers.find((o) => o._id === offreId);
+      // OPTIMISATION: Utiliser Map pour O(1) au lieu de O(n)
+      const clientsMap = new Map(clients.map(c => [c._id, c]));
+      const offersMap = new Map(offers.map(o => [o._id, o]));
 
-      console.log("🔍 Client trouvé:", client);
-      console.log("🔍 Offre trouvée:", offre);
+      const client = clientsMap.get(clientId);
+      const offre = offersMap.get(offreId);
 
       if (!client || !offre) {
-        console.log("❌ Client ou offre non trouvé");
         return "";
       }
 
@@ -169,10 +163,7 @@ const FacturesPage = () => {
         "_"
       );
 
-      const numeroGenere = `Fac_${nomClient}_${nomOffre}`;
-      console.log("✅ Numéro généré:", numeroGenere);
-
-      return numeroGenere;
+      return `Fac_${nomClient}_${nomOffre}`;
     },
     [clients, offers]
   );
@@ -180,42 +171,42 @@ const FacturesPage = () => {
   const loadOffersAndClients = useCallback(async () => {
     try {
       console.log(
-        "🔄 Chargement des offres, clients, utilisateurs, personnel et états..."
+        "🔄 Chargement des offres, clients, utilisateurs, personnel, états et factures en parallèle..."
       );
-      const [offersData, clientsData, usersData, personnelData, etatsData] =
+      // OPTIMISATION: Charger les factures en parallèle avec les autres données
+      // Gérer fetchUsers séparément pour ignorer silencieusement l'erreur de permission
+      const [offersData, clientsData, personnelData, etatsData, facturesData] =
         await Promise.all([
           fetchOffers(token),
           fetchClients(token),
-          fetchUsers(token),
           fetchPersonnel(token),
           fetchFacturesEtats(token),
+          fetchFactures(token), // Charger les factures en parallèle
         ]);
-
-      console.log("📋 Offres chargées:", offersData);
-      console.log("👥 Clients chargés:", clientsData);
-      console.log("👤 Utilisateurs chargés:", usersData);
-      console.log("👥 Personnel chargé:", personnelData);
-      console.log("📊 États chargés:", etatsData);
+      
+      // Charger les utilisateurs séparément et ignorer l'erreur de permission
+      let usersData = [];
+      try {
+        usersData = await fetchUsers(token);
+      } catch (userError) {
+        // Ignorer silencieusement l'erreur de permission pour les utilisateurs
+        if (userError.message && userError.message.includes("users_manage") && userError.message.includes("cart_view_all")) {
+          console.log("ℹ️ Permission insuffisante pour charger les utilisateurs - ignoré silencieusement");
+        } else {
+          console.warn("⚠️ Erreur lors du chargement des utilisateurs:", userError);
+        }
+        usersData = [];
+      }
 
       // Filtrer les offres selon les permissions
       let filteredOffers = Array.isArray(offersData) ? offersData : [];
       if (!hasPermission("factures_view_all")) {
         const currentUserId = localStorage.getItem("userId");
-        console.log("🔍 Filtrage des offres - userId:", currentUserId);
-        console.log("🔍 Total offres avant filtrage:", filteredOffers.length);
         filteredOffers = filteredOffers.filter(
           (offre) =>
             offre.responsable_id === currentUserId ||
             offre.user_id === currentUserId ||
             offre.created_by === currentUserId
-        );
-        console.log(
-          "🔍 Offres filtrées pour l'utilisateur:",
-          filteredOffers.length
-        );
-      } else {
-        console.log(
-          "✅ Permission factures_view_all - Affichage de toutes les offres"
         );
       }
 
@@ -228,17 +219,75 @@ const FacturesPage = () => {
       if (Array.isArray(etatsData) && etatsData.length > 0) {
         setEtats(etatsData);
       } else {
-        console.log("🔄 Utilisation des états par défaut pour les factures");
         setEtats(["A envoyer au client", "En attente de payement", "Payée"]);
       }
+
+      // Traiter les factures immédiatement avec les données chargées
+      let facturesArray = Array.isArray(facturesData)
+        ? facturesData
+        : facturesData?.data || facturesData?.factures || [];
+
+      // Filtrer selon les permissions
+      if (
+        !hasPermission("factures_view_all") &&
+        hasPermission("factures_view")
+      ) {
+        const currentUserId = localStorage.getItem("userId");
+        facturesArray = facturesArray.filter(
+          (f) =>
+            f.responsable_id === currentUserId ||
+            f.user_id === currentUserId ||
+            f.created_by === currentUserId
+        );
+      }
+
+      // OPTIMISATION: Utiliser Map pour enrichissement rapide
+      const clientsArray = Array.isArray(clientsData) ? clientsData : [];
+      const clientsMap = new Map(clientsArray.map(c => [c._id, c]));
+      const offersMap = new Map(filteredOffers.map(o => [o._id, o]));
+
+      const enrichedFactures = facturesArray.map((facture) => {
+        const client = clientsMap.get(facture.client_id);
+        const offre = offersMap.get(facture.offre_id);
+
+        return {
+          ...facture,
+          client: client || { raison_sociale: "Client inconnu" },
+          offre: offre || { intitulee: "Offre inconnue" },
+          documents: facture.document || facture.documents || [],
+        };
+      });
+
+      setFactures(enrichedFactures);
+      setLoading(false);
+      setError("");
     } catch (error) {
       console.error("❌ Erreur lors du chargement des données:", error);
-      // Valeurs par défaut en cas d'erreur
+      // Ne pas afficher l'erreur si c'est uniquement l'erreur de permission pour les utilisateurs
+      const isUserPermissionError = error.message && 
+        error.message.includes("users_manage") && 
+        error.message.includes("cart_view_all");
+      
       setOffers([]);
       setClients([]);
       setUsers([]);
       setPersonnel([]);
-      setEtats(["A envoyer au client", "En attente de payement", "Payée"]);
+      // Garder les états par défaut avec couleurs (objets, pas strings)
+      const defaultStatuses = [
+        { nom: "A envoyer au client", couleur: "#ffc107" },
+        { nom: "En attente de payement", couleur: "#f67800" },
+        { nom: "Payée", couleur: "#28a745" },
+      ];
+      setEtats(defaultStatuses);
+      setFactures([]);
+      setLoading(false);
+      
+      // Ne pas afficher l'erreur de permission pour les utilisateurs
+      if (!isUserPermissionError) {
+        setError(`Erreur lors du chargement: ${error.message}`);
+      } else {
+        setError(""); // Pas d'erreur affichée
+      }
     }
   }, [token, hasPermission]);
 
@@ -250,10 +299,10 @@ const FacturesPage = () => {
       !hasPermission("factures_view_all")
     ) {
       console.log("🔓 FacturesPage - Permission refusée");
-      // navigate("/sources");
-      // return;
+      return;
     }
-    // Charger d'abord les clients et offres, puis les factures
+    // OPTIMISATION: Charger tout en une seule fois (factures incluses)
+    setLoading(true);
     loadOffersAndClients();
     // Charger les états de factures dynamiques
     loadInvoiceStatuses();
@@ -265,24 +314,16 @@ const FacturesPage = () => {
     loadInvoiceStatuses,
   ]);
 
-  // Synchronisation périodique avec l'API Flask
+  // OPTIMISATION: Synchronisation moins fréquente (30 secondes au lieu de 5)
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("🔄 Synchronisation périodique des états de factures...");
       loadInvoiceStatuses();
-    }, 5000); // Vérification toutes les 5 secondes
+    }, 30000); // Vérification toutes les 30 secondes
 
     return () => {
       clearInterval(interval);
     };
   }, [loadInvoiceStatuses]);
-
-  useEffect(() => {
-    // Charger les factures seulement après avoir chargé les clients et offres
-    if (clients.length > 0 && offers.length > 0) {
-      loadFactures();
-    }
-  }, [clients, offers, loadFactures]);
 
   const filteredFactures = factures.filter((facture) => {
     const search = searchTerm.toLowerCase();
@@ -849,28 +890,18 @@ const FactureModal = ({
 
   const generateNumeroFacture = useCallback(
     (clientId, offreId) => {
-      console.log(
-        "🔍 Génération numéro facture - clientId:",
-        clientId,
-        "offreId:",
-        offreId
-      );
-      console.log("🔍 Clients disponibles:", clients);
-      console.log("🔍 Offres disponibles:", offers);
-
       if (!clientId || !offreId) {
-        console.log("❌ clientId ou offreId manquant");
         return "";
       }
 
-      const client = clients.find((c) => c._id === clientId);
-      const offre = offers.find((o) => o._id === offreId);
+      // OPTIMISATION: Utiliser Map pour O(1) au lieu de O(n)
+      const clientsMap = new Map(clients.map(c => [c._id, c]));
+      const offersMap = new Map(offers.map(o => [o._id, o]));
 
-      console.log("🔍 Client trouvé:", client);
-      console.log("🔍 Offre trouvée:", offre);
+      const client = clientsMap.get(clientId);
+      const offre = offersMap.get(offreId);
 
       if (!client || !offre) {
-        console.log("❌ Client ou offre non trouvé");
         return "";
       }
 
@@ -884,10 +915,7 @@ const FactureModal = ({
         "_"
       );
 
-      const numeroGenere = `Fac_${nomClient}_${nomOffre}`;
-      console.log("✅ Numéro généré:", numeroGenere);
-
-      return numeroGenere;
+      return `Fac_${nomClient}_${nomOffre}`;
     },
     [clients, offers]
   );

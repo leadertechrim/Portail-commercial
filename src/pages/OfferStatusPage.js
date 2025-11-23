@@ -1,22 +1,42 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { offerStatusesAPI } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./OfferStatusPage.css";
 
 const OfferStatusPage = () => {
-  const [statuses, setStatuses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Charger les statuts depuis localStorage en premier pour affichage immédiat
+  const [statuses, setStatuses] = useState(() => {
+    const cached = localStorage.getItem("offerStatuses");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.log("📦 Statuts d'offres chargés depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        console.warn("Erreur lors du parsing des statuts en cache:", e);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les statuts en cache
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
-  const role = localStorage.getItem("role");
+  const _role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   // Statuts initiaux selon les spécifications
   const initialStatuses = useMemo(
@@ -54,9 +74,22 @@ const OfferStatusPage = () => {
   );
 
   const loadStatuses = useCallback(async () => {
+    // Vérifier si on a déjà des statuts en cache dans localStorage
+    const cached = localStorage.getItem("offerStatuses");
+    const hasCachedStatuses = cached && cached.length > 0;
+
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     try {
-      setLoading(true);
-      console.log("📋 Chargement des statuts d'offres depuis l'API Flask...");
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des statuts en cache
+      if (!hasCachedStatuses) {
+        setLoading(true);
+        console.log("📋 Chargement des statuts d'offres depuis l'API Flask...");
+      }
 
       // Charger depuis l'API Flask
       const apiStatuses = await offerStatusesAPI.getAll();
@@ -64,57 +97,76 @@ const OfferStatusPage = () => {
       if (apiStatuses && apiStatuses.length > 0) {
         console.log("📋 Statuts d'offres chargés depuis l'API:", apiStatuses);
         setStatuses(apiStatuses);
+        // Sauvegarder dans localStorage pour la synchronisation
+        localStorage.setItem("offerStatuses", JSON.stringify(apiStatuses));
       } else {
-        console.log("📋 Aucun statut trouvé, utilisation des statuts initiaux");
-        setStatuses(initialStatuses);
-        // Créer les statuts initiaux dans l'API
-        for (const status of initialStatuses) {
-          try {
-            await offerStatusesAPI.create(status);
-          } catch (err) {
-            console.warn("Erreur lors de la création du statut initial:", err);
+        // Si pas de cache, utiliser les statuts initiaux
+        if (!hasCachedStatuses) {
+          console.log(
+            "📋 Aucun statut trouvé, utilisation des statuts initiaux"
+          );
+          setStatuses(initialStatuses);
+          localStorage.setItem(
+            "offerStatuses",
+            JSON.stringify(initialStatuses)
+          );
+          // Créer les statuts initiaux dans l'API
+          for (const status of initialStatuses) {
+            try {
+              await offerStatusesAPI.create(status);
+            } catch (err) {
+              console.warn(
+                "Erreur lors de la création du statut initial:",
+                err
+              );
+            }
           }
         }
       }
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors du chargement des statuts:", err);
-      setError(`Erreur lors du chargement des statuts: ${err.message}`);
-      // Fallback vers les statuts initiaux en cas d'erreur API
-      setStatuses(initialStatuses);
+      // En cas d'erreur, garder les statuts en cache si disponibles
+      if (!hasCachedStatuses) {
+        setError(`Erreur lors du chargement des statuts: ${err.message}`);
+        setStatuses(initialStatuses);
+        localStorage.setItem("offerStatuses", JSON.stringify(initialStatuses));
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
     }
   }, [initialStatuses]);
 
   useEffect(() => {
     if (permissionsLoading) return;
-
-    if (!hasPermission("offer_status_manage")) {
-      console.log("🔓 OfferStatusPage - Permission refusée");
-      // navigate("/sources");
-      // return;
-    }
     loadStatuses();
-  }, [navigate, hasPermission, permissionsLoading, loadStatuses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
 
   // Synchronisation en temps réel avec les autres pages
   useEffect(() => {
-    const handleStorageChange = () => {
-      console.log(
-        "🔄 Synchronisation des statuts d'offres depuis localStorage..."
-      );
-      loadStatuses();
+    const handleStorageChange = (e) => {
+      // Seulement si c'est un changement de offerStatuses
+      if (e && e.key === "offerStatuses") {
+        console.log(
+          "🔄 Synchronisation des statuts d'offres depuis localStorage..."
+        );
+        loadStatuses();
+      }
     };
 
-    // Écouter les changements dans localStorage
+    // Écouter les changements dans localStorage (entre onglets)
     window.addEventListener("storage", handleStorageChange);
 
-    // Vérification périodique pour les changements dans le même onglet
-    const interval = setInterval(handleStorageChange, 1000);
+    // Écouter les événements personnalisés (même onglet)
+    const handleCustomEvent = () => {
+      loadStatuses();
+    };
+    window.addEventListener("offerStatusesUpdated", handleCustomEvent);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
+      window.removeEventListener("offerStatusesUpdated", handleCustomEvent);
     };
   }, [loadStatuses]);
 
@@ -126,58 +178,67 @@ const OfferStatusPage = () => {
 
   const handleCreateStatus = async (statusData) => {
     try {
-      const newStatus = {
-        _id: Date.now().toString(),
+      const newStatusData = {
         ...statusData,
         ordre: statuses.length + 1,
       };
-      const updatedStatuses = [...statuses, newStatus];
-      setStatuses(updatedStatuses);
 
-      // Sauvegarder dans localStorage pour la synchronisation
-      localStorage.setItem("offerStatuses", JSON.stringify(updatedStatuses));
+      // Créer via l'API Flask
+      const _newStatus = await offerStatusesAPI.create(newStatusData);
+
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
+      await loadStatuses();
 
       setIsAddModalOpen(false);
       alert("Statut créé avec succès");
     } catch (error) {
       console.error("Erreur lors de la création du statut:", error);
-      alert("Erreur lors de la création du statut");
+      alert(
+        "Erreur lors de la création du statut: " +
+          (error.message || "Erreur inconnue")
+      );
     }
   };
 
   const handleUpdateStatus = async (statusId, statusData) => {
     try {
-      const updatedStatuses = statuses.map((status) =>
-        status._id === statusId ? { ...status, ...statusData } : status
-      );
-      setStatuses(updatedStatuses);
+      // Mettre à jour via l'API Flask
+      await offerStatusesAPI.update(statusId, statusData);
 
-      // Sauvegarder dans localStorage pour la synchronisation
-      localStorage.setItem("offerStatuses", JSON.stringify(updatedStatuses));
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
+      await loadStatuses();
 
       setIsEditModalOpen(false);
       setEditingStatus(null);
       alert("Statut modifié avec succès");
     } catch (error) {
       console.error("Erreur lors de la modification du statut:", error);
-      alert("Erreur lors de la modification du statut");
+      alert(
+        "Erreur lors de la modification du statut: " +
+          (error.message || "Erreur inconnue")
+      );
     }
   };
 
   const handleDeleteStatus = async (statusId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce statut ?")) {
       try {
-        const updatedStatuses = statuses.filter(
-          (status) => status._id !== statusId
-        );
-        setStatuses(updatedStatuses);
+        // Supprimer via l'API Flask
+        await offerStatusesAPI.delete(statusId);
 
-        // Sauvegarder dans localStorage pour la synchronisation
-        localStorage.setItem("offerStatuses", JSON.stringify(updatedStatuses));
+        // Recharger depuis l'API pour avoir les données à jour
+        hasLoadedRef.current = false;
+        await loadStatuses();
 
         alert("Statut supprimé avec succès");
       } catch (error) {
-        alert("Erreur lors de la suppression du statut");
+        console.error("Erreur lors de la suppression du statut:", error);
+        alert(
+          "Erreur lors de la suppression du statut: " +
+            (error.message || "Erreur inconnue")
+        );
       }
     }
   };

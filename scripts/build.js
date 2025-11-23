@@ -49,6 +49,11 @@ REACT_APP_ENVIRONMENT=${environment}
 REACT_APP_PWA_ENABLED=true
 REACT_APP_APP_NAME=Portail des Appels d'Offres
 REACT_APP_APP_SHORT_NAME=APLOFR
+
+# Configuration des uploads Filestack
+REACT_APP_FILESTACK_API_KEY=AJOUNH2oSuidEE40RQHN3z
+REACT_APP_MAX_FILE_SIZE=10485760
+
 GENERATE_SOURCEMAP=${environment === "production" ? "false" : "true"}
 REACT_APP_DEBUG=${environment === "production" ? "false" : "true"}
 `;
@@ -154,6 +159,28 @@ function generateDirectoryTree(dir, depth) {
   return tree;
 }
 
+function removeConsoleLogs() {
+  log("\n🧹 Suppression des console.log pour la production...", colors.cyan);
+  try {
+    execSync("node scripts/removeConsoleLogs.js", { stdio: "inherit" });
+    log("✅ Console.log supprimés", colors.green);
+  } catch (error) {
+    log(`⚠️  Erreur lors de la suppression des console.log: ${error.message}`, colors.yellow);
+    // Ne pas bloquer le build en cas d'erreur
+  }
+}
+
+function restoreConsoleLogs() {
+  log("\n🔄 Restauration des console.log...", colors.cyan);
+  try {
+    execSync("node scripts/removeConsoleLogs.js restore", { stdio: "inherit" });
+    log("✅ Console.log restaurés", colors.green);
+  } catch (error) {
+    log(`⚠️  Erreur lors de la restauration des console.log: ${error.message}`, colors.yellow);
+    // Ne pas bloquer le build en cas d'erreur
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
   const environment = args[0] || "production";
@@ -173,8 +200,18 @@ function main() {
   // Linter
   runCommand("npm run lint || true", "Vérification du code");
 
+  // Supprimer les console.log en production
+  if (environment === "production") {
+    removeConsoleLogs();
+  }
+
   // Build
   runCommand("npm run build", "Build de l'application");
+
+  // Restaurer les console.log après le build (en production uniquement)
+  if (environment === "production") {
+    restoreConsoleLogs();
+  }
 
   // Optimiser le build
   optimizeBuild();

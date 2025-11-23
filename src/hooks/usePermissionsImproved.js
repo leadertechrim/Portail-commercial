@@ -6,9 +6,27 @@ import { rolesAPI } from "../api";
  * Utilise les nouvelles constantes de permissions
  */
 export const usePermissionsImproved = () => {
-  const [permissions, setPermissions] = useState([]);
-  const [userRole, setUserRole] = useState("");
-  const [loading, setLoading] = useState(true);
+  // Charger les permissions depuis localStorage en premier pour affichage immédiat
+  const [permissions, setPermissions] = useState(() => {
+    const cached = localStorage.getItem("userPermissions");
+    const cachedRole = localStorage.getItem("role");
+    if (cached && cachedRole) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.log("📦 Permissions chargées depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        console.warn("Erreur lors du parsing des permissions en cache:", e);
+      }
+    }
+    return [];
+  });
+  
+  const [userRole, setUserRole] = useState(() => {
+    return localStorage.getItem("role") || "";
+  });
+  
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les permissions en cache
   const [error, setError] = useState(null);
 
   // Charger les permissions de l'utilisateur
@@ -20,28 +38,21 @@ export const usePermissionsImproved = () => {
       setPermissions([]);
       setUserRole("");
       setLoading(false);
+      localStorage.removeItem("userPermissions");
       return;
     }
 
+    // Vérifier si on a déjà des permissions en cache
+    const hasCachedPermissions = permissions.length > 0;
+
     try {
-      setLoading(true);
+      // Ne pas mettre loading à true si on a déjà des permissions en cache
+      if (!hasCachedPermissions) {
+        setLoading(true);
+      }
       setError(null);
 
-      console.log("🔐 Chargement des permissions:");
-      console.log("  - Token présent:", !!token);
-      console.log("  - Token contenu:", token?.substring(0, 20) + "...");
-      console.log("  - Rôle dans localStorage:", role);
-      console.log("  - Type du rôle:", typeof role);
-      console.log("  - Comparaison admin:", role === "admin");
-      console.log("  - localStorage complet keys:", Object.keys(localStorage));
-      console.log("  - localStorage complet contenu:");
-      Object.keys(localStorage).forEach((key) => {
-        console.log(`    ${key}: ${localStorage.getItem(key)}`);
-      });
-
-      // Récupérer les permissions depuis l'API pour TOUS les rôles (y compris admin)
-      console.log(`🔐 Chargement des permissions pour le rôle: ${role}`);
-
+      // Récupérer les permissions depuis l'API
       const userPermissions = await rolesAPI.getCurrentUserPermissions(token);
 
       if (
@@ -52,30 +63,53 @@ export const usePermissionsImproved = () => {
       ) {
         console.log("⚠️ Permissions API vides, aucune permission accordée");
         setPermissions([]);
+        localStorage.removeItem("userPermissions");
       } else {
         console.log(
           "✅ Permissions chargées depuis l'API:",
           userPermissions.data.permissions
         );
         setPermissions(userPermissions.data.permissions);
+        // Sauvegarder dans localStorage pour le prochain chargement
+        localStorage.setItem("userPermissions", JSON.stringify(userPermissions.data.permissions));
       }
 
-      setUserRole(role);
+      setUserRole(role || "");
+      if (role) {
+        localStorage.setItem("role", role);
+      }
     } catch (err) {
       console.error("❌ Erreur chargement permissions:", err);
 
-      // En cas d'erreur, aucune permission accordée
-      setPermissions([]);
+      // En cas d'erreur, garder les permissions en cache si disponibles
+      if (!hasCachedPermissions) {
+        setPermissions([]);
+        localStorage.removeItem("userPermissions");
+      }
       setUserRole(role || "");
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Pas de dépendances pour éviter les boucles
+
+  // Vérifier si l'utilisateur est un rôle privilégié (admin, supadmin, etc.)
+  const isPrivilegedRole = useCallback(() => {
+    if (!userRole) return false;
+    const normalizedRole = userRole.trim().toLowerCase();
+    const privilegedRoles = ["admin", "supadmin", "administrateur principal", "administrateur système"];
+    return privilegedRoles.includes(normalizedRole);
+  }, [userRole]);
 
   // Vérifier si l'utilisateur a une permission spécifique
   const hasPermission = useCallback(
     (permission) => {
+      // Les rôles privilégiés ont toutes les permissions
+      if (isPrivilegedRole()) {
+        return true;
+      }
+
       if (!permissions || !Array.isArray(permissions)) {
         console.warn(
           `⚠️ hasPermission(${permission}): Permissions non chargées ou invalides`
@@ -95,55 +129,64 @@ export const usePermissionsImproved = () => {
         );
       }
 
-      if (userRole === "admin") {
-        return true; // Admin a tout
-      }
-
       return hasAccess;
     },
-    [permissions, userRole]
+    [permissions, userRole, isPrivilegedRole]
   );
 
   // Vérifier si l'utilisateur a au moins une des permissions listées
   const hasAnyPermission = useCallback(
     (permissionList) => {
-      if (!permissions || !Array.isArray(permissions)) {
-        return false;
+      // Les rôles privilégiés ont toutes les permissions
+      if (isPrivilegedRole()) {
+        return true;
       }
 
-      if (userRole === "admin") {
-        return true; // Admin a tout
+      if (!permissions || !Array.isArray(permissions)) {
+        return false;
       }
 
       return permissionList.some((permission) =>
         permissions.includes(permission)
       );
     },
-    [permissions, userRole]
+    [permissions, isPrivilegedRole]
   );
 
   // Vérifier si l'utilisateur a toutes les permissions listées
   const hasAllPermissions = useCallback(
     (permissionList) => {
-      if (!permissions || !Array.isArray(permissions)) {
-        return false;
+      // Les rôles privilégiés ont toutes les permissions
+      if (isPrivilegedRole()) {
+        return true;
       }
 
-      if (userRole === "admin") {
-        return true; // Admin a tout
+      if (!permissions || !Array.isArray(permissions)) {
+        return false;
       }
 
       return permissionList.every((permission) =>
         permissions.includes(permission)
       );
     },
-    [permissions, userRole]
+    [permissions, isPrivilegedRole]
   );
 
   // Charger les permissions au montage du composant
+  // Si on a déjà des permissions en cache, charger en arrière-plan sans bloquer
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setPermissions([]);
+      setUserRole("");
+      setLoading(false);
+      return;
+    }
+    
+    // Toujours charger pour mettre à jour, mais sans bloquer si on a déjà un cache
     loadPermissions();
-  }, [loadPermissions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger une seule fois au montage
 
   // Debug des permissions (uniquement en développement)
   useEffect(() => {

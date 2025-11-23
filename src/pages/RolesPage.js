@@ -1,13 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { rolesAPI, API_BASE_URL } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
+import logger from "../utils/logger";
+import notify from "../utils/notifications";
 import "./RolesPage.css";
 
 const RolesPage = () => {
-  const [roles, setRoles] = useState([]);
+  // Charger les rôles depuis localStorage en premier pour affichage immédiat
+  const [roles, setRoles] = useState(() => {
+    const cached = localStorage.getItem("roles");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        logger.log("📦 Rôles chargés depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        logger.warn("Erreur lors du parsing des rôles en cache:", e);
+      }
+    }
+    return [];
+  });
   const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les rôles en cache
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +31,7 @@ const RolesPage = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [viewingRole, setViewingRole] = useState(null);
+  const hasLoadedRef = useRef(false);
 
   // États pour les formulaires
   const [formData, setFormData] = useState({
@@ -32,54 +48,58 @@ const RolesPage = () => {
   const token = localStorage.getItem("token");
 
   const loadRoles = useCallback(async () => {
+    // Vérifier si on a déjà des rôles en cache dans localStorage
+    const cached = localStorage.getItem("roles");
+    const hasCachedRoles = cached && cached.length > 0;
+    
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+    
     try {
-      console.log("🔄 RolesPage loadRoles - Début du chargement");
-      setLoading(true);
-      setError(null);
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des rôles en cache
+      if (!hasCachedRoles) {
+        setLoading(true);
+        logger.log("📋 Chargement des rôles depuis l'API Flask...");
+      }
 
       const response = await rolesAPI.getAll(token);
-      console.log("🔄 RolesPage loadRoles - Réponse:", response);
+      logger.log("🔄 RolesPage loadRoles - Réponse:", response);
 
       if (response && response.data) {
+        logger.log("📋 Rôles chargés depuis l'API:", response.data);
         setRoles(response.data);
-        console.log(
-          "✅ RolesPage loadRoles - Rôles chargés:",
-          response.data.length
-        );
-
-        // Logs détaillés pour chaque rôle
-        response.data.forEach((role, index) => {
-          console.log(`🔍 Rôle ${index + 1}:`, role.nom);
-          console.log(`🔍 Permissions du rôle ${role.nom}:`, role.permissions);
-          console.log(`🔍 Type des permissions:`, typeof role.permissions);
-          console.log(`🔍 Est-ce un tableau?`, Array.isArray(role.permissions));
-          if (Array.isArray(role.permissions) && role.permissions.length > 0) {
-            console.log(
-              `🔍 Premier élément de permission:`,
-              role.permissions[0]
-            );
-            console.log(
-              `🔍 Type du premier élément:`,
-              typeof role.permissions[0]
-            );
-          }
-        });
+        // Sauvegarder dans localStorage pour la synchronisation
+        localStorage.setItem("roles", JSON.stringify(response.data));
+      } else if (response && Array.isArray(response)) {
+        // Si la réponse est directement un tableau
+        logger.log("📋 Rôles chargés depuis l'API (tableau direct):", response);
+        setRoles(response);
+        localStorage.setItem("roles", JSON.stringify(response));
       } else {
-        console.log("⚠️ RolesPage loadRoles - Aucune donnée reçue");
-        setRoles([]);
+        logger.log("⚠️ RolesPage loadRoles - Aucune donnée reçue");
+        if (!hasCachedRoles) {
+          setRoles([]);
+        }
       }
+      setLoading(false);
     } catch (err) {
-      console.error("❌ RolesPage loadRoles - Erreur:", err);
-      setError(err.message);
-      setRoles([]);
-    } finally {
+      logger.error("❌ RolesPage loadRoles - Erreur:", err);
+      // En cas d'erreur, garder les rôles en cache si disponibles
+      if (!hasCachedRoles) {
+        setError(err.message);
+        setRoles([]);
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
     }
   }, [token]);
 
   const loadPermissions = useCallback(async () => {
     try {
-      console.log("🔄 Chargement des permissions disponibles");
+      logger.log("🔄 Chargement des permissions disponibles");
       const response = await fetch(`${API_BASE_URL}/api/permissions`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -88,57 +108,67 @@ const RolesPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🔍 Structure des permissions reçues:", data);
-        console.log("🔍 Permissions data:", data.data);
+        logger.log("🔍 Structure des permissions reçues:", data);
+        logger.log("🔍 Permissions data:", data.data);
 
         if (data.data && data.data.length > 0) {
-          console.log("🔍 Premier élément de permission:", data.data[0]);
-          console.log("🔍 CLÉS du premier élément:", Object.keys(data.data[0]));
-          console.log(
+          logger.log("🔍 Premier élément de permission:", data.data[0]);
+          logger.log("🔍 CLÉS du premier élément:", Object.keys(data.data[0]));
+          logger.log(
             "🔍 VALEURS du premier élément:",
             Object.values(data.data[0])
           );
 
           // Normaliser les permissions pour s'assurer qu'elles ont les bons champs
-          const normalizedPermissions = data.data.map((perm) => {
-            // Déterminer le nom de la permission
-            const permName = perm.nom || perm.name || perm.code || perm._id;
+          const seenPermissions = new Set();
+          const normalizedPermissions = data.data
+            .map((perm) => {
+              // Déterminer le nom de la permission
+              const permName = perm.nom || perm.name || perm.code || perm._id;
 
-            // Déterminer la catégorie
-            const permCategory = perm.category || perm.categorie || "Autres";
+              // Déterminer la catégorie
+              const permCategory = perm.category || perm.categorie || "Autres";
 
-            // Déterminer la description
-            const permDescription =
-              perm.description || perm.desc || perm.titre || permName;
+              // Déterminer la description
+              const permDescription =
+                perm.description || perm.desc || perm.titre || permName;
 
-            console.log(`🔄 Normalisation permission:`, {
-              original: perm,
-              nom: permName,
-              category: permCategory,
-              description: permDescription,
+              logger.log(`🔄 Normalisation permission:`, {
+                original: perm,
+                nom: permName,
+                category: permCategory,
+                description: permDescription,
+              });
+
+              return {
+                ...perm,
+                nom: permName,
+                category: permCategory,
+                description: permDescription,
+              };
+            })
+            .filter((perm) => {
+              if (!perm.nom) return false;
+              if (seenPermissions.has(perm.nom)) {
+                return false;
+              }
+              seenPermissions.add(perm.nom);
+              return true;
             });
 
-            return {
-              ...perm,
-              nom: permName,
-              category: permCategory,
-              description: permDescription,
-            };
-          });
-
-          console.log("✅ Permissions normalisées:", normalizedPermissions);
+          logger.log("✅ Permissions normalisées:", normalizedPermissions);
           setPermissions(normalizedPermissions);
         } else {
           setPermissions([]);
         }
 
-        console.log("✅ Permissions chargées:", data.data?.length || 0);
+        logger.log("✅ Permissions chargées:", data.data?.length || 0);
       } else {
-        console.log("⚠️ Erreur lors du chargement des permissions");
+        logger.log("⚠️ Erreur lors du chargement des permissions");
         setPermissions([]);
       }
     } catch (err) {
-      console.error("❌ Erreur lors du chargement des permissions:", err);
+      logger.error("❌ Erreur lors du chargement des permissions:", err);
       setPermissions([]);
     }
   }, [token]);
@@ -153,12 +183,40 @@ const RolesPage = () => {
 
     loadRoles();
     loadPermissions();
-  }, [hasPermission, permissionsLoading, navigate, loadRoles, loadPermissions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
+
+  // Synchronisation en temps réel avec les autres pages
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // Seulement si c'est un changement de roles
+      if (e && e.key === "roles") {
+        logger.log(
+          "🔄 Synchronisation des rôles depuis localStorage..."
+        );
+        loadRoles();
+      }
+    };
+
+    // Écouter les changements dans localStorage (entre onglets)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Écouter les événements personnalisés (même onglet)
+    const handleCustomEvent = () => {
+      loadRoles();
+    };
+    window.addEventListener("rolesUpdated", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("rolesUpdated", handleCustomEvent);
+    };
+  }, [loadRoles]);
 
   // Log des changements de formData.permissions
   useEffect(() => {
-    console.log("🔄 formData.permissions a changé:", formData.permissions);
-    console.log("🔍 Nombre de permissions:", formData.permissions.length);
+    logger.log("🔄 formData.permissions a changé:", formData.permissions);
+    logger.log("🔍 Nombre de permissions:", formData.permissions.length);
   }, [formData.permissions]);
 
   const filteredRoles = roles.filter(
@@ -169,7 +227,7 @@ const RolesPage = () => {
 
   const handleAddRole = async () => {
     try {
-      console.log("🔄 Ouverture du modal d'ajout de rôle");
+      logger.log("🔄 Ouverture du modal d'ajout de rôle");
       setFormData({
         nom: "",
         description: "",
@@ -179,22 +237,22 @@ const RolesPage = () => {
       });
       setIsAddModalOpen(true);
     } catch (err) {
-      console.error("❌ Erreur lors de l'ouverture du modal:", err);
+      logger.error("❌ Erreur lors de l'ouverture du modal:", err);
       setError(err.message);
     }
   };
 
   const handleViewRole = (role) => {
-    console.log("👁️ Affichage du rôle:", role);
+    logger.log("👁️ Affichage du rôle:", role);
     setViewingRole(role);
     setIsViewModalOpen(true);
   };
 
   const handleEditRole = (role) => {
-    console.log("✏️ Modification du rôle:", role);
-    console.log("🔍 Permissions du rôle:", role.permissions);
-    console.log("🔍 Type des permissions:", typeof role.permissions);
-    console.log("🔍 Est-ce un tableau?", Array.isArray(role.permissions));
+    logger.log("✏️ Modification du rôle:", role);
+    logger.log("🔍 Permissions du rôle:", role.permissions);
+    logger.log("🔍 Type des permissions:", typeof role.permissions);
+    logger.log("🔍 Est-ce un tableau?", Array.isArray(role.permissions));
 
     // Extraire les noms des permissions si c'est un tableau d'objets
     let permissionNames = [];
@@ -213,7 +271,7 @@ const RolesPage = () => {
         .filter(Boolean); // Enlever les valeurs vides
     }
 
-    console.log("🔍 Noms de permissions extraits:", permissionNames);
+    logger.log("🔍 Noms de permissions extraits:", permissionNames);
 
     setFormData({
       nom: role.nom || "",
@@ -227,58 +285,69 @@ const RolesPage = () => {
   };
 
   const handleDeleteRole = async (role) => {
-    if (
-      window.confirm(
-        `Êtes-vous sûr de vouloir supprimer le rôle "${role.nom}" ?`
-      )
-    ) {
+    const confirmed = await notify.confirm(
+      `Êtes-vous sûr de vouloir supprimer le rôle "${role.nom}" ?`
+    );
+    if (confirmed) {
       try {
-        console.log("🗑️ Suppression du rôle:", role);
+        logger.log("🗑️ Suppression du rôle:", role);
         await rolesAPI.delete(role._id, token);
-        console.log("✅ Rôle supprimé avec succès");
-        loadRoles(); // Recharger la liste
+        logger.log("✅ Rôle supprimé avec succès");
+        // Recharger depuis l'API pour avoir les données à jour
+        hasLoadedRef.current = false;
+        await loadRoles();
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("rolesUpdated"));
+        notify.success("Rôle supprimé avec succès");
       } catch (err) {
-        console.error("❌ Erreur lors de la suppression:", err);
+        logger.error("❌ Erreur lors de la suppression:", err);
         setError(err.message);
+        notify.error(`Erreur lors de la suppression: ${err.message}`);
       }
     }
   };
 
   const handleSaveRole = async (roleData) => {
     try {
-      console.log("💾 Sauvegarde du rôle:", roleData);
-      console.log("🔍 État editingRole:", editingRole);
-      console.log("🔍 Token:", token ? "Présent" : "Manquant");
+      logger.log("💾 Sauvegarde du rôle:", roleData);
+      logger.log("🔍 État editingRole:", editingRole);
+      logger.log("🔍 Token:", token ? "Présent" : "Manquant");
 
       if (editingRole) {
         // Modification
-        console.log("🔄 Modification du rôle existant:", editingRole._id);
+        logger.log("🔄 Modification du rôle existant:", editingRole._id);
         const result = await rolesAPI.update(editingRole._id, roleData, token);
-        console.log("✅ Rôle modifié avec succès:", result);
+        logger.log("✅ Rôle modifié avec succès:", result);
       } else {
         // Création
-        console.log("🆕 Création d'un nouveau rôle");
+        logger.log("🆕 Création d'un nouveau rôle");
         const result = await rolesAPI.create(roleData, token);
-        console.log("✅ Rôle créé avec succès:", result);
+        logger.log("✅ Rôle créé avec succès:", result);
       }
 
-      console.log("🔄 Rechargement de la liste des rôles...");
-      await loadRoles(); // Recharger la liste
-      console.log("✅ Liste des rôles rechargée");
+      logger.log("🔄 Rechargement de la liste des rôles...");
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
+      await loadRoles();
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("rolesUpdated"));
+      logger.log("✅ Liste des rôles rechargée");
 
-      console.log("🔄 Fermeture des modales...");
+      logger.log("🔄 Fermeture des modales...");
       closeModals();
-      console.log("✅ Modales fermées");
+      logger.log("✅ Modales fermées");
 
       // Afficher le message de succès
       const action = editingRole ? "modifié" : "créé";
       setSuccessMessage(`Rôle ${action} avec succès !`);
+      notify.success(`Rôle ${action} avec succès !`);
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      console.error("❌ Erreur lors de la sauvegarde:", err);
-      console.error("❌ Message d'erreur:", err.message);
-      console.error("❌ Stack trace:", err.stack);
+      logger.error("❌ Erreur lors de la sauvegarde:", err);
+      logger.error("❌ Message d'erreur:", err.message);
+      logger.error("❌ Stack trace:", err.stack);
       setError(err.message);
+      notify.error(`Erreur lors de la sauvegarde: ${err.message}`);
       setSuccessMessage(""); // Effacer le message de succès en cas d'erreur
     }
   };
@@ -291,35 +360,35 @@ const RolesPage = () => {
   };
 
   const handlePermissionToggle = (permissionName) => {
-    console.log("🔄 Toggle permission:", permissionName);
-    console.log("🔍 Type de permission:", typeof permissionName);
-    console.log("🔍 Permissions actuelles:", formData.permissions);
-    console.log(
+    logger.log("🔄 Toggle permission:", permissionName);
+    logger.log("🔍 Type de permission:", typeof permissionName);
+    logger.log("🔍 Permissions actuelles:", formData.permissions);
+    logger.log(
       "🔍 Type des permissions actuelles:",
       formData.permissions.map((p) => typeof p)
     );
-    console.log(
+    logger.log(
       "🔍 Permission déjà sélectionnée?",
       formData.permissions.includes(permissionName)
     );
 
     setFormData((prev) => {
       const isSelected = prev.permissions.includes(permissionName);
-      console.log("🔍 isSelected:", isSelected);
+      logger.log("🔍 isSelected:", isSelected);
 
       let newPermissions;
       if (isSelected) {
         // Désélectionner : retirer la permission
         newPermissions = prev.permissions.filter((p) => p !== permissionName);
-        console.log("➖ Désélection - Retrait de:", permissionName);
+        logger.log("➖ Désélection - Retrait de:", permissionName);
       } else {
         // Sélectionner : ajouter la permission
         newPermissions = [...prev.permissions, permissionName];
-        console.log("➕ Sélection - Ajout de:", permissionName);
+        logger.log("➕ Sélection - Ajout de:", permissionName);
       }
 
-      console.log("🔍 Nouvelles permissions:", newPermissions);
-      console.log("🔍 Nombre de permissions:", newPermissions.length);
+      logger.log("🔍 Nouvelles permissions:", newPermissions);
+      logger.log("🔍 Nombre de permissions:", newPermissions.length);
       return {
         ...prev,
         permissions: newPermissions,
@@ -608,7 +677,7 @@ const RolesPage = () => {
                     </button>
                   </div>
                   <div className="permissions-grid">
-                    {console.log("🔍 Permissions dans le rendu:", permissions)}
+                    {logger.log("🔍 Permissions dans le rendu:", permissions)}
                     {permissions.length === 0 ? (
                       <div className="no-permissions-message">
                         <p>Aucune permission disponible</p>
@@ -629,7 +698,7 @@ const RolesPage = () => {
                           {}
                         );
 
-                        console.log(
+                        logger.log(
                           "🔍 Permissions groupées:",
                           groupedPermissions
                         );
@@ -644,7 +713,7 @@ const RolesPage = () => {
                                     formData.permissions.includes(
                                       permission.nom
                                     );
-                                  console.log(
+                                  logger.log(
                                     `🔍 Rendu checkbox pour "${permission.nom}":`,
                                     {
                                       nom: permission.nom,
@@ -666,7 +735,7 @@ const RolesPage = () => {
                                         checked={isChecked}
                                         onChange={(e) => {
                                           e.stopPropagation();
-                                          console.log(
+                                          logger.log(
                                             "🖱️ Clic sur checkbox:",
                                             permission.nom
                                           );
@@ -813,7 +882,7 @@ const RolesPage = () => {
                     </button>
                   </div>
                   <div className="permissions-grid">
-                    {console.log("🔍 Permissions dans le rendu:", permissions)}
+                    {logger.log("🔍 Permissions dans le rendu:", permissions)}
                     {permissions.length === 0 ? (
                       <div className="no-permissions-message">
                         <p>Aucune permission disponible</p>
@@ -834,7 +903,7 @@ const RolesPage = () => {
                           {}
                         );
 
-                        console.log(
+                        logger.log(
                           "🔍 Permissions groupées:",
                           groupedPermissions
                         );
@@ -849,7 +918,7 @@ const RolesPage = () => {
                                     formData.permissions.includes(
                                       permission.nom
                                     );
-                                  console.log(
+                                  logger.log(
                                     `🔍 Rendu checkbox pour "${permission.nom}":`,
                                     {
                                       nom: permission.nom,
@@ -871,7 +940,7 @@ const RolesPage = () => {
                                         checked={isChecked}
                                         onChange={(e) => {
                                           e.stopPropagation();
-                                          console.log(
+                                          logger.log(
                                             "🖱️ Clic sur checkbox:",
                                             permission.nom
                                           );

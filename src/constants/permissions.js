@@ -96,6 +96,7 @@ export const PERMISSIONS_OFFRES_IA = {
   VIEW: "offres_ia_view",
   MASQUER: "offres_ia_masquer",  // Seul permission pour masquer les faux positifs
   VIEW_STATS: "offres_ia_view_stats",
+  SUPPRIMER: "offres_ia_supprimer",
 };
 
 // ===== REGROUPEMENT PAR MODULE =====

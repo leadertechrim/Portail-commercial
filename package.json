@@ -30,7 +30,9 @@
     "clean:build": "node scripts/cleanup.js build",
     "clean:deps": "node scripts/cleanup.js deps",
     "clean:logs": "node scripts/cleanup.js logs",
-    "analyze": "node scripts/cleanup.js analyze"
+    "analyze": "node scripts/cleanup.js analyze",
+    "remove:console": "node scripts/removeConsoleLogs.js",
+    "restore:console": "node scripts/removeConsoleLogs.js restore"
   },
   "browserslist": {
     "production": [

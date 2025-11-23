@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { offresIAAPI } from "../api";
 import { PERMISSIONS_OFFRES_IA } from "../constants/permissions";
-import { usePermissions } from "../hooks/usePermissions";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import {
   FiSearch,
   FiFilter,
@@ -20,7 +20,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { AiOutlineRobot } from "react-icons/ai";
-import { BsCheckCircle, BsStar, BsTrash } from "react-icons/bs";
+import { BsStar, BsTrash } from "react-icons/bs";
 import "./OffresIAPage.css";
 
 const OffresIAPage = () => {
@@ -33,12 +33,29 @@ const OffresIAPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const token = localStorage.getItem("token");
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading: permissionsLoading } =
+    usePermissionsImproved();
 
+  const canView = hasPermission(PERMISSIONS_OFFRES_IA.VIEW);
+  const canViewStats = hasPermission(PERMISSIONS_OFFRES_IA.VIEW_STATS);
   const canMasquer = hasPermission(PERMISSIONS_OFFRES_IA.MASQUER);
+  const canSupprimer = hasPermission(PERMISSIONS_OFFRES_IA.SUPPRIMER);
+  const canFetchStats = canView || canViewStats;
+
+  useEffect(() => {
+    if (!permissionsLoading) {
+      console.log("🔐 Permissions Offres IA:", {
+        canView,
+        canViewStats,
+        canMasquer,
+        canSupprimer,
+      });
+    }
+  }, [permissionsLoading, canView, canViewStats, canMasquer, canSupprimer]);
 
   // Charger les données
   const loadData = async () => {
+    if (!canFetchStats) return;
     setLoading(true);
     try {
       // Toujours charger les stats
@@ -46,25 +63,27 @@ const OffresIAPage = () => {
       console.log("📊 Statistiques:", statsData);
       setStats(statsData);
 
-      // Charger les offres en fonction du filtre actif
-      let offresData;
-      if (filter === "masques") {
-        console.log("🔄 Chargement des offres MASQUÉES");
-        // Si le filtre "masqués" est actif, charger les offres masquées
-        offresData = await offresIAAPI.getMasques(token);
-        console.log("✅ Offres masquées chargées:", offresData?.length || 0);
-      } else {
-        console.log("🔄 Chargement des offres INFORMATIQUES");
-        // Sinon, charger les offres informatiques (non masquées)
-        offresData = await offresIAAPI.getAll(token);
-        console.log(
-          "✅ Offres informatiques chargées:",
-          offresData?.length || 0
-        );
-      }
+      if (canView) {
+        // Charger les offres en fonction du filtre actif
+        let offresData;
+        if (filter === "masques") {
+          console.log("🔄 Chargement des offres MASQUÉES");
+          offresData = await offresIAAPI.getMasques(token);
+          console.log("✅ Offres masquées chargées:", offresData?.length || 0);
+        } else {
+          console.log("🔄 Chargement des offres INFORMATIQUES");
+          offresData = await offresIAAPI.getAll(token);
+          console.log(
+            "✅ Offres informatiques chargées:",
+            offresData?.length || 0
+          );
+        }
 
-      console.log("📋 Exemple d'offre chargée:", offresData[0]);
-      setOffres(offresData);
+        console.log("📋 Exemple d'offre chargée:", offresData[0]);
+        setOffres(offresData);
+      } else {
+        setOffres([]);
+      }
     } catch (error) {
       console.error("Erreur chargement données:", error);
     } finally {
@@ -73,11 +92,15 @@ const OffresIAPage = () => {
   };
 
   useEffect(() => {
+    if (permissionsLoading || !canFetchStats) {
+      return;
+    }
+
     loadData();
-    // Rafraîchir toutes les 60 secondes
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
-  }, [filter]); // Recharger quand le filtre change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, permissionsLoading, canFetchStats, canView]); // Recharger quand le filtre ou les permissions changent
 
   // Masquer un appel d'offres
   const handleMasquer = async (url, titre) => {
@@ -155,7 +178,7 @@ const OffresIAPage = () => {
 
   // Mettre en corbeille (suppression définitive de l'UI)
   const handleMettreEnCorbeille = async (url, titre) => {
-    if (!canMasquer) {
+    if (!canSupprimer) {
       alert("❌ Vous n'avez pas la permission de mettre en corbeille");
       return;
     }
@@ -275,6 +298,24 @@ const OffresIAPage = () => {
     return pages;
   };
 
+  if (permissionsLoading) {
+    return (
+      <div className="offres-ia-page">
+        <div className="loading">⏳ Chargement en cours...</div>
+      </div>
+    );
+  }
+
+  if (!canFetchStats) {
+    return (
+      <div className="offres-ia-page">
+        <div className="no-permission">
+          Permission requise pour accéder aux Offres IA.
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="offres-ia-page">
@@ -294,265 +335,276 @@ const OffresIAPage = () => {
       </div>
 
       {/* Statistiques */}
-      <div className="stats-container">
-        <div className="stat-card">
-          <FiLayers className="stat-icon" />
-          <div className="stat-number">{stats.total}</div>
-          <div className="stat-label">Total Appels d'Offres</div>
-        </div>
-        <div className="stat-card informatique">
-          <FiCpu className="stat-icon" />
-          <div className="stat-number">{stats.informatique}</div>
-          <div className="stat-label">Informatique (IA)</div>
-        </div>
-        {canMasquer && (
-          <div className="stat-card masques">
-            <FiEyeOff className="stat-icon" />
-            <div className="stat-number">{stats.masques}</div>
-            <div className="stat-label">Masqués</div>
+      {canViewStats && (
+        <div className="stats-container">
+          <div className="stat-card">
+            <FiLayers className="stat-icon" />
+            <div className="stat-number">{stats.total}</div>
+            <div className="stat-label">Total Appels d'Offres</div>
           </div>
-        )}
-        <div className="stat-card pdf">
-          <HiOutlineDocumentText className="stat-icon" />
-          <div className="stat-number">{stats.avec_pdf || 0}</div>
-          <div className="stat-label">Avec PDF</div>
-        </div>
-      </div>
-
-      {/* Filtres et recherche */}
-      <div className="filters-section">
-        <div className="filters-buttons">
-          <button
-            className={`filter-btn ${filter === "tous" ? "active" : ""}`}
-            onClick={() => setFilter("tous")}
-          >
-            <FiFilter /> Tous
-          </button>
+          <div className="stat-card informatique">
+            <FiCpu className="stat-icon" />
+            <div className="stat-number">{stats.informatique}</div>
+            <div className="stat-label">Informatique (IA)</div>
+          </div>
           {canMasquer && (
-            <button
-              className={`filter-btn ${filter === "masques" ? "active" : ""}`}
-              onClick={() => setFilter("masques")}
-            >
-              <FiEyeOff /> Masqués ({nombreMasques})
-            </button>
+            <div className="stat-card masques">
+              <FiEyeOff className="stat-icon" />
+              <div className="stat-number">{stats.masques}</div>
+              <div className="stat-label">Masqués</div>
+            </div>
           )}
-        </div>
-
-        <div className="search-container">
-          <FiSearch className="search-icon" />
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Rechercher par titre ou description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Informations de pagination */}
-      {filteredOffres.length > 0 && (
-        <div className="pagination-info">
-          <div className="results-count">
-            <FiBarChart2 /> Affichage{" "}
-            {filteredOffres.length === 0
-              ? "d'aucun résultat"
-              : `de ${startIndex + 1} à ${Math.min(
-                  endIndex,
-                  filteredOffres.length
-                )} sur ${filteredOffres.length} résultat(s)`}
-          </div>
-          <div className="items-per-page">
-            <label htmlFor="itemsPerPage">Afficher :</label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+          <div className="stat-card pdf">
+            <HiOutlineDocumentText className="stat-icon" />
+            <div className="stat-number">{stats.avec_pdf || 0}</div>
+            <div className="stat-label">Avec PDF</div>
           </div>
         </div>
       )}
 
-      {/* Liste des appels d'offres */}
-      <div className="offres-list">
-        {filteredOffres.length === 0 ? (
-          <div className="no-results">Aucun appel d'offres trouvé</div>
-        ) : (
-          currentOffres.map((offre) => (
-            <div
-              key={offre.url}
-              className={`offre-card ${offre.est_masque ? "masque" : ""}`}
-            >
-              <div className="offre-header">
-                <h3 className="offre-titre">{offre.titre}</h3>
-                <div className="offre-badges">
-                  {offre.analysis_result?.est_informatique_ia && (
-                    <span className="badge informatique">
-                      <FiCpu /> INFORMATIQUE (IA)
-                    </span>
-                  )}
-                  {offre.nb_pdf > 0 && (
-                    <span className="badge pdf">
-                      <HiOutlineDocumentText /> {offre.nb_pdf} PDF
-                      {offre.nb_pdf_analyses > 0 &&
-                        ` (${offre.nb_pdf_analyses} analysés)`}
-                    </span>
-                  )}
-                  {offre.est_masque && (
-                    <span className="badge masque">
-                      <FiEyeOff /> Masqué
-                    </span>
-                  )}
-                  {offre.ia_score && (
-                    <span className="badge score">
-                      <BsStar /> Score: {(offre.ia_score * 100).toFixed(0)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {offre.description && (
-                <p className="offre-description">{offre.description}</p>
+      {/* Filtres, recherche et liste visibles uniquement si consultation autorisée */}
+      {canView && (
+        <>
+          <div className="filters-section">
+            <div className="filters-buttons">
+              <button
+                className={`filter-btn ${filter === "tous" ? "active" : ""}`}
+                onClick={() => setFilter("tous")}
+              >
+                <FiFilter /> Tous
+              </button>
+              {canMasquer && (
+                <button
+                  className={`filter-btn ${
+                    filter === "masques" ? "active" : ""
+                  }`}
+                  onClick={() => setFilter("masques")}
+                >
+                  <FiEyeOff /> Masqués ({nombreMasques})
+                </button>
               )}
+            </div>
 
-              <div className="offre-meta">
-                <span className="meta-item">
-                  <FiGlobe /> {offre.source_entite || "Source inconnue"}
-                </span>
-                <span className="meta-item">
-                  <FiCalendar />{" "}
-                  {new Date(offre.date_added).toLocaleDateString("fr-FR")}
-                </span>
+            <div className="search-container">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Rechercher par titre ou description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {filteredOffres.length > 0 && (
+            <div className="pagination-info">
+              <div className="results-count">
+                <FiBarChart2 /> Affichage{" "}
+                {filteredOffres.length === 0
+                  ? "d'aucun résultat"
+                  : `de ${startIndex + 1} à ${Math.min(
+                      endIndex,
+                      filteredOffres.length
+                    )} sur ${filteredOffres.length} résultat(s)`}
               </div>
+              <div className="items-per-page">
+                <label htmlFor="itemsPerPage">Afficher :</label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+          )}
 
-              {/* PDF */}
-              {offre.liens_pdf && offre.liens_pdf.length > 0 && (
-                <div className="offre-documents">
-                  <strong>
-                    <FiFileText /> Documents PDF ({offre.liens_pdf.length})
-                  </strong>
-                  <div className="pdf-links">
-                    {offre.liens_pdf.slice(0, 5).map((pdf, idx) => (
-                      <a
-                        key={idx}
-                        href={pdf.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="doc-link"
-                        title={pdf.texte}
+          <div className="offres-list">
+            {filteredOffres.length === 0 ? (
+              <div className="no-results">Aucun appel d'offres trouvé</div>
+            ) : (
+              currentOffres.map((offre) => (
+                <div
+                  key={offre.url}
+                  className={`offre-card ${offre.est_masque ? "masque" : ""}`}
+                >
+                  <div className="offre-header">
+                    <h3 className="offre-titre">{offre.titre}</h3>
+                    <div className="offre-badges">
+                      {offre.analysis_result?.est_informatique_ia && (
+                        <span className="badge informatique">
+                          <FiCpu /> INFORMATIQUE (IA)
+                        </span>
+                      )}
+                      {offre.nb_pdf > 0 && (
+                        <span className="badge pdf">
+                          <HiOutlineDocumentText /> {offre.nb_pdf} PDF
+                          {offre.nb_pdf_analyses > 0 &&
+                            ` (${offre.nb_pdf_analyses} analysés)`}
+                        </span>
+                      )}
+                      {offre.est_masque && (
+                        <span className="badge masque">
+                          <FiEyeOff /> Masqué
+                        </span>
+                      )}
+                      {offre.ia_score && (
+                        <span className="badge score">
+                          <BsStar /> Score: {(offre.ia_score * 100).toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {offre.description && (
+                    <p className="offre-description">{offre.description}</p>
+                  )}
+
+                  <div className="offre-meta">
+                    <span className="meta-item">
+                      <FiGlobe /> {offre.source_entite || "Source inconnue"}
+                    </span>
+                    <span className="meta-item">
+                      <FiCalendar />{" "}
+                      {new Date(offre.date_added).toLocaleDateString("fr-FR")}
+                    </span>
+                  </div>
+
+                  {/* PDF */}
+                  {offre.liens_pdf && offre.liens_pdf.length > 0 && (
+                    <div className="offre-documents">
+                      <strong>
+                        <FiFileText /> Documents PDF ({offre.liens_pdf.length})
+                      </strong>
+                      <div className="pdf-links">
+                        {offre.liens_pdf.slice(0, 5).map((pdf, idx) => (
+                          <a
+                            key={idx}
+                            href={pdf.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="doc-link"
+                            title={pdf.texte}
+                          >
+                            <FiPaperclip /> PDF {idx + 1}:{" "}
+                            {pdf.texte?.substring(0, 40)}
+                            {pdf.texte?.length > 40 ? "..." : ""}
+                          </a>
+                        ))}
+                        {offre.liens_pdf.length > 5 && (
+                          <small className="more-docs">
+                            ... et {offre.liens_pdf.length - 5} autre(s) PDF
+                          </small>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="offre-actions">
+                    <a
+                      href={offre.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary"
+                    >
+                      <FiExternalLink /> Voir l'annonce complète
+                    </a>
+
+                    {/* Bouton Masquer : visible si NON masqué */}
+                    {canMasquer && !offre.est_masque && !offre.en_corbeille && (
+                      <button
+                        className="btn btn-masquer"
+                        onClick={() => handleMasquer(offre.url, offre.titre)}
                       >
-                        <FiPaperclip /> PDF {idx + 1}:{" "}
-                        {pdf.texte?.substring(0, 40)}
-                        {pdf.texte?.length > 40 ? "..." : ""}
-                      </a>
-                    ))}
-                    {offre.liens_pdf.length > 5 && (
-                      <small className="more-docs">
-                        ... et {offre.liens_pdf.length - 5} autre(s) PDF
-                      </small>
+                        <FiEyeOff /> Masquer
+                      </button>
+                    )}
+
+                    {/* Boutons Démasquer et Corbeille : visibles si MASQUÉ */}
+                    {canMasquer && offre.est_masque && !offre.en_corbeille && (
+                      <>
+                        <button
+                          className="btn btn-demasquer"
+                          onClick={() => handleDemasquer(offre.url)}
+                        >
+                          <FiEye /> Démasquer
+                        </button>
+                        {canSupprimer && (
+                          <button
+                            className="btn btn-corbeille"
+                            onClick={() =>
+                              handleMettreEnCorbeille(offre.url, offre.titre)
+                            }
+                            title="Supprimer définitivement (corbeille)"
+                          >
+                            <BsTrash /> Corbeille
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Actions */}
-              <div className="offre-actions">
-                <a
-                  href={offre.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                >
-                  <FiExternalLink /> Voir l'annonce complète
-                </a>
-
-                {/* Bouton Masquer : visible si NON masqué */}
-                {canMasquer && !offre.est_masque && !offre.en_corbeille && (
-                  <button
-                    className="btn btn-masquer"
-                    onClick={() => handleMasquer(offre.url, offre.titre)}
-                  >
-                    <FiEyeOff /> Masquer
-                  </button>
-                )}
-
-                {/* Boutons Démasquer et Corbeille : visibles si MASQUÉ */}
-                {canMasquer && offre.est_masque && !offre.en_corbeille && (
-                  <>
-                    <button
-                      className="btn btn-demasquer"
-                      onClick={() => handleDemasquer(offre.url)}
-                    >
-                      <FiEye /> Démasquer
-                    </button>
-                    <button
-                      className="btn btn-corbeille"
-                      onClick={() =>
-                        handleMettreEnCorbeille(offre.url, offre.titre)
-                      }
-                      title="Supprimer définitivement (corbeille)"
-                    >
-                      <BsTrash /> Corbeille
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Pagination */}
-      {filteredOffres.length > 0 && totalPages > 1 && (
-        <div className="pagination-container">
-          <button
-            className="pagination-btn pagination-prev"
-            onClick={goToPrevPage}
-            disabled={currentPage === 1}
-            title="Page précédente"
-          >
-            <FiChevronLeft />
-          </button>
-
-          <div className="pagination-numbers">
-            {getPageNumbers().map((page, index) =>
-              page === "..." ? (
-                <span key={`ellipsis-${index}`} className="pagination-ellipsis">
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={page}
-                  className={`pagination-number ${
-                    currentPage === page ? "active" : ""
-                  }`}
-                  onClick={() => goToPage(page)}
-                  title={`Page ${page}`}
-                >
-                  {page}
-                </button>
-              )
+              ))
             )}
           </div>
 
-          <button
-            className="pagination-btn pagination-next"
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages}
-            title="Page suivante"
-          >
-            <FiChevronRight />
-          </button>
-        </div>
+          {/* Pagination */}
+          {filteredOffres.length > 0 && totalPages > 1 && (
+            <div className="pagination-container">
+              <button
+                className="pagination-btn pagination-prev"
+                onClick={goToPrevPage}
+                disabled={currentPage === 1}
+                title="Page précédente"
+              >
+                <FiChevronLeft />
+              </button>
+
+              <div className="pagination-numbers">
+                {getPageNumbers().map((page, index) =>
+                  page === "..." ? (
+                    <span
+                      key={`ellipsis-${index}`}
+                      className="pagination-ellipsis"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      className={`pagination-number ${
+                        currentPage === page ? "active" : ""
+                      }`}
+                      onClick={() => goToPage(page)}
+                      title={`Page ${page}`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                className="pagination-btn pagination-next"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                title="Page suivante"
+              >
+                <FiChevronRight />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

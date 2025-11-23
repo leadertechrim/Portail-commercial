@@ -254,7 +254,7 @@ export default function SourcesPage() {
     }
   };
 
-  const handleLogout = () => {
+  const _handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
@@ -420,7 +420,7 @@ export default function SourcesPage() {
         onClose={() => setIsEditModalOpen(false)}
         source={editingSource}
         onSave={handleSaveSource}
-        onDelete={handleDeleteSource}
+        onDelete={hasPermission("sources_delete") ? handleDeleteSource : null}
       />
 
       {/* Modal pour ajouter une nouvelle offre */}

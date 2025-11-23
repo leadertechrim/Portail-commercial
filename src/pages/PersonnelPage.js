@@ -6,6 +6,7 @@ import {
   updatePersonnel,
   deletePersonnel,
 } from "../api";
+import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./PersonnelPage.css";
 
 const PersonnelPage = () => {
@@ -20,10 +21,21 @@ const PersonnelPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  const isSpectator = role === "spectateur";
+  const { hasPermission, loading: permissionsLoading } = usePermissionsImproved();
+  
+  // Permissions spécifiques
+  const canView = hasPermission("personnel_view");
+  const canCreate = hasPermission("personnel_create");
+  const canManage = hasPermission("personnel_manage");
 
   useEffect(() => {
+    if (permissionsLoading) return;
+    
+    if (!canView) {
+      navigate("/sources");
+      return;
+    }
+
     const loadPersonnel = async () => {
       try {
         setLoading(true);
@@ -39,7 +51,7 @@ const PersonnelPage = () => {
     };
 
     loadPersonnel();
-  }, [token]);
+  }, [token, canView, permissionsLoading, navigate]);
 
   const handleAddPersonnel = async (personnelData) => {
     try {
@@ -102,13 +114,14 @@ const PersonnelPage = () => {
       person.telephone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  // Afficher un loader pendant le chargement des permissions ou des données
+  if (permissionsLoading || loading) {
     return (
-
-        <div className="personnel-page">
-          <div className="loading">Chargement du personnel...</div>
+      <div className="personnel-page">
+        <div className="loading">
+          {permissionsLoading ? "Chargement des permissions..." : "Chargement du personnel..."}
         </div>
-
+      </div>
     );
   }
 
@@ -123,7 +136,7 @@ const PersonnelPage = () => {
             </button>
             {/* <h1>Gestion du Personnel</h1> */}
           </div>
-          {!isSpectator && (
+          {canCreate && (
             <button
               className="add-personnel-btn"
               onClick={() => setIsAddModalOpen(true)}
@@ -177,7 +190,7 @@ const PersonnelPage = () => {
                     >
                       <i className="fas fa-eye"></i>
                     </button>
-                    {!isSpectator && (
+                    {canManage && (
                       <>
                         <button
                           className="edit-btn"

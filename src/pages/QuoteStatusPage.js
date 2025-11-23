@@ -1,87 +1,180 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { quoteStatusesAPI } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
+import logger from "../utils/logger";
+import notify from "../utils/notifications";
 import "./QuoteStatusPage.css";
 
 const QuoteStatusPage = () => {
-  const [statuses, setStatuses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Charger les statuts depuis localStorage en premier pour affichage immédiat
+  const [statuses, setStatuses] = useState(() => {
+    const cached = localStorage.getItem("quoteStatuses");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        logger.log("📦 Statuts de devis chargés depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        logger.warn("Erreur lors du parsing des statuts en cache:", e);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les statuts en cache
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
-  const role = localStorage.getItem("role");
+  const _role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
-  // États initiaux pour les devis selon les spécifications
+  // Statuts initiaux selon les spécifications
   const initialStatuses = useMemo(
     () => [
       {
         _id: "1",
-        nom: "Validé",
-        couleur: "#28a745", // Vert
-        description: "Devis validé par le client",
+        nom: "Brouillon",
+        couleur: "#6c757d", // Gris
+        description: "Devis en brouillon",
         ordre: 1,
       },
       {
         _id: "2",
-        nom: "Transformé en facture",
-        couleur: "#6c757d", // Gris
-        description: "Devis transformé en facture",
+        nom: "Envoyé",
+        couleur: "#17a2b8", // Bleu
+        description: "Devis envoyé au client",
         ordre: 2,
+      },
+      {
+        _id: "3",
+        nom: "Validé",
+        couleur: "#28a745", // Vert
+        description: "Devis validé par le client",
+        ordre: 3,
+      },
+      {
+        _id: "4",
+        nom: "Refusé",
+        couleur: "#dc3545", // Rouge
+        description: "Devis refusé par le client",
+        ordre: 4,
+      },
+      {
+        _id: "5",
+        nom: "Transformé en facture",
+        couleur: "#f67800", // Orange
+        description: "Devis transformé en facture",
+        ordre: 5,
       },
     ],
     []
   );
 
   const loadStatuses = useCallback(async () => {
+    // Vérifier si on a déjà des statuts en cache dans localStorage
+    const cached = localStorage.getItem("quoteStatuses");
+    const hasCachedStatuses = cached && cached.length > 0;
+
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     try {
-      setLoading(true);
-      console.log("📋 Chargement des états de devis depuis l'API Flask...");
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des statuts en cache
+      if (!hasCachedStatuses) {
+        setLoading(true);
+        logger.log("📋 Chargement des statuts de devis depuis l'API Flask...");
+      }
 
       // Charger depuis l'API Flask
       const apiStatuses = await quoteStatusesAPI.getAll();
 
       if (apiStatuses && apiStatuses.length > 0) {
-        console.log("📋 États de devis chargés depuis l'API:", apiStatuses);
+        logger.log("📋 Statuts de devis chargés depuis l'API:", apiStatuses);
         setStatuses(apiStatuses);
+        // Sauvegarder dans localStorage pour la synchronisation
+        localStorage.setItem("quoteStatuses", JSON.stringify(apiStatuses));
       } else {
-        console.log("📋 Aucun état trouvé, utilisation des états initiaux");
-        setStatuses(initialStatuses);
-        // Créer les états initiaux dans l'API
-        for (const status of initialStatuses) {
-          try {
-            await quoteStatusesAPI.create(status);
-          } catch (err) {
-            console.warn("Erreur lors de la création de l'état initial:", err);
+        // Si pas de cache, utiliser les statuts initiaux
+        if (!hasCachedStatuses) {
+          logger.log(
+            "📋 Aucun statut trouvé, utilisation des statuts initiaux"
+          );
+          setStatuses(initialStatuses);
+          localStorage.setItem(
+            "quoteStatuses",
+            JSON.stringify(initialStatuses)
+          );
+          // Créer les statuts initiaux dans l'API
+          for (const status of initialStatuses) {
+            try {
+              await quoteStatusesAPI.create(status);
+            } catch (err) {
+              logger.warn("Erreur lors de la création du statut initial:", err);
+            }
           }
         }
       }
       setLoading(false);
     } catch (err) {
-      console.error("Erreur lors du chargement des états:", err);
-      setError(`Erreur lors du chargement des états: ${err.message}`);
-      // Fallback vers les états initiaux en cas d'erreur API
-      setStatuses(initialStatuses);
+      logger.error("Erreur lors du chargement des statuts:", err);
+      // En cas d'erreur, garder les statuts en cache si disponibles
+      if (!hasCachedStatuses) {
+        setError(`Erreur lors du chargement des statuts: ${err.message}`);
+        setStatuses(initialStatuses);
+        localStorage.setItem("quoteStatuses", JSON.stringify(initialStatuses));
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
     }
   }, [initialStatuses]);
 
   useEffect(() => {
     if (permissionsLoading) return;
-
-    if (!hasPermission("quote_status_manage")) {
-      console.log("🔓 QuoteStatusPage - Permission refusée");
-      // navigate("/sources");
-      // return;
-    }
     loadStatuses();
-  }, [navigate, hasPermission, permissionsLoading, loadStatuses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
+
+  // Synchronisation en temps réel avec les autres pages
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // Seulement si c'est un changement de quoteStatuses
+      if (e && e.key === "quoteStatuses") {
+        logger.log(
+          "🔄 Synchronisation des statuts de devis depuis localStorage..."
+        );
+        loadStatuses();
+      }
+    };
+
+    // Écouter les changements dans localStorage (entre onglets)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Écouter les événements personnalisés (même onglet)
+    const handleCustomEvent = () => {
+      loadStatuses();
+    };
+    window.addEventListener("quoteStatusesUpdated", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("quoteStatusesUpdated", handleCustomEvent);
+    };
+  }, [loadStatuses]);
 
   const filteredStatuses = statuses.filter(
     (status) =>
@@ -97,54 +190,73 @@ const QuoteStatusPage = () => {
       };
 
       // Créer via l'API Flask
-      const newStatus = await quoteStatusesAPI.create(newStatusData);
+      const _newStatus = await quoteStatusesAPI.create(newStatusData);
 
-      // Mettre à jour l'état local
-      setStatuses([...statuses, newStatus]);
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
+      await loadStatuses();
+
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("quoteStatusesUpdated"));
+
       setIsAddModalOpen(false);
-      alert("État créé avec succès");
+      notify.success("Statut créé avec succès");
     } catch (error) {
-      console.error("Erreur lors de la création de l'état:", error);
-      alert("Erreur lors de la création de l'état");
+      logger.error("Erreur lors de la création du statut:", error);
+      notify.error(
+        "Erreur lors de la création du statut: " +
+          (error.message || "Erreur inconnue")
+      );
     }
   };
 
   const handleUpdateStatus = async (statusId, statusData) => {
     try {
       // Mettre à jour via l'API Flask
-      const updatedStatus = await quoteStatusesAPI.update(statusId, statusData);
+      await quoteStatusesAPI.update(statusId, statusData);
 
-      // Mettre à jour l'état local
-      const updatedStatuses = statuses.map((status) =>
-        status._id === statusId ? updatedStatus : status
-      );
-      setStatuses(updatedStatuses);
+      // Recharger depuis l'API pour avoir les données à jour
+      hasLoadedRef.current = false;
+      await loadStatuses();
+
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("quoteStatusesUpdated"));
 
       setIsEditModalOpen(false);
       setEditingStatus(null);
-      alert("État modifié avec succès");
+      notify.success("Statut modifié avec succès");
     } catch (error) {
-      console.error("Erreur lors de la modification de l'état:", error);
-      alert("Erreur lors de la modification de l'état");
+      logger.error("Erreur lors de la modification du statut:", error);
+      notify.error(
+        "Erreur lors de la modification du statut: " +
+          (error.message || "Erreur inconnue")
+      );
     }
   };
 
   const handleDeleteStatus = async (statusId) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet état ?")) {
+    const confirmed = await notify.confirm(
+      "Êtes-vous sûr de vouloir supprimer ce statut ?"
+    );
+    if (confirmed) {
       try {
         // Supprimer via l'API Flask
         await quoteStatusesAPI.delete(statusId);
 
-        // Mettre à jour l'état local
-        const updatedStatuses = statuses.filter(
-          (status) => status._id !== statusId
-        );
-        setStatuses(updatedStatuses);
+        // Recharger depuis l'API pour avoir les données à jour
+        hasLoadedRef.current = false;
+        await loadStatuses();
 
-        alert("État supprimé avec succès");
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("quoteStatusesUpdated"));
+
+        notify.success("Statut supprimé avec succès");
       } catch (error) {
-        console.error("Erreur lors de la suppression de l'état:", error);
-        alert("Erreur lors de la suppression de l'état");
+        logger.error("Erreur lors de la suppression du statut:", error);
+        notify.error(
+          "Erreur lors de la suppression du statut: " +
+            (error.message || "Erreur inconnue")
+        );
       }
     }
   };
@@ -166,7 +278,7 @@ const QuoteStatusPage = () => {
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
-            <p>Chargement des états...</p>
+            <p>Chargement des statuts...</p>
           </div>
         </div>
       </div>
@@ -181,7 +293,7 @@ const QuoteStatusPage = () => {
           <div className="status-header-actions">
             <input
               type="text"
-              placeholder="Rechercher un état..."
+              placeholder="Rechercher un statut..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -192,7 +304,7 @@ const QuoteStatusPage = () => {
                 onClick={() => setIsAddModalOpen(true)}
               >
                 <i className="fas fa-plus"></i>
-                Nouvel État
+                Nouveau Statut
               </button>
             )}
           </div>
@@ -208,9 +320,9 @@ const QuoteStatusPage = () => {
 
           {filteredStatuses.length === 0 ? (
             <div className="empty-statuses">
-              <i className="fas fa-clipboard-check"></i>
-              <h3>Aucun état trouvé</h3>
-              <p>Commencez par créer votre premier état de devis</p>
+              <i className="fas fa-tags"></i>
+              <h3>Aucun statut trouvé</h3>
+              <p>Commencez par créer votre premier statut de devis</p>
             </div>
           ) : (
             <div className="status-grid">
@@ -269,7 +381,7 @@ const QuoteStatusPage = () => {
           isOpen={isAddModalOpen}
           onClose={closeModals}
           onSubmit={handleCreateStatus}
-          title="Nouvel État"
+          title="Nouveau Statut"
         />
       )}
 
@@ -279,18 +391,18 @@ const QuoteStatusPage = () => {
           onClose={closeModals}
           onSubmit={(data) => handleUpdateStatus(editingStatus._id, data)}
           status={editingStatus}
-          title="Modifier l'État"
+          title="Modifier le Statut"
         />
       )}
     </div>
   );
 };
 
-// Composant Modal pour ajouter/modifier un état
+// Composant Modal pour ajouter/modifier un statut
 const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
   const [formData, setFormData] = useState({
     nom: "",
-    couleur: "#6c757d",
+    couleur: "#17a2b8",
     description: "",
     ordre: 1,
   });
@@ -299,13 +411,13 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
 
   // Couleurs prédéfinies
   const predefinedColors = [
-    { name: "Gris", value: "#6c757d" },
-    { name: "Jaune", value: "#ffc107" },
+    { name: "Bleu", value: "#17a2b8" },
     { name: "Vert", value: "#28a745" },
     { name: "Rouge", value: "#dc3545" },
     { name: "Orange", value: "#f67800" },
-    { name: "Bleu", value: "#007bff" },
+    { name: "Gris", value: "#6c757d" },
     { name: "Violet", value: "#6f42c1" },
+    { name: "Jaune", value: "#ffc107" },
     { name: "Noir", value: "#343a40" },
   ];
 
@@ -313,14 +425,14 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
     if (status) {
       setFormData({
         nom: status.nom || "",
-        couleur: status.couleur || "#6c757d",
+        couleur: status.couleur || "#17a2b8",
         description: status.description || "",
         ordre: status.ordre || 1,
       });
     } else {
       setFormData({
         nom: "",
-        couleur: "#6c757d",
+        couleur: "#17a2b8",
         description: "",
         ordre: 1,
       });
@@ -352,7 +464,7 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
     try {
       await onSubmit(formData);
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error("Erreur:", error);
     } finally {
       setLoading(false);
     }
@@ -372,7 +484,7 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
-            <label htmlFor="nom">Nom de l'état *</label>
+            <label htmlFor="nom">Nom du statut *</label>
             <input
               type="text"
               id="nom"
@@ -380,7 +492,7 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
               value={formData.nom}
               onChange={handleChange}
               className={errors.nom ? "error" : ""}
-              placeholder="Ex: En attente"
+              placeholder="Ex: Validé"
             />
             {errors.nom && <span className="error-message">{errors.nom}</span>}
           </div>
@@ -392,7 +504,7 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Description de l'état"
+              placeholder="Description du statut"
               rows="3"
             />
           </div>
@@ -413,7 +525,7 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
                 value={formData.couleur}
                 onChange={handleChange}
                 className="color-text"
-                placeholder="#6c757d"
+                placeholder="#17a2b8"
               />
             </div>
             <div className="predefined-colors">

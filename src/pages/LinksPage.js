@@ -160,6 +160,7 @@ const LinksPage = () => {
     console.log("✅ Appel loadLinks et loadCategories");
     loadLinks();
     loadCategories(); // Charger les catégories dynamiquement
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, hasPermission, permissionsLoading, loadLinks, loadCategories]);
 
   // Écouter les changements dans le localStorage pour les catégories
@@ -297,13 +298,14 @@ const LinksPage = () => {
     setViewingLink(null);
   };
 
-  if (loading) {
+  // Afficher un loader pendant le chargement des permissions ou des données
+  if (permissionsLoading || loading) {
     return (
       <div className="links-page">
         <div className="loading-container">
           <div className="loading-spinner">
             <i className="fas fa-spinner fa-spin"></i>
-            <p>Chargement des liens...</p>
+            <p>{permissionsLoading ? "Chargement des permissions..." : "Chargement des liens..."}</p>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
 // URL de base pour toutes les APIs
 // Utilise la variable d'environnement si définie, sinon Railway en production, sinon local
-// TEMPORAIREMENT EN LOCAL POUR TESTS
-// export const API_BASE_URL = "http://127.0.0.1:8000";
-// export const API_BASE_URL = "http://localhost:8080";
-export const API_BASE_URL = "https://applesoffres-production.up.railway.app";
+export const API_BASE_URL = 
+  process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? "https://applesoffres-production.up.railway.app" 
+    : "http://127.0.0.1:8000");
 
 // ---------------- LOGIN ----------------
 export async function loginUser(email, password) {
@@ -1168,11 +1169,18 @@ export const fetchFacturesEtats = async (token) => {
 // Fonction utilitaire pour les appels API Flask
 const apiCall = async (endpoint, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
-      headers: {
+    // Récupérer le token depuis localStorage
+    const token = localStorage.getItem("token");
+    
+    // Préparer les headers avec le token si disponible
+    const headers = {
         "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
-      },
+    };
+
+    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+      headers,
       ...options,
     });
 

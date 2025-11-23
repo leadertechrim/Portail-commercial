@@ -16,8 +16,8 @@ const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  // const isSpectator = role === "spectateur"; // Non utilisé - remplacé par PermissionGuard
+  const _role = localStorage.getItem("role");
+  // const isSpectator = _role === "spectateur"; // Non utilisé - remplacé par PermissionGuard
 
   useEffect(() => {
     const loadClients = async () => {

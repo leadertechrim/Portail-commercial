@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   fetchDevis,
   createDevis,
   updateDevis,
   deleteDevis,
-  fetchDevisEtats,
   fetchOffers,
   fetchClients,
   transformDevisToFacture,
@@ -24,7 +23,29 @@ const DevisPage = () => {
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const [personnel, setPersonnel] = useState([]);
-  const [etats, setEtats] = useState([]);
+  // Charger les états depuis localStorage en premier pour affichage immédiat
+  const [etats, setEtats] = useState(() => {
+    const cached = localStorage.getItem("quoteStatuses");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.length > 0) {
+          console.log("📦 États de devis chargés depuis le cache:", parsed);
+          return parsed;
+        }
+      } catch (e) {
+        console.warn("Erreur lors du parsing des états en cache:", e);
+      }
+    }
+    // États par défaut si pas de cache (correspondent à QuoteStatusPage)
+    return [
+      { nom: "Brouillon", couleur: "#6c757d" },
+      { nom: "Envoyé", couleur: "#17a2b8" },
+      { nom: "Validé", couleur: "#28a745" },
+      { nom: "Refusé", couleur: "#dc3545" },
+      { nom: "Transformé en facture", couleur: "#f67800" },
+    ];
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -34,43 +55,74 @@ const DevisPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const token = localStorage.getItem("token");
   const currentUserId = localStorage.getItem("userId");
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
+  const hasLoadedRef = useRef(false);
 
   const loadQuoteStatuses = useCallback(async () => {
     try {
       console.log("📋 Chargement des états de devis depuis l'API Flask...");
 
-      // Charger depuis l'API Flask
+      // Toujours charger depuis l'API Flask pour avoir les données à jour
       const apiStatuses = await quoteStatusesAPI.getAll();
 
       if (apiStatuses && apiStatuses.length > 0) {
         console.log("📋 États de devis chargés depuis l'API:", apiStatuses);
         setEtats(apiStatuses);
+        // Sauvegarder dans localStorage pour le prochain chargement
+        localStorage.setItem("quoteStatuses", JSON.stringify(apiStatuses));
       } else {
         // États par défaut si aucun n'est configuré
         const defaultStatuses = [
+          { nom: "Brouillon", couleur: "#6c757d" },
+          { nom: "Envoyé", couleur: "#17a2b8" },
           { nom: "Validé", couleur: "#28a745" },
-          { nom: "Transformé en facture", couleur: "#6c757d" },
+          { nom: "Refusé", couleur: "#dc3545" },
+          { nom: "Transformé en facture", couleur: "#f67800" },
         ];
         console.log("📋 Utilisation des états par défaut");
         setEtats(defaultStatuses);
+        localStorage.setItem("quoteStatuses", JSON.stringify(defaultStatuses));
       }
     } catch (err) {
       console.error("❌ Erreur lors du chargement des états de devis:", err);
+      // En cas d'erreur, utiliser le cache ou les états par défaut
+      const cached = localStorage.getItem("quoteStatuses");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.length > 0) {
+            console.log("📋 Utilisation des états en cache");
+            setEtats(parsed);
+            return;
+          }
+        } catch (e) {
+          console.warn("Erreur lors du parsing du cache:", e);
+        }
+      }
       // États par défaut en cas d'erreur
       const defaultStatuses = [
+        { nom: "Brouillon", couleur: "#6c757d" },
+        { nom: "Envoyé", couleur: "#17a2b8" },
         { nom: "Validé", couleur: "#28a745" },
-        { nom: "Transformé en facture", couleur: "#6c757d" },
+        { nom: "Refusé", couleur: "#dc3545" },
+        { nom: "Transformé en facture", couleur: "#f67800" },
       ];
       setEtats(defaultStatuses);
+      localStorage.setItem("quoteStatuses", JSON.stringify(defaultStatuses));
     }
-  }, []);
+  }, []); // Pas de dépendances pour éviter les boucles infinies
 
   const loadDevis = useCallback(async () => {
+    // Éviter le double chargement si déjà en cours
+    if (loading) {
+      console.log("⏭️ Chargement des devis déjà en cours, ignoré");
+      return;
+    }
+
     try {
       setLoading(true);
       console.log("🔄 Chargement des devis...");
@@ -96,10 +148,14 @@ const DevisPage = () => {
         );
       }
 
+      // OPTIMISATION: Utiliser Map pour enrichissement rapide
+      const clientsMap = new Map(clients.map((c) => [c._id, c]));
+      const offersMap = new Map(offers.map((o) => [o._id, o]));
+
       // Enrichir les devis avec les détails complets des clients et offres
       const enrichedDevis = filteredDevisData.map((devis) => {
-        const client = clients.find((c) => c._id === devis.client_id);
-        const offre = offers.find((o) => o._id === devis.offre_id);
+        const client = clientsMap.get(devis.client_id);
+        const offre = offersMap.get(devis.offre_id);
 
         return {
           ...devis,
@@ -120,58 +176,22 @@ const DevisPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, clients, offers, hasPermission, currentUserId]);
+  }, [token, clients, offers, hasPermission, currentUserId, loading]);
 
   const generateNumeroDevis = useCallback(
     (clientId, offreId) => {
-      console.log(
-        "🔍 Génération numéro devis - clientId:",
-        clientId,
-        "offreId:",
-        offreId
-      );
-      console.log("🔍 Clients disponibles:", clients.length, clients);
-      console.log("🔍 Offres disponibles:", offers.length, offers);
-      console.log(
-        "🔍 Permissions utilisateur:",
-        hasPermission("view_all_offers") ? "Admin" : "Utilisateur standard"
-      );
-      console.log("🔍 Current user ID:", currentUserId);
-
       if (!clientId || !offreId) {
-        console.log("❌ clientId ou offreId manquant");
         return "";
       }
 
-      const client = clients.find((c) => c._id === clientId);
-      const offre = offers.find((o) => o._id === offreId);
+      // OPTIMISATION: Utiliser Map pour O(1) au lieu de O(n)
+      const clientsMap = new Map(clients.map((c) => [c._id, c]));
+      const offersMap = new Map(offers.map((o) => [o._id, o]));
 
-      console.log("🔍 Client trouvé:", client);
-      console.log("🔍 Offre trouvée:", offre);
+      const client = clientsMap.get(clientId);
+      const offre = offersMap.get(offreId);
 
-      if (!client) {
-        console.log("❌ Client non trouvé avec ID:", clientId);
-        console.log(
-          "🔍 IDs des clients disponibles:",
-          clients.map((c) => c._id)
-        );
-        return "";
-      }
-
-      if (!offre) {
-        console.log("❌ Offre non trouvée avec ID:", offreId);
-        console.log(
-          "🔍 IDs des offres disponibles:",
-          offers.map((o) => o._id)
-        );
-        // Pour les utilisateurs simples, vérifier si l'offre est filtrée
-        if (!hasPermission("view_all_offers")) {
-          console.log("🔍 Vérification du filtrage pour utilisateur simple");
-          const allOffres = offers.filter(
-            (o) => o.responsable_id === currentUserId
-          );
-          console.log("🔍 Offres de l'utilisateur:", allOffres);
-        }
+      if (!client || !offre) {
         return "";
       }
 
@@ -185,44 +205,58 @@ const DevisPage = () => {
         "_"
       );
 
-      const numeroGenere = `Dev_${nomClient}_${nomOffre}`;
-      console.log("✅ Numéro généré:", numeroGenere);
-
-      return numeroGenere;
+      return `Dev_${nomClient}_${nomOffre}`;
     },
-    [clients, offers, hasPermission, currentUserId]
+    [clients, offers]
   );
 
   const loadOffersAndClients = useCallback(async () => {
-    try {
-      console.log(
-        "🔄 DevisPage - Chargement des offres, clients, utilisateurs, personnel et états..."
-      );
-      console.log("🔑 Token présent:", token ? "Oui" : "Non");
+    // Éviter le double chargement
+    if (hasLoadedRef.current) {
+      console.log("⏭️ Chargement déjà effectué, ignoré");
+      return;
+    }
 
-      const [offersData, clientsData, usersData, personnelData, etatsData] =
-        await Promise.all([
-          fetchOffers(token).catch((err) => {
-            console.error("❌ Erreur fetchOffers:", err);
-            return [];
-          }),
-          fetchClients(token).catch((err) => {
-            console.error("❌ Erreur fetchClients:", err);
-            return [];
-          }),
-          fetchUsers(token).catch((err) => {
-            console.error("❌ Erreur fetchUsers:", err);
-            return [];
-          }),
-          fetchPersonnel(token).catch((err) => {
-            console.error("❌ Erreur fetchPersonnel:", err);
-            return [];
-          }),
-          fetchDevisEtats(token).catch((err) => {
-            console.error("❌ Erreur fetchDevisEtats:", err);
-            return [];
-          }),
-        ]);
+    try {
+      hasLoadedRef.current = true;
+      console.log(
+        "🔄 DevisPage - Chargement des offres, clients, utilisateurs, personnel, états et devis en parallèle..."
+      );
+
+      // OPTIMISATION: Charger les devis en parallèle avec les autres données
+      const [
+        offersData,
+        clientsData,
+        usersData,
+        personnelData,
+        etatsData,
+        devisData,
+      ] = await Promise.all([
+        fetchOffers(token).catch((err) => {
+          console.error("❌ Erreur fetchOffers:", err);
+          return [];
+        }),
+        fetchClients(token).catch((err) => {
+          console.error("❌ Erreur fetchClients:", err);
+          return [];
+        }),
+        fetchUsers(token).catch((err) => {
+          console.error("❌ Erreur fetchUsers:", err);
+          return [];
+        }),
+        fetchPersonnel(token).catch((err) => {
+          console.error("❌ Erreur fetchPersonnel:", err);
+          return [];
+        }),
+        quoteStatusesAPI.getAll().catch((err) => {
+          console.error("❌ Erreur quoteStatusesAPI.getAll:", err);
+          return [];
+        }),
+        fetchDevis(token).catch((err) => {
+          console.error("❌ Erreur fetchDevis:", err);
+          return [];
+        }),
+      ]);
 
       console.log("📋 Offres chargées:", offersData?.length || 0, offersData);
       console.log("👥 Clients chargés:", clientsData?.length || 0, clientsData);
@@ -267,14 +301,86 @@ const DevisPage = () => {
 
       // Gestion spéciale pour les états - toujours avoir des valeurs par défaut
       if (Array.isArray(etatsData) && etatsData.length > 0) {
+        console.log("📋 États chargés depuis l'API:", etatsData);
         setEtats(etatsData);
+        localStorage.setItem("quoteStatuses", JSON.stringify(etatsData));
       } else {
-        console.log("🔄 Utilisation des états par défaut pour les devis");
-        setEtats([
-          { nom: "Validé", couleur: "#28a745" },
-          { nom: "Transformé en facture", couleur: "#6c757d" },
-        ]);
+        // Vérifier le cache avant d'utiliser les valeurs par défaut
+        const cached = localStorage.getItem("quoteStatuses");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.length > 0) {
+              console.log("📋 Utilisation des états en cache");
+              setEtats(parsed);
+            } else {
+              throw new Error("Cache vide");
+            }
+          } catch (e) {
+            console.log("🔄 Utilisation des états par défaut pour les devis");
+            const defaultStatuses = [
+              { nom: "Brouillon", couleur: "#6c757d" },
+              { nom: "Envoyé", couleur: "#17a2b8" },
+              { nom: "Validé", couleur: "#28a745" },
+              { nom: "Refusé", couleur: "#dc3545" },
+              { nom: "Transformé en facture", couleur: "#f67800" },
+            ];
+            setEtats(defaultStatuses);
+            localStorage.setItem(
+              "quoteStatuses",
+              JSON.stringify(defaultStatuses)
+            );
+          }
+        } else {
+          console.log("🔄 Utilisation des états par défaut pour les devis");
+          const defaultStatuses = [
+            { nom: "Brouillon", couleur: "#6c757d" },
+            { nom: "Envoyé", couleur: "#17a2b8" },
+            { nom: "Validé", couleur: "#28a745" },
+            { nom: "Refusé", couleur: "#dc3545" },
+            { nom: "Transformé en facture", couleur: "#f67800" },
+          ];
+          setEtats(defaultStatuses);
+          localStorage.setItem(
+            "quoteStatuses",
+            JSON.stringify(defaultStatuses)
+          );
+        }
       }
+
+      // Traiter les devis immédiatement avec les données chargées
+      let filteredDevisData = Array.isArray(devisData) ? devisData : [];
+
+      // Filtrer selon les permissions
+      if (!hasPermission("devis_view_all") && hasPermission("devis_view")) {
+        filteredDevisData = filteredDevisData.filter(
+          (d) =>
+            d.responsable_id === currentUserId ||
+            d.user_id === currentUserId ||
+            d.created_by === currentUserId
+        );
+      }
+
+      // OPTIMISATION: Utiliser Map pour enrichissement rapide
+      const clientsArray = Array.isArray(clientsData) ? clientsData : [];
+      const clientsMap = new Map(clientsArray.map((c) => [c._id, c]));
+      const offersMap = new Map(filteredOffers.map((o) => [o._id, o]));
+
+      const enrichedDevis = filteredDevisData.map((devis) => {
+        const client = clientsMap.get(devis.client_id);
+        const offre = offersMap.get(devis.offre_id);
+
+        return {
+          ...devis,
+          client: client || { raison_sociale: "Client inconnu" },
+          offre: offre || { intitulee: "Offre inconnue" },
+          documents: devis.document || devis.documents || [],
+        };
+      });
+
+      setDevis(enrichedDevis);
+      setLoading(false);
+      setError("");
     } catch (error) {
       console.error("❌ Erreur lors du chargement des données:", error);
       // Valeurs par défaut en cas d'erreur
@@ -282,55 +388,74 @@ const DevisPage = () => {
       setClients([]);
       setUsers([]);
       setPersonnel([]);
-      setEtats(["Validé", "Transformé en facture"]);
+      setEtats([
+        { nom: "Validé", couleur: "#28a745" },
+        { nom: "Transformé en facture", couleur: "#6c757d" },
+      ]);
+      setDevis([]);
+      setLoading(false);
+      setError(`Erreur lors du chargement: ${error.message}`);
+      hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
     }
-  }, [token, hasPermission]);
+  }, [token, hasPermission, currentUserId]);
 
   useEffect(() => {
-    if (permissionsLoading) return; // Attendre le chargement des permissions
+    if (permissionsLoading) {
+      // Afficher un loader pendant le chargement des permissions
+      setLoading(true);
+      return;
+    }
 
     if (!hasPermission("devis_view") && !hasPermission("devis_view_all")) {
       console.log("🔓 DevisPage - Mode test sans connexion");
-      // navigate("/sources");
-      // return;
+      setLoading(false);
+      return;
     }
-    // Charger d'abord les clients et offres, puis les devis
-    loadOffersAndClients();
-    // Charger les états de devis dynamiques
-    loadQuoteStatuses();
-  }, [
-    navigate,
-    hasPermission,
-    permissionsLoading,
-    loadOffersAndClients,
-    loadQuoteStatuses,
-  ]);
 
-  // Synchronisation périodique avec l'API Flask
+    // OPTIMISATION: Charger tout en une seule fois (devis inclus)
+    setLoading(true);
+    loadOffersAndClients();
+    // Charger les états de devis dynamiques pour s'assurer qu'ils sont à jour
+    loadQuoteStatuses().catch((err) => {
+      console.warn("Erreur lors du chargement des états (non bloquant):", err);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
+
+  // Synchronisation en temps réel avec les autres pages
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("🔄 Synchronisation périodique des états de devis...");
+    // Charger les statuts immédiatement au montage
+    loadQuoteStatuses();
+
+    const handleStorageChange = (e) => {
+      if (e.key === "quoteStatuses") {
+        try {
+          const updatedStatuses = JSON.parse(e.newValue);
+          setEtats(updatedStatuses);
+          console.log("🔄 États de devis mis à jour depuis localStorage");
+        } catch (err) {
+          console.warn("Erreur lors de la mise à jour des états:", err);
+        }
+      }
+    };
+
+    const handleStatusesUpdated = () => {
+      // Recharger depuis l'API quand les statuts sont mis à jour
+      console.log(
+        "🔄 Événement quoteStatusesUpdated reçu, rechargement des statuts..."
+      );
       loadQuoteStatuses();
-    }, 5000); // Vérification toutes les 5 secondes
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("quoteStatusesUpdated", handleStatusesUpdated);
 
     return () => {
-      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("quoteStatusesUpdated", handleStatusesUpdated);
     };
-  }, [loadQuoteStatuses]);
-
-  useEffect(() => {
-    // Charger les devis seulement après avoir chargé les clients et offres
-    console.log("🔍 Vérification chargement devis:");
-    console.log("  - Clients:", clients.length);
-    console.log("  - Offres:", offers.length);
-
-    if (clients.length > 0 && offers.length > 0) {
-      console.log("✅ Conditions remplies, chargement des devis...");
-      loadDevis();
-    } else {
-      console.log("⏳ En attente des clients et offres...");
-    }
-  }, [clients, offers, loadDevis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger une seule fois au montage
 
   const filteredDevis = devis.filter((devis) => {
     const search = searchTerm.toLowerCase();
@@ -651,7 +776,26 @@ const DevisPage = () => {
     return defaultColors[etat] || "#ffc107";
   };
 
-  if (loading) {
+  // Afficher un loader seulement pendant le chargement des permissions
+  // Ne pas bloquer si on a déjà des états en cache
+  if (permissionsLoading) {
+    return (
+      <div className="devis-page">
+        <div className="main-content">
+          <div className="loading-container">
+            <div className="loading-spinner">
+              <i className="fas fa-spinner fa-spin"></i>
+              <p>Chargement des permissions...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Afficher un loader seulement si on charge ET qu'on n'a pas encore de devis
+  // Si on a déjà des devis, on peut afficher la page même si on recharge en arrière-plan
+  if (loading && devis.length === 0 && offers.length === 0) {
     return (
       <div className="devis-page">
         <div className="main-content">
@@ -908,8 +1052,8 @@ const DevisModal = ({
   offers,
   clients,
   etats,
-  role,
-  currentUserId,
+  _role,
+  _currentUserId,
   generateNumeroDevis,
   title,
 }) => {

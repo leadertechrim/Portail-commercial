@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  fetchPersonnel,
-  rolesAPI,
-  fetchUserById,
-  fetchUserDecryptedPassword,
-} from "../api";
+import { fetchPersonnel, rolesAPI, fetchUserDecryptedPassword } from "../api";
 import "./UserModal.css";
 
 const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {

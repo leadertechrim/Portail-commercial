@@ -1,22 +1,42 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { linkCategoriesAPI } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./LinkCategoriesPage.css";
 
 const LinkCategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Charger les catégories depuis localStorage en premier pour affichage immédiat
+  const [categories, setCategories] = useState(() => {
+    const cached = localStorage.getItem("linkCategories");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.log("📦 Catégories de liens chargées depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        console.warn("Erreur lors du parsing des catégories en cache:", e);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les catégories en cache
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
-  const role = localStorage.getItem("role");
+  const _role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   // Catégories initiales pour les liens
   const initialCategories = useMemo(
@@ -68,37 +88,49 @@ const LinkCategoriesPage = () => {
   );
 
   const loadCategories = useCallback(async () => {
+    // Vérifier si on a déjà des catégories en cache dans localStorage
+    const cached = localStorage.getItem("linkCategories");
+    const hasCachedCategories = cached && cached.length > 0;
+
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     try {
-      console.log("🔄 Début du chargement des catégories de liens...");
-      setLoading(true);
-      console.log("🌐 Appel linkCategoriesAPI.getAll()...");
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des catégories en cache
+      if (!hasCachedCategories) {
+        setLoading(true);
+        console.log("🔄 Début du chargement des catégories de liens...");
+      }
+
       const categoriesData = await linkCategoriesAPI.getAll();
-      console.log("✅ Catégories chargées depuis l'API:", categoriesData);
-      console.log("📊 Nombre de catégories:", categoriesData?.length || 0);
       setCategories(categoriesData);
+      // Sauvegarder dans localStorage pour la synchronisation
+      localStorage.setItem("linkCategories", JSON.stringify(categoriesData));
       setLoading(false);
-      console.log("✅ Loading mis à false - Catégories");
     } catch (err) {
       console.error("❌ Erreur lors du chargement des catégories:", err);
-      setError(`Erreur lors du chargement des catégories: ${err.message}`);
-      // Fallback vers les données locales en cas d'erreur
-      console.log("🔄 Utilisation des catégories initiales...");
-      setCategories(initialCategories);
+      // En cas d'erreur, garder les catégories en cache si disponibles
+      if (!hasCachedCategories) {
+        setError(`Erreur lors du chargement des catégories: ${err.message}`);
+        setCategories(initialCategories);
+        localStorage.setItem(
+          "linkCategories",
+          JSON.stringify(initialCategories)
+        );
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
-      console.log("✅ Fallback terminé - Catégories");
     }
   }, [initialCategories]);
 
   useEffect(() => {
     if (permissionsLoading) return;
-
-    if (!hasPermission("link_categories_manage")) {
-      console.log("🔓 LinkCategoriesPage - Permission refusée");
-      // navigate("/sources");
-      // return;
-    }
     loadCategories();
-  }, [navigate, hasPermission, permissionsLoading, loadCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -109,7 +141,12 @@ const LinkCategoriesPage = () => {
   const handleCreateCategory = async (categoryData) => {
     try {
       const newCategory = await linkCategoriesAPI.create(categoryData);
-      setCategories([...categories, newCategory]);
+      const updatedCategories = [...categories, newCategory];
+      setCategories(updatedCategories);
+      // Sauvegarder dans localStorage
+      localStorage.setItem("linkCategories", JSON.stringify(updatedCategories));
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("linkCategoriesUpdated"));
       console.log("📁 Catégorie de lien créée:", newCategory);
       setIsAddModalOpen(false);
       alert("Catégorie créée avec succès");
@@ -129,6 +166,10 @@ const LinkCategoriesPage = () => {
         category._id === categoryId ? updatedCategory : category
       );
       setCategories(updatedCategories);
+      // Sauvegarder dans localStorage
+      localStorage.setItem("linkCategories", JSON.stringify(updatedCategories));
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("linkCategoriesUpdated"));
       console.log("📁 Catégorie de lien modifiée:", updatedCategory);
       setIsEditModalOpen(false);
       setEditingCategory(null);
@@ -149,6 +190,13 @@ const LinkCategoriesPage = () => {
           (category) => category._id !== categoryId
         );
         setCategories(updatedCategories);
+        // Sauvegarder dans localStorage
+        localStorage.setItem(
+          "linkCategories",
+          JSON.stringify(updatedCategories)
+        );
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("linkCategoriesUpdated"));
         console.log("📁 Catégorie de lien supprimée:", categoryId);
         alert("Catégorie supprimée avec succès");
       } catch (error) {

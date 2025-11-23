@@ -27,10 +27,17 @@ export const usePermissions = () => {
 
       // Essayer de récupérer les permissions depuis l'API
       const userPermissions = await rolesAPI.getCurrentUserPermissions(token);
-      // S'assurer que c'est bien un tableau
-      const permissionsArray = Array.isArray(userPermissions)
-        ? userPermissions
-        : [];
+
+      // L'API renvoie { message, data: { permissions: [...] } }
+      let permissionsArray = [];
+      if (userPermissions?.data?.permissions) {
+        permissionsArray = userPermissions.data.permissions;
+      } else if (Array.isArray(userPermissions)) {
+        permissionsArray = userPermissions;
+      } else if (Array.isArray(userPermissions?.permissions)) {
+        permissionsArray = userPermissions.permissions;
+      }
+
       setPermissions(permissionsArray);
     } catch (err) {
       console.warn(

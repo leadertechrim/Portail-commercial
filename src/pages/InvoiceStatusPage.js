@@ -1,22 +1,42 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { invoiceStatusesAPI } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./InvoiceStatusPage.css";
 
 const InvoiceStatusPage = () => {
-  const [statuses, setStatuses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Charger les états depuis localStorage en premier pour affichage immédiat
+  const [statuses, setStatuses] = useState(() => {
+    const cached = localStorage.getItem("invoiceStatuses");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.log("📦 États de factures chargés depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        console.warn("Erreur lors du parsing des états en cache:", e);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les états en cache
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
-  const role = localStorage.getItem("role");
+  const _role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   // États initiaux pour les factures selon les spécifications
   const initialStatuses = useMemo(
@@ -47,9 +67,24 @@ const InvoiceStatusPage = () => {
   );
 
   const loadStatuses = useCallback(async () => {
+    // Vérifier si on a déjà des états en cache dans localStorage
+    const cached = localStorage.getItem("invoiceStatuses");
+    const hasCachedStatuses = cached && cached.length > 0;
+
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     try {
-      setLoading(true);
-      console.log("📋 Chargement des états de factures depuis l'API Flask...");
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des états en cache
+      if (!hasCachedStatuses) {
+        setLoading(true);
+        console.log(
+          "📋 Chargement des états de factures depuis l'API Flask..."
+        );
+      }
 
       // Charger depuis l'API Flask
       const apiStatuses = await invoiceStatusesAPI.getAll();
@@ -57,38 +92,52 @@ const InvoiceStatusPage = () => {
       if (apiStatuses && apiStatuses.length > 0) {
         console.log("📋 États de factures chargés depuis l'API:", apiStatuses);
         setStatuses(apiStatuses);
+        // Sauvegarder dans localStorage pour la synchronisation
+        localStorage.setItem("invoiceStatuses", JSON.stringify(apiStatuses));
       } else {
-        console.log("📋 Aucun état trouvé, utilisation des états initiaux");
-        setStatuses(initialStatuses);
-        // Créer les états initiaux dans l'API
-        for (const status of initialStatuses) {
-          try {
-            await invoiceStatusesAPI.create(status);
-          } catch (err) {
-            console.warn("Erreur lors de la création de l'état initial:", err);
+        // Si pas de cache, utiliser les états initiaux
+        if (!hasCachedStatuses) {
+          console.log("📋 Aucun état trouvé, utilisation des états initiaux");
+          setStatuses(initialStatuses);
+          localStorage.setItem(
+            "invoiceStatuses",
+            JSON.stringify(initialStatuses)
+          );
+          // Créer les états initiaux dans l'API
+          for (const status of initialStatuses) {
+            try {
+              await invoiceStatusesAPI.create(status);
+            } catch (err) {
+              console.warn(
+                "Erreur lors de la création de l'état initial:",
+                err
+              );
+            }
           }
         }
       }
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors du chargement des états:", err);
-      setError(`Erreur lors du chargement des états: ${err.message}`);
-      // Fallback vers les états initiaux en cas d'erreur API
-      setStatuses(initialStatuses);
+      // En cas d'erreur, garder les états en cache si disponibles
+      if (!hasCachedStatuses) {
+        setError(`Erreur lors du chargement des états: ${err.message}`);
+        setStatuses(initialStatuses);
+        localStorage.setItem(
+          "invoiceStatuses",
+          JSON.stringify(initialStatuses)
+        );
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
     }
   }, [initialStatuses]);
 
   useEffect(() => {
     if (permissionsLoading) return;
-
-    if (!hasPermission("invoice_status_manage")) {
-      console.log("🔓 InvoiceStatusPage - Permission refusée");
-      // navigate("/sources");
-      // return;
-    }
     loadStatuses();
-  }, [navigate, hasPermission, permissionsLoading, loadStatuses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
 
   const filteredStatuses = statuses.filter(
     (status) =>
@@ -107,7 +156,12 @@ const InvoiceStatusPage = () => {
       const newStatus = await invoiceStatusesAPI.create(newStatusData);
 
       // Mettre à jour l'état local
-      setStatuses([...statuses, newStatus]);
+      const updatedStatuses = [...statuses, newStatus];
+      setStatuses(updatedStatuses);
+      // Sauvegarder dans localStorage
+      localStorage.setItem("invoiceStatuses", JSON.stringify(updatedStatuses));
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("invoiceStatusesUpdated"));
       setIsAddModalOpen(false);
       alert("État créé avec succès");
     } catch (error) {
@@ -129,7 +183,10 @@ const InvoiceStatusPage = () => {
         status._id === statusId ? updatedStatus : status
       );
       setStatuses(updatedStatuses);
-
+      // Sauvegarder dans localStorage
+      localStorage.setItem("invoiceStatuses", JSON.stringify(updatedStatuses));
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("invoiceStatusesUpdated"));
       setIsEditModalOpen(false);
       setEditingStatus(null);
       alert("État modifié avec succès");
@@ -150,7 +207,13 @@ const InvoiceStatusPage = () => {
           (status) => status._id !== statusId
         );
         setStatuses(updatedStatuses);
-
+        // Sauvegarder dans localStorage
+        localStorage.setItem(
+          "invoiceStatuses",
+          JSON.stringify(updatedStatuses)
+        );
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("invoiceStatusesUpdated"));
         alert("État supprimé avec succès");
       } catch (error) {
         console.error("Erreur lors de la suppression de l'état:", error);

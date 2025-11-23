@@ -1,22 +1,42 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { offerCategoriesAPI } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./OfferCategoriesPage.css";
 
 const OfferCategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Charger les catégories depuis localStorage en premier pour affichage immédiat
+  const [categories, setCategories] = useState(() => {
+    const cached = localStorage.getItem("offerCategories");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        console.log("📦 Catégories d'offres chargées depuis le cache:", parsed);
+        return parsed;
+      } catch (e) {
+        console.warn("Erreur lors du parsing des catégories en cache:", e);
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false); // Commencer à false car on a déjà les catégories en cache
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
-  const role = localStorage.getItem("role");
+  const _role = localStorage.getItem("role");
+  const hasLoadedRef = useRef(false);
 
   // Catégories initiales pour les offres
   const initialCategories = useMemo(
@@ -61,30 +81,48 @@ const OfferCategoriesPage = () => {
   );
 
   const loadCategories = useCallback(async () => {
+    // Vérifier si on a déjà des catégories en cache dans localStorage
+    const cached = localStorage.getItem("offerCategories");
+    const hasCachedCategories = cached && cached.length > 0;
+
+    // Éviter le double chargement si déjà en cours
+    if (hasLoadedRef.current) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      hasLoadedRef.current = true;
+      // Ne pas bloquer si on a déjà des catégories en cache
+      if (!hasCachedCategories) {
+        setLoading(true);
+      }
+
       const categoriesData = await offerCategoriesAPI.getAll();
       setCategories(categoriesData);
+      // Sauvegarder dans localStorage pour la synchronisation
+      localStorage.setItem("offerCategories", JSON.stringify(categoriesData));
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors du chargement des catégories:", err);
-      setError(`Erreur lors du chargement des catégories: ${err.message}`);
-      // Fallback vers les données locales en cas d'erreur
-      setCategories(initialCategories);
+      // En cas d'erreur, garder les catégories en cache si disponibles
+      if (!hasCachedCategories) {
+        setError(`Erreur lors du chargement des catégories: ${err.message}`);
+        setCategories(initialCategories);
+        localStorage.setItem(
+          "offerCategories",
+          JSON.stringify(initialCategories)
+        );
+        hasLoadedRef.current = false; // Réessayer au prochain montage en cas d'erreur
+      }
       setLoading(false);
     }
   }, [initialCategories]);
 
   useEffect(() => {
     if (permissionsLoading) return;
-
-    if (!hasPermission("offer_categories_manage")) {
-      console.log("🔓 OfferCategoriesPage - Permission refusée");
-      // navigate("/sources");
-      // return;
-    }
     loadCategories();
-  }, [navigate, hasPermission, permissionsLoading, loadCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoading]); // Ne dépendre que de permissionsLoading
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -95,7 +133,15 @@ const OfferCategoriesPage = () => {
   const handleCreateCategory = async (categoryData) => {
     try {
       const newCategory = await offerCategoriesAPI.create(categoryData);
-      setCategories([...categories, newCategory]);
+      const updatedCategories = [...categories, newCategory];
+      setCategories(updatedCategories);
+      // Sauvegarder dans localStorage
+      localStorage.setItem(
+        "offerCategories",
+        JSON.stringify(updatedCategories)
+      );
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("offerCategoriesUpdated"));
       console.log("📁 Catégorie d'offre créée:", newCategory);
       setIsAddModalOpen(false);
       alert("Catégorie créée avec succès");
@@ -115,6 +161,13 @@ const OfferCategoriesPage = () => {
         category._id === categoryId ? updatedCategory : category
       );
       setCategories(updatedCategories);
+      // Sauvegarder dans localStorage
+      localStorage.setItem(
+        "offerCategories",
+        JSON.stringify(updatedCategories)
+      );
+      // Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(new Event("offerCategoriesUpdated"));
       console.log("📁 Catégorie d'offre modifiée:", updatedCategory);
       setIsEditModalOpen(false);
       setEditingCategory(null);
@@ -135,6 +188,13 @@ const OfferCategoriesPage = () => {
           (category) => category._id !== categoryId
         );
         setCategories(updatedCategories);
+        // Sauvegarder dans localStorage
+        localStorage.setItem(
+          "offerCategories",
+          JSON.stringify(updatedCategories)
+        );
+        // Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(new Event("offerCategoriesUpdated"));
         console.log("📁 Catégorie d'offre supprimée:", categoryId);
         alert("Catégorie supprimée avec succès");
       } catch (error) {

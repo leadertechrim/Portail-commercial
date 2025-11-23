@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaShoppingCart,
   FaRobot,
@@ -24,22 +24,54 @@ import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./Sidebar.css";
 
 const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
-  const { hasPermission, loading: permissionsLoading } =
-    usePermissionsImproved();
+  const {
+    hasPermission,
+    loading: permissionsLoading,
+    permissions,
+  } = usePermissionsImproved();
 
-  const [expandedSections, setExpandedSections] = useState({
-    gestionOffres: true,
-    gestionClientele: false,
-    gestionRH: false,
-    liensUtiles: false,
-    parametrage: false,
+  // Si on a des permissions en cache, afficher le menu même si loading est true
+  const hasCachedPermissions = permissions && permissions.length > 0;
+  const shouldWaitForPermissions = permissionsLoading && !hasCachedPermissions;
+
+  // Charger l'état des sections depuis localStorage ou utiliser les valeurs par défaut
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const saved = localStorage.getItem("sidebarExpandedSections");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn("Erreur lors du chargement de l'état du sidebar:", e);
+      }
+    }
+    // Valeurs par défaut : toutes fermées
+    return {
+      gestionOffres: false,
+      gestionClientele: false,
+      gestionRH: false,
+      liensUtiles: false,
+      parametrage: false,
+    };
   });
 
+  // Sauvegarder l'état dans localStorage à chaque changement
+  useEffect(() => {
+    localStorage.setItem(
+      "sidebarExpandedSections",
+      JSON.stringify(expandedSections)
+    );
+  }, [expandedSections]);
+
   const toggleSection = (section) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+    setExpandedSections((prev) => {
+      const newState = {
+        ...prev,
+        [section]: !prev[section],
+      };
+      // Sauvegarder immédiatement dans localStorage
+      localStorage.setItem("sidebarExpandedSections", JSON.stringify(newState));
+      return newState;
+    });
   };
 
   // Menu avec permissions intégrées
@@ -48,7 +80,7 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
       id: "gestionOffres",
       label: "Gestion des offres",
       icon: <FaShoppingBag />,
-      permission: "menu_view_sources", // Permission globale pour la section
+      permission: ["menu_view_sources", "menu_view_offres_ia"], // Section visible si l'une des permissions est accordée
       children: [
         {
           id: "sources",
@@ -110,19 +142,19 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
       id: "gestionRH",
       label: "Gestion des ressources humaines",
       icon: <FaUserTie />,
-      permission: ["personnel_view", "partners_view"], // Fallback permissions
+      permission: ["menu_view_personnel", "menu_view_partenaires"], // Permissions menu correctes
       children: [
         {
           id: "personnel",
           label: "Personnels",
           icon: <FaUserCog />,
-          permission: "personnel_view",
+          permission: "menu_view_personnel",
         },
         {
           id: "partners",
           label: "Partenaires",
           icon: <FaHandshake />,
-          permission: "partners_view",
+          permission: "menu_view_partenaires",
         },
       ],
     },
@@ -194,7 +226,8 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
 
   // Fonction pour vérifier si une section doit être affichée
   const shouldShowSection = (section) => {
-    if (permissionsLoading) return false; // Attendre le chargement des permissions
+    // Si on attend les permissions et qu'on n'a pas de cache, ne rien afficher
+    if (shouldWaitForPermissions) return false;
     if (!section.permission) return true; // Si pas de permission définie, afficher
 
     // Si c'est un tableau, vérifier qu'au moins une permission est accordée
@@ -208,7 +241,8 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
 
   // Fonction pour vérifier si un élément de menu doit être affiché
   const shouldShowMenuItem = (item) => {
-    if (permissionsLoading) return false;
+    // Si on attend les permissions et qu'on n'a pas de cache, ne rien afficher
+    if (shouldWaitForPermissions) return false;
     if (!item.permission) return true;
     return hasPermission(item.permission);
   };
@@ -231,60 +265,63 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
         console.log(`  ${section.label}: ${visible ? "Visible" : "Masqué"}`);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permissionsLoading, hasPermission]);
 
   return (
     <aside className={`sidebar ${isOpen ? "" : "closed"}`}>
       <div className="sidebar-content">
         <nav className="main-nav">
-          {menuConfig.map((section) => {
-            // Ne pas afficher la section si l'utilisateur n'a pas les permissions
-            if (!shouldShowSection(section)) {
-              return null;
-            }
+          {shouldWaitForPermissions
+            ? null
+            : menuConfig.map((section) => {
+                // Ne pas afficher la section si l'utilisateur n'a pas les permissions
+                if (!shouldShowSection(section)) {
+                  return null;
+                }
 
-            return (
-              <div key={section.id} className="menu-section">
-                <div
-                  className="section-header"
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <span className="section-icon">{section.icon}</span>
-                  <span className="section-label">{section.label}</span>
-                  <span className="section-toggle">
-                    {expandedSections[section.id] ? (
-                      <FaChevronDown />
-                    ) : (
-                      <FaChevronRight />
+                return (
+                  <div key={section.id} className="menu-section">
+                    <div
+                      className="section-header"
+                      onClick={() => toggleSection(section.id)}
+                    >
+                      <span className="section-icon">{section.icon}</span>
+                      <span className="section-label">{section.label}</span>
+                      <span className="section-toggle">
+                        {expandedSections[section.id] ? (
+                          <FaChevronDown />
+                        ) : (
+                          <FaChevronRight />
+                        )}
+                      </span>
+                    </div>
+                    {expandedSections[section.id] && (
+                      <ul className="section-items">
+                        {section.children.map((item) => {
+                          // Ne pas afficher l'élément s'il n'a pas les permissions
+                          if (!shouldShowMenuItem(item)) {
+                            return null;
+                          }
+
+                          return (
+                            <li
+                              key={item.id}
+                              className={`menu-item ${
+                                selectedMenu === item.id ? "active" : ""
+                              }`}
+                              onClick={() => setSelectedMenu(item.id)}
+                            >
+                              <span className="item-icon">{item.icon}</span>
+                              <span className="item-label">{item.label}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
-                  </span>
-                </div>
-                {expandedSections[section.id] && (
-                  <ul className="section-items">
-                    {section.children.map((item) => {
-                      // Ne pas afficher l'élément s'il n'a pas les permissions
-                      if (!shouldShowMenuItem(item)) {
-                        return null;
-                      }
-
-                      return (
-                        <li
-                          key={item.id}
-                          className={`menu-item ${
-                            selectedMenu === item.id ? "active" : ""
-                          }`}
-                          onClick={() => setSelectedMenu(item.id)}
-                        >
-                          <span className="item-icon">{item.icon}</span>
-                          <span className="item-label">{item.label}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
+                  </div>
+                );
+              })}
         </nav>
       </div>
     </aside>
