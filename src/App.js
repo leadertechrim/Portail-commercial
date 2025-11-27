@@ -36,15 +36,19 @@ import InvoiceStatusPage from "./pages/InvoiceStatusPage";
 import OfferCategoriesPage from "./pages/OfferCategoriesPage";
 import LinkCategoriesPage from "./pages/LinkCategoriesPage";
 
+import { NotificationProvider, useNotificationContext } from "./contexts/NotificationContext";
+import NotificationContainer from "./components/NotificationContainer";
 import "./App.css";
 import "./styles/UnifiedButtons.css";
+import "./styles/HighlightNewItem.css";
 
-function App() {
+function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedMenu, setSelectedMenu] = useState("sources");
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem("token");
   });
+  const { notifications, removeNotification } = useNotificationContext();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -115,6 +119,10 @@ function App() {
 
   return (
     <Router>
+      <NotificationContainer
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
       <Routes>
         <Route
           path="/login"
@@ -130,6 +138,14 @@ function App() {
         />
       </Routes>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
   );
 }
 

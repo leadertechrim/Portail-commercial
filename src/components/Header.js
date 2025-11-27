@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaUserCircle, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
 import "./Header.css";
-import logo from "./logo.png";
+import logo from "../assets/logo.png";
 
 const Header = ({ toggleSidebar, isSidebarOpen }) => {
   const [showProfileCard, setShowProfileCard] = useState(false);
@@ -86,7 +86,6 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
   return (
     <header className="app-header">
       <div className="logo-section">
-        <img src={logo} alt="Logo IT Predict" className="logo" />
         <button
           className="menu-btn"
           onClick={toggleSidebar}
@@ -94,6 +93,8 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
         >
           {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
+        <img src={logo} alt="Logo IT Predict" className="logo" />
+        <span className="app-title">Portail de gestion commerciale</span>
       </div>
 
       <div className="header-icons">

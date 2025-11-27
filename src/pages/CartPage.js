@@ -13,7 +13,9 @@ import AddCallForTenderModal from "../components/AddCallForTenderModal";
 import EditCallForTenderModal from "../components/EditCallForTenderModal";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import { PERMISSIONS_CART } from "../constants/permissions";
+import { navigateToCreatedItem } from "../utils/navigationUtils";
 import "./CartPage.css";
+import "../styles/HighlightNewItem.css";
 
 const CartPage = () => {
   const [offers, setOffers] = useState([]);
@@ -427,7 +429,22 @@ const CartPage = () => {
       if (result.message === "Offre créée avec succès") {
         alert("Offre créée avec succès !");
         setIsAddModalOpen(false);
-        loadOffers();
+        
+        // Recharger les offres
+        await loadOffers();
+        
+        // Naviguer vers la nouvelle offre créée
+        const offerId = result.offer?._id || result._id || result.id;
+        if (offerId) {
+          setTimeout(() => {
+            navigateToCreatedItem({
+              itemId: offerId,
+              items: [],
+              scrollToItem: true,
+              highlightDuration: 3000,
+            });
+          }, 800);
+        }
       } else {
         alert(result.message || "Erreur lors de la création de l'offre");
       }
@@ -902,7 +919,7 @@ const CartPage = () => {
                   {filteredOffers.map((offer) => {
                     console.log("Offre complète:", offer);
                     return (
-                      <tr key={offer._id}>
+                      <tr key={offer._id} id={`item-${offer._id}`}>
                         {/* N-Offre */}
                         <td>{offer["N-Offre"] || offer.numero || "-"}</td>
 

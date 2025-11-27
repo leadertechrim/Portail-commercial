@@ -1,0 +1,107 @@
+/* Styles pour mettre en évidence un nouvel élément créé */
+
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(246, 120, 0, 0.3);
+    box-shadow: 0 0 0 0 rgba(246, 120, 0, 0.7);
+  }
+  50% {
+    background-color: rgba(246, 120, 0, 0.5);
+    box-shadow: 0 0 0 10px rgba(246, 120, 0, 0);
+  }
+  100% {
+    background-color: rgba(246, 120, 0, 0.2);
+    box-shadow: 0 0 0 0 rgba(246, 120, 0, 0);
+  }
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(246, 120, 0, 0.4);
+    border-left: 4px solid #f67800;
+  }
+  100% {
+    background-color: transparent;
+    border-left: 4px solid transparent;
+  }
+}
+
+/* Highlight pour les lignes de tableau */
+.highlight-new-item {
+  animation: highlightFade 3s ease-out;
+  transition: background-color 0.3s ease;
+}
+
+/* Highlight pour les éléments de liste */
+.highlight-new-item {
+  position: relative;
+  animation: highlightFade 3s ease-out;
+}
+
+.highlight-new-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #f67800;
+  animation: highlightPulse 1.5s ease-in-out;
+}
+
+/* Highlight pour les cartes */
+.highlight-new-item.card,
+.highlight-new-item[class*="card"] {
+  border: 2px solid #f67800;
+  box-shadow: 0 0 15px rgba(246, 120, 0, 0.5);
+  animation: highlightFade 3s ease-out;
+}
+
+/* Highlight pour les éléments de grille */
+.highlight-new-item[class*="grid-item"],
+.highlight-new-item[class*="item"] {
+  background-color: rgba(246, 120, 0, 0.1);
+  border: 2px solid #f67800;
+  animation: highlightFade 3s ease-out;
+}
+
+/* Style pour les lignes de tableau spécifiquement */
+table tr.highlight-new-item {
+  background-color: rgba(246, 120, 0, 0.15) !important;
+  border-left: 4px solid #f67800;
+  animation: highlightFade 3s ease-out;
+}
+
+/* Style pour les éléments de liste */
+ul li.highlight-new-item,
+ol li.highlight-new-item {
+  background-color: rgba(246, 120, 0, 0.1);
+  padding-left: 10px;
+  border-left: 4px solid #f67800;
+  animation: highlightFade 3s ease-out;
+}
+
+/* Badge "Nouveau" optionnel */
+.highlight-new-item::after {
+  content: "Nouveau";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #f67800;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  animation: highlightFade 3s ease-out;
+  opacity: 0;
+  animation-delay: 0s;
+}
+
+/* Pour les éléments qui doivent avoir un ID */
+[id^="item-"].highlight-new-item {
+  scroll-margin-top: 20px;
+  scroll-margin-bottom: 20px;
+}
+
+

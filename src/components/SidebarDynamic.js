@@ -104,7 +104,7 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
           id: "cart",
           label: "Mon panier",
           icon: <FaShoppingCart />,
-          permission: "menu_view_cart",
+          permission: "cart_view", // Permission cart_view seule suffit maintenant
         },
       ],
     },

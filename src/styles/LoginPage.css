@@ -224,6 +224,12 @@ p {
   box-shadow: 0 0 8px rgba(246, 194, 62, 0.4);
 }
 
+/* Ajuster le padding pour le champ mot de passe avec le bouton œil */
+.input-group input[type="password"],
+.input-group input[type="text"] {
+  padding-right: 45px;
+}
+
 /* Icon */
 .input-icon {
   position: absolute;
@@ -233,6 +239,39 @@ p {
   font-size: 1.2rem;
   color: #aaa;
   pointer-events: none;
+}
+
+/* Bouton pour afficher/masquer le mot de passe */
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  transition: color 0.3s;
+  outline: none;
+}
+
+.password-toggle:hover {
+  color: #f67800;
+}
+
+.password-toggle:focus {
+  color: #f67800;
+  outline: 2px solid rgba(246, 120, 0, 0.3);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.password-icon {
+  font-size: 1.2rem;
 }
 
 /* Lien mot de passe oublié */
@@ -253,7 +292,7 @@ p {
 }
 
 /* Bouton */
-button {
+button:not(.password-toggle) {
   width: 100%;
   padding: 12px;
   background: linear-gradient(90deg, #f67800, #f68215);
@@ -266,7 +305,7 @@ button {
   transition: background 0.3s, box-shadow 0.3s;
 }
 
-button:hover {
+button:not(.password-toggle):hover {
   box-shadow: 0 6px 15px rgba(246, 194, 62, 0.5);
 }
 

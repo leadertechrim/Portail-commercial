@@ -8,9 +8,12 @@ import {
 } from "../api";
 import { useCart } from "../hooks/useCart";
 import { usePermissionsImproved as usePermissions } from "../hooks/usePermissionsImproved";
+import { useNotificationContext } from "../contexts/NotificationContext";
 import RecentlyVisited from "../components/RecentlyVisited";
 import EditSourceModal from "../components/EditSourceModal";
+import { logger } from "../utils/logger";
 import "./../styles/SourcesPage.css";
+import "./../styles/HighlightNewItem.css";
 
 export default function SourcesPage() {
   const [sourcesNat, setSourcesNat] = useState([]);
@@ -26,45 +29,125 @@ export default function SourcesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isReorganizing, setIsReorganizing] = useState(false); // Loader réorganisation
+  const [reorganizingProgress, setReorganizingProgress] = useState({ current: 0, total: 0 }); // Progression réorganisation
+  const [newSourceId, setNewSourceId] = useState(null); // ID de la nouvelle source à scroller
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
+  const { hasPermission } = usePermissions();
+  const { showSuccess, showError, showWarning } = useNotificationContext();
+
+  // Fonction pour trier les sources par ordre (définie avec useCallback pour éviter les re-créations)
+  const sortSourcesByOrder = useCallback((sources) => {
+    return [...sources].sort((a, b) => {
+      const orderA = parseInt(a.order) || 9999; // Les sources sans ordre vont à la fin
+      const orderB = parseInt(b.order) || 9999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // Si même ordre, trier par nom
+      return (a.nom_entite || "").localeCompare(b.nom_entite || "");
+    });
+  }, []);
+
+  // Fonction pour vérifier et corriger les ordres redondants
+  const fixDuplicateOrders = useCallback((sources) => {
+    const sorted = sortSourcesByOrder(sources);
+    const fixed = [];
+    const usedOrders = new Set();
+    
+    sorted.forEach((source) => {
+      let order = parseInt(source.order) || 0;
+      
+      // Si l'ordre est déjà utilisé, trouver le prochain ordre disponible
+      while (usedOrders.has(order)) {
+        order++;
+      }
+      
+      usedOrders.add(order);
+      
+      // Si l'ordre a changé, mettre à jour la source
+      if (parseInt(source.order) !== order) {
+        fixed.push({ ...source, order });
+      } else {
+        fixed.push(source);
+      }
+    });
+    
+    return fixed;
+  }, [sortSourcesByOrder]);
 
   const loadSources = useCallback(async () => {
-    console.log("Chargement des sources...");
     const currentToken = localStorage.getItem("token");
-    console.log("Token actuel:", currentToken);
     const data = await fetchSourcesGrouped(currentToken);
-    console.log("Sources chargées:", data);
-    setSourcesNat(data.nationale || []);
-    setSourcesInt(data.internationale || []);
-    setFilteredNat(data.nationale || []);
-    setFilteredInt(data.internationale || []);
-  }, []); // Removed token dependency
+    
+    // Trier et corriger les ordres pour chaque catégorie
+    const sourcesNatSorted = sortSourcesByOrder(data.nationale || []);
+    const sourcesIntSorted = sortSourcesByOrder(data.internationale || []);
+    
+    // Vérifier et corriger les ordres redondants
+    const sourcesNatFixed = fixDuplicateOrders(sourcesNatSorted);
+    const sourcesIntFixed = fixDuplicateOrders(sourcesIntSorted);
+    
+    setSourcesNat(sourcesNatFixed);
+    setSourcesInt(sourcesIntFixed);
+    setFilteredNat(sourcesNatFixed);
+    setFilteredInt(sourcesIntFixed);
+  }, [sortSourcesByOrder, fixDuplicateOrders]);
 
   useEffect(() => {
     const currentToken = localStorage.getItem("token");
-    console.log("🔐 Vérification token:", currentToken);
     if (!currentToken) {
-      console.log("❌ Pas de token, redirection vers login");
       navigate("/login");
     } else {
-      console.log("✅ Token trouvé, chargement des sources");
       loadSources();
     }
-  }, [navigate, loadSources]); // Token checked directly in effect
+  }, [navigate, loadSources]);
 
-  // Debug permissions
+  // Effet pour scroller vers la nouvelle source créée
   useEffect(() => {
-    if (!permissionsLoading) {
-      console.log("🔐 SourcesPage - Permissions chargées:");
-      console.log("  - edit:", hasPermission("sources_edit"));
-      console.log("  - delete:", hasPermission("sources_delete"));
-      console.log("  - create:", hasPermission("sources_create"));
-      console.log("  - view:", hasPermission("sources_view"));
+    if (newSourceId && (sourcesNat.length > 0 || sourcesInt.length > 0)) {
+      const scrollToNewSource = () => {
+        const elementId = `item-${newSourceId}`;
+        const element = document.getElementById(elementId);
+        
+        if (element) {
+          logger.debug("Élément trouvé, scroll en cours vers:", elementId);
+          // Scroll vers l'élément
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          
+          // Ajouter le highlight
+          element.classList.add("highlight-new-item");
+          
+          // Retirer le highlight après 3 secondes
+          setTimeout(() => {
+            element.classList.remove("highlight-new-item");
+          }, 3000);
+          
+          // Réinitialiser l'ID après le scroll
+          setNewSourceId(null);
+          return true;
+        }
+        return false;
+      };
+      
+      // Essayer de scroller avec un petit délai
+      const timer = setTimeout(() => {
+        if (!scrollToNewSource()) {
+          // Si pas trouvé, réessayer après 500ms
+          setTimeout(() => {
+            scrollToNewSource();
+          }, 500);
+        }
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
-  }, [permissionsLoading, hasPermission]);
+  }, [newSourceId, sourcesNat, sourcesInt]);
+
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase().trim();
@@ -99,15 +182,18 @@ export default function SourcesPage() {
       return searchFields.includes(query);
     };
 
-    setFilteredNat(sourcesNat.filter(searchInSource));
-    setFilteredInt(sourcesInt.filter(searchInSource));
+    // Filtrer et trier les résultats
+    const filteredNat = sourcesNat.filter(searchInSource);
+    const filteredInt = sourcesInt.filter(searchInSource);
+    
+    setFilteredNat(sortSourcesByOrder(filteredNat));
+    setFilteredInt(sortSourcesByOrder(filteredInt));
   };
 
   const handleAddSource = async (sourceData) => {
     try {
       const currentToken = localStorage.getItem("token");
-      console.log("Tentative d'ajout de source:", sourceData);
-      console.log("Token utilisé:", currentToken ? "Présent" : "Manquant");
+      logger.debug("Tentative d'ajout de source:", sourceData);
 
       // Vérifier si l'URL existe déjà
       const allSources = [...sourcesNat, ...sourcesInt];
@@ -118,27 +204,28 @@ export default function SourcesPage() {
       );
 
       if (urlExists) {
-        alert(
-          "⚠️ Cette URL existe déjà dans la base de données.\n\nVeuillez vérifier la liste des sources existantes."
-        );
+        showWarning("Cette URL existe déjà dans la base de données. Veuillez vérifier la liste des sources existantes.");
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
       // Vérifier si l'ordre existe déjà et décaler les ordres si nécessaire
-      const newOrder = parseInt(sourceData.order);
+      const newOrder = parseInt(sourceData.order) || 1;
       const sourcesInSameCategory =
         sourceData.categorie === "Nationale" ? sourcesNat : sourcesInt;
 
-      const orderExists = sourcesInSameCategory.some(
+      // Trier les sources par ordre pour un décalage correct
+      const sortedSources = sortSourcesByOrder(sourcesInSameCategory);
+
+      const orderExists = sortedSources.some(
         (source) => parseInt(source.order) === newOrder
       );
 
       if (orderExists) {
         // Demander confirmation pour le décalage
         const confirmer = window.confirm(
-          `⚠️ L'ordre ${newOrder} existe déjà.\n\n` +
-            `Si vous continuez, toutes les sources à partir de l'ordre ${newOrder} ` +
+          `L'ordre ${newOrder} existe déjà.\n\n` +
+            `Si vous continuez, toutes les sources avec un ordre >= ${newOrder} ` +
             `seront décalées d'une position.\n\n` +
             `Voulez-vous continuer ?`
         );
@@ -151,42 +238,73 @@ export default function SourcesPage() {
         // Afficher le loader de réorganisation
         setIsReorganizing(true);
 
-        // Décaler tous les ordres >= newOrder de la même catégorie
-        console.log(
-          `🔄 Décalage des ordres >= ${newOrder} dans catégorie ${sourceData.categorie}`
-        );
+        // Décaler tous les ordres >= newOrder de la même catégorie (en ordre décroissant pour éviter les conflits)
+        logger.debug(`Décalage des ordres >= ${newOrder} dans catégorie ${sourceData.categorie}`);
 
         try {
-          for (const source of sourcesInSameCategory) {
-            if (parseInt(source.order) >= newOrder) {
-              const nouvelOrdre = parseInt(source.order) + 1;
-              console.log(
-                `  Décalage: ${source.nom_entite} ordre ${source.order} → ${nouvelOrdre}`
-              );
+          // Trier par ordre décroissant pour décaler d'abord les plus grands ordres
+          const sourcesToShift = sortedSources
+            .filter((source) => parseInt(source.order) >= newOrder)
+            .sort((a, b) => parseInt(b.order) - parseInt(a.order));
 
+          const totalSources = sourcesToShift.length;
+          logger.debug(`${totalSources} source(s) à décaler`);
+          setReorganizingProgress({ current: 0, total: totalSources });
+
+          // OPTIMISATION: Faire tous les appels API en parallèle au lieu de séquentiellement
+          // Cela réduit considérablement le temps d'exécution (de N secondes à ~1 seconde)
+          let completedCount = 0;
+          
+          const updatePromises = sourcesToShift.map(async (source) => {
+            const nouvelOrdre = parseInt(source.order) + 1;
+            logger.debug(`Décalage: ${source.nom_entite} ordre ${source.order} → ${nouvelOrdre}`);
+
+            try {
               // Créer un objet sans _id pour la mise à jour
               const { _id, ...sourceWithoutId } = source;
-              await updateSource(currentToken, source._id, {
+              const result = await updateSource(currentToken, source._id, {
                 ...sourceWithoutId,
                 order: nouvelOrdre,
               });
+              
+              // Mettre à jour la progression de manière thread-safe
+              completedCount++;
+              setReorganizingProgress({ current: completedCount, total: totalSources });
+              
+              return result;
+            } catch (error) {
+              logger.error(`Erreur lors du décalage de ${source.nom_entite}:`, error);
+              throw error;
             }
-          }
-        } finally {
+          });
+
+          // Exécuter tous les appels en parallèle (beaucoup plus rapide que séquentiel)
+          await Promise.all(updatePromises);
+          logger.debug("Tous les décalages terminés en parallèle");
+          setReorganizingProgress({ current: totalSources, total: totalSources });
+          
+          // Fermer le loader après un court délai pour voir la progression complète
+          setTimeout(() => {
+            setIsReorganizing(false);
+            setReorganizingProgress({ current: 0, total: 0 });
+          }, 500);
+        } catch (error) {
+          logger.error("Erreur lors du décalage des ordres:", error);
           setIsReorganizing(false);
+          setReorganizingProgress({ current: 0, total: 0 });
+          showError("Erreur lors de la réorganisation des ordres. Veuillez réessayer.");
+          throw error;
         }
       }
 
       const newSource = await addSource(currentToken, sourceData);
-      console.log("Source ajoutée avec succès:", newSource);
+      logger.debug("Source ajoutée avec succès:", newSource);
 
       // Message de succès
       if (orderExists) {
-        alert(
-          "✅ Source ajoutée avec succès !\n\nLes autres sources ont été décalées automatiquement."
-        );
+        showSuccess("Source ajoutée avec succès ! Les autres sources ont été décalées automatiquement.");
       } else {
-        alert("✅ Source ajoutée avec succès !");
+        showSuccess("Source ajoutée avec succès !");
       }
 
       // Réinitialiser le formulaire
@@ -195,13 +313,19 @@ export default function SourcesPage() {
       setCategorie("Nationale");
       setOrder(1);
 
-      // Scroller vers le haut
-      window.scrollTo({ top: 0, behavior: "smooth" });
-
       setIsAddModalOpen(false);
-      loadSources();
+      
+      // Stocker l'ID de la nouvelle source pour le scroll automatique
+      const sourceId = newSource._id || newSource.id;
+      if (sourceId) {
+        setNewSourceId(sourceId);
+        logger.debug("ID de la nouvelle source stocké pour scroll:", sourceId);
+      }
+      
+      // Recharger les sources (le useEffect se chargera du scroll)
+      await loadSources();
     } catch (error) {
-      console.error("Erreur détaillée lors de l'ajout de la source:", error);
+      logger.error("Erreur lors de l'ajout de la source:", error);
 
       // Afficher un message d'erreur plus informatif
       let errorMessage = "Erreur lors de l'ajout de la source.";
@@ -218,7 +342,7 @@ export default function SourcesPage() {
         errorMessage = error.message;
       }
 
-      alert(`❌ ${errorMessage}`);
+      showError(errorMessage);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -229,16 +353,16 @@ export default function SourcesPage() {
   };
 
   const handleSaveSource = async (sourceId, data) => {
-    console.log("SourcesPage handleSaveSource - ID:", sourceId, "Data:", data);
     const currentToken = localStorage.getItem("token");
     const result = await updateSource(currentToken, sourceId, data);
-    console.log("SourcesPage handleSaveSource - Result:", result);
+    logger.debug("Source mise à jour:", result);
     if (result.message === "Source mise à jour") {
       setIsEditModalOpen(false);
       setEditingSource(null);
       loadSources();
+      showSuccess("Source modifiée avec succès !");
     } else {
-      alert(result.message || "Erreur modification");
+      showError(result.message || "Erreur lors de la modification");
     }
   };
 
@@ -249,8 +373,9 @@ export default function SourcesPage() {
       setIsEditModalOpen(false);
       setEditingSource(null);
       loadSources();
+      showSuccess("Source supprimée avec succès !");
     } else {
-      alert(result.message || "Erreur suppression");
+      showError(result.message || "Erreur lors de la suppression");
     }
   };
 
@@ -259,13 +384,17 @@ export default function SourcesPage() {
     navigate("/login");
   };
 
-  const Section = ({ title, items }) => (
-    <section className="links-section">
-      <h2>{title}</h2>
-      <ul className="links-list">
-        {items.length === 0 && <li className="no-results">Aucun résultat</li>}
-        {items.map((s) => (
-          <li key={s._id} className="link-item">
+  const Section = ({ title, items }) => {
+    // Trier les items par ordre avant l'affichage
+    const sortedItems = sortSourcesByOrder(items);
+    
+    return (
+      <section className="links-section">
+        <h2>{title}</h2>
+        <ul className="links-list">
+          {sortedItems.length === 0 && <li className="no-results">Aucun résultat</li>}
+          {sortedItems.map((s) => (
+            <li key={s._id} id={`item-${s._id}`} className="link-item">
             {/* Badge d'ordre en cercle en haut */}
             {s.order && <span className="order-badge">{s.order}</span>}
 
@@ -294,10 +423,11 @@ export default function SourcesPage() {
               </div>
             )}
           </li>
-        ))}
-      </ul>
-    </section>
-  );
+          ))}
+        </ul>
+      </section>
+    );
+  };
 
   return (
     <div className="sources-page">
@@ -306,8 +436,25 @@ export default function SourcesPage() {
         <div className="reorganization-overlay">
           <div className="reorganization-loader">
             <div className="spinner-orange"></div>
-            <p> Réorganisation des ordres en cours...</p>
-            <p className="loader-subtitle">Veuillez patienter</p>
+            <p>🔄 Réorganisation des ordres en cours...</p>
+            {reorganizingProgress.total > 0 && (
+              <div className="reorganization-progress">
+                <p className="loader-subtitle">
+                  {reorganizingProgress.current} / {reorganizingProgress.total} source(s) mise(s) à jour
+                </p>
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ 
+                      width: `${(reorganizingProgress.current / reorganizingProgress.total) * 100}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            {reorganizingProgress.total === 0 && (
+              <p className="loader-subtitle">Optimisation en cours...</p>
+            )}
           </div>
         </div>
       )}

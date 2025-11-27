@@ -56,7 +56,7 @@ const RecentlyVisited = ({ recentlyVisited, clearHistory }) => {
                 target="_blank"
                 rel="noreferrer"
                 className="visit-again-btn"
-              >
+                >
                 <FaExternalLinkAlt />
               </a>
             </div>

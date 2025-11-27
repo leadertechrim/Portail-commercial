@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import "./../styles/LoginPage.css";
 import logo from "./../assets/logo.png";
 import { loginUser } from "../api";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -56,12 +57,24 @@ export default function LoginPage() {
           <div className="input-group">
             <FaLock className="input-icon" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+              {showPassword ? (
+                <FaEyeSlash className="password-icon" />
+              ) : (
+                <FaEye className="password-icon" />
+              )}
+            </button>
           </div>
           <div className="forgot-password">
             <a href="/forgot-password">Mot de passe oublié ?</a>

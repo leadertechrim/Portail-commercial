@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchClients, createClient, updateClient, deleteClient } from "../api";
 import PermissionGuard from "../components/PermissionGuard";
+import { navigateToCreatedItem } from "../utils/navigationUtils";
 import "./ClientsPage.css";
+import "../styles/HighlightNewItem.css";
 
 const ClientsPage = () => {
   const navigate = useNavigate();
@@ -46,6 +48,19 @@ const ClientsPage = () => {
         const data = await fetchClients(token);
         setClients(data);
         alert("Client ajouté avec succès");
+        
+        // Naviguer vers le nouveau client créé
+        const clientId = result.client?._id || result._id || result.id;
+        if (clientId) {
+          setTimeout(() => {
+            navigateToCreatedItem({
+              itemId: clientId,
+              items: data,
+              scrollToItem: true,
+              highlightDuration: 3000,
+            });
+          }, 500);
+        }
       } else {
         alert(result.message || "Erreur lors de l'ajout");
       }
@@ -153,7 +168,7 @@ const ClientsPage = () => {
           </thead>
           <tbody>
             {filteredClients.map((client) => (
-              <tr key={client._id}>
+              <tr key={client._id} id={`item-${client._id}`}>
                 <td>{client.raison_sociale || "-"}</td>
                 <td>{client.nom_prenom || "-"}</td>
                 <td>{client.telephone || "-"}</td>

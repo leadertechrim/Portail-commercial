@@ -6,32 +6,46 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const logger = {
+  /**
+   * Log d'information (uniquement en développement)
+   */
   log: (...args) => {
     if (isDevelopment) {
       console.log(...args);
     }
   },
+
+  /**
+   * Avertissement (uniquement en développement)
+   */
   warn: (...args) => {
     if (isDevelopment) {
       console.warn(...args);
     }
   },
+
+  /**
+   * Erreur (toujours affiché, même en production)
+   */
   error: (...args) => {
-    // Toujours logger les erreurs, même en production
     console.error(...args);
   },
+
+  /**
+   * Debug (uniquement en développement)
+   */
   debug: (...args) => {
     if (isDevelopment) {
-      console.debug(...args);
+      console.log('[DEBUG]', ...args);
     }
   },
+
+  /**
+   * Info importante (toujours affiché)
+   */
   info: (...args) => {
-    if (isDevelopment) {
-      console.info(...args);
-    }
+    console.log(...args);
   },
 };
 
 export default logger;
-
-

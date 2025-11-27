@@ -1,53 +1,127 @@
-// URL de base pour toutes les APIs
-// Utilise la variable d'environnement si définie, sinon Railway par défaut
-export const API_BASE_URL =
+import { logger } from "./utils/logger";
+
+let API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   "https://applesoffres-production.up.railway.app";
 
-// ---------------- LOGIN ----------------
+if (API_BASE_URL && API_BASE_URL.includes("0.0.0.0")) {
+  logger.warn("Correction automatique: 0.0.0.0 remplacé par localhost");
+  API_BASE_URL = API_BASE_URL.replace("0.0.0.0", "localhost");
+}
+
+export { API_BASE_URL };
+
+const handleFetchError = (error, context = "API") => {
+  logger.error(`Erreur ${context}:`, error);
+
+  if (error instanceof TypeError && error.message === "Failed to fetch") {
+    return new Error(
+      "Impossible de se connecter au serveur. Vérifiez votre connexion."
+    );
+  }
+
+  if (error.name === "AbortError" || error.message.includes("timeout")) {
+    return new Error("La requête a pris trop de temps. Réessayez.");
+  }
+
+  return error;
+};
+
 export async function loginUser(email, password) {
-  const res = await fetch(`${API_BASE_URL}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const res = await fetch(`${API_BASE_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.message || "Erreur login");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Erreur de connexion");
+    }
+
+    return await res.json();
+  } catch (error) {
+    throw handleFetchError(error, "Login");
   }
-
-  return await res.json();
 }
 
-// ---------------- GET SOURCES ----------------
 export async function fetchSources(token) {
-  const res = await fetch(`${API_BASE_URL}/api/sources`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.ok ? await res.json() : [];
-}
-
-// ---------------- ADD SOURCE ----------------
-export async function addSource(token, source) {
-  const res = await fetch(`${API_BASE_URL}/api/sources`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(source),
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sources`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.ok ? await res.json() : [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des sources:", error);
+    throw handleFetchError(error, "fetchSources");
   }
-
-  return await res.json();
 }
 
-// ---------------- GET SOURCES GROUPED ----------------
+export async function addSource(token, source) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sources`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(source),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        throw new Error(errorData.message || "Cette source existe déjà");
+      }
+      throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    throw handleFetchError(error, "addSource");
+  }
+}
+
+export async function checkSourceDuplicate(token, data) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sources/check-duplicate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      // Pour la vérification, on peut retourner les informations même en cas d'erreur
+      if (res.status === 409) {
+        return {
+          isDuplicate: true,
+          nom_entite_exists: errorData.nom_entite_exists || false,
+          url_exists: errorData.url_exists || false,
+          message: errorData.message,
+          error: errorData.error,
+        };
+      }
+      throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+    }
+
+    const result = await res.json();
+    return {
+      isDuplicate: false,
+      nom_entite_exists: result.nom_entite_exists || false,
+      url_exists: result.url_exists || false,
+      message: result.message || "Aucun doublon détecté",
+    };
+  } catch (error) {
+    console.error("Erreur lors de la vérification des doublons:", error);
+    throw error;
+  }
+}
+
 export async function fetchSourcesGrouped(token) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/sources/grouped`, {
@@ -69,7 +143,6 @@ export async function fetchSourcesGrouped(token) {
   }
 }
 
-// ---------------- UPDATE SOURCE ----------------
 export async function updateSource(token, sourceId, data) {
   console.log("API updateSource - ID:", sourceId, "Data:", data);
   const res = await fetch(`${API_BASE_URL}/api/sources/${sourceId}`, {
@@ -80,12 +153,22 @@ export async function updateSource(token, sourceId, data) {
     },
     body: JSON.stringify(data),
   });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    console.log("API updateSource - Error:", errorData);
+    // Gestion spécifique des erreurs de doublon (409)
+    if (res.status === 409) {
+      throw new Error(errorData.message || "Cette source existe déjà");
+    }
+    throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+  }
+
   const result = await res.json();
   console.log("API updateSource - Response:", result);
   return result;
 }
 
-// ---------------- DELETE SOURCE ----------------
 export async function deleteSource(token, sourceId) {
   const res = await fetch(`${API_BASE_URL}/api/sources/${sourceId}`, {
     method: "DELETE",
@@ -93,8 +176,6 @@ export async function deleteSource(token, sourceId) {
   });
   return await res.json();
 }
-
-// ---------------- USER MANAGEMENT (ADMIN) ----------------
 
 export async function fetchUsers(token) {
   console.log("🔍 API fetchUsers - Début");
@@ -301,7 +382,6 @@ export async function changeOwnPassword(passwordData, token) {
   return await res.json();
 }
 
-// ===== GESTION DES OFFRES =====
 export const fetchOffers = async (token) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/offres`, {
@@ -327,7 +407,41 @@ export const fetchOffers = async (token) => {
     return data;
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
+    const handledError = handleFetchError(error, "fetchOffers");
+    // Retourner un tableau vide pour ne pas casser l'interface
+    if (handledError.message.includes("Impossible de se connecter")) {
+      throw handledError;
+    }
     return [];
+  }
+};
+
+export const checkCartViewPermission = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/panier/can-view`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    logger.debug("Vérification permission panier:", data);
+    return data;
+  } catch (error) {
+    logger.error(
+      "Erreur lors de la vérification de la permission panier:",
+      error
+    );
+    return {
+      can_view: false,
+      has_cart_view: false,
+      has_cart_view_all: false,
+    };
   }
 };
 
@@ -441,10 +555,6 @@ export const getOffersStats = async (token) => {
   }
 };
 
-// ===========================================
-// GESTION DES CLIENTS
-// ===========================================
-
 export const fetchClients = async (token) => {
   try {
     console.log("Fetching clients with token:", token ? "Present" : "Missing");
@@ -535,10 +645,6 @@ export const deleteClient = async (clientId, token) => {
     return { message: "Erreur de connexion" };
   }
 };
-
-// ===========================================
-// GESTION DES PARTENAIRES
-// ===========================================
 
 export const fetchPartners = async (token) => {
   try {
@@ -636,10 +742,6 @@ export const deletePartner = async (partnerId, token) => {
     return { message: "Erreur de connexion" };
   }
 };
-
-// ===========================================
-// GESTION DU PERSONNEL
-// ===========================================
 
 export const fetchPersonnel = async (token) => {
   try {
@@ -758,7 +860,6 @@ export const deletePersonnel = async (personnelId, token) => {
   }
 };
 
-// ---------------- DEVIS API ----------------
 export const fetchDevis = async (token) => {
   try {
     console.log("🔄 API: Chargement des devis...");
@@ -972,7 +1073,6 @@ export const fetchDevisEtats = async (token) => {
   }
 };
 
-// ---------------- FACTURES API ----------------
 export const fetchFactures = async (token) => {
   try {
     console.log("🔄 API: Chargement des factures...");
@@ -1196,7 +1296,6 @@ const apiCall = async (endpoint, options = {}) => {
   }
 };
 
-// ===== CATÉGORIES DE LIENS =====
 export const linkCategoriesAPI = {
   // Récupérer toutes les catégories
   getAll: () => apiCall("/link-categories"),
