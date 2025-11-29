@@ -301,13 +301,74 @@ body {
   margin: 0;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  font-size: var(--font-size-xl);
-  cursor: pointer;
-  color: var(--gray-color);
-  padding: var(--spacing-xs);
+.modal-close,
+.close-btn {
+  background: rgba(108, 117, 125, 0.08) !important;
+  border: none !important;
+  font-size: 0.9rem !important;
+  color: #6c757d !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  width: 14px !important;
+  height: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s ease !important;
+  flex-shrink: 0 !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  margin-left: auto !important;
+  line-height: 1 !important;
+  position: relative !important;
+}
+
+.modal-close i,
+.close-btn i,
+.modal-close svg,
+.close-btn svg {
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.modal-close:hover,
+.close-btn:hover {
+  background: rgba(220, 53, 69, 0.12) !important;
+  color: #dc3545 !important;
+  transform: rotate(90deg) scale(1.1) !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2) !important;
+}
+
+.modal-close:active,
+.close-btn:active {
+  transform: scale(0.9) !important;
+  background: rgba(220, 53, 69, 0.18) !important;
+  color: #dc3545 !important;
+}
+
+/* Style spécial pour modal avec fond sombre (ex: CartModal) */
+.cart-header .modal-close,
+.cart-header .close-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.cart-header .modal-close:hover,
+.cart-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  transform: rotate(90deg) scale(1.1) !important;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2) !important;
+}
+
+.cart-header .modal-close:active,
+.cart-header .close-btn:active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  transform: scale(0.9) !important;
 }
 
 .modal-body {

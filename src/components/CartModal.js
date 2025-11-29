@@ -28,7 +28,7 @@ const CartModal = ({ isOpen, onClose, cart, removeFromCart, clearCart }) => {
             <i className="fas fa-shopping-basket"></i>
             Mon Panier ({cart.length})
           </h2>
-          <button className="close-btn" onClick={onClose}>
+          <button className="modal-close" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
