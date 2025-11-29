@@ -356,16 +356,14 @@ const CategoryModal = ({ isOpen, onClose, onSubmit, category, title }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Couleurs prédéfinies
+  // Couleurs prédéfinies - Palette épurée et élégante
   const predefinedColors = [
-    { name: "Bleu", value: "#007bff" },
-    { name: "Vert", value: "#28a745" },
-    { name: "Jaune", value: "#ffc107" },
-    { name: "Rouge", value: "#dc3545" },
-    { name: "Orange", value: "#f67800" },
-    { name: "Violet", value: "#6f42c1" },
-    { name: "Gris", value: "#6c757d" },
-    { name: "Noir", value: "#343a40" },
+    { name: "Bleu Saphir", value: "#2563EB" },
+    { name: "Vert Menthe", value: "#059669" },
+    { name: "Rouge Rubis", value: "#DC2626" },
+    { name: "Orange Sunset", value: "#EA580C" },
+    { name: "Violet Améthyste", value: "#7C3AED" },
+    { name: "Gris Perle", value: "#475569" },
   ];
 
   useEffect(() => {
@@ -485,7 +483,10 @@ const CategoryModal = ({ isOpen, onClose, onSubmit, category, title }) => {
                     className={`color-option ${
                       formData.couleur === color.value ? "selected" : ""
                     }`}
-                    style={{ backgroundColor: color.value }}
+                    style={{ 
+                      backgroundColor: color.value,
+                      backgroundImage: 'none'
+                    }}
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, couleur: color.value }))
                     }

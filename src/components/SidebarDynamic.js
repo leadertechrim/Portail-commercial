@@ -168,7 +168,7 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
           id: "links",
           label: "Liste des liens",
           icon: <FaLink />,
-          permission: "menu_view_links",
+          permission: "links_view",
         },
       ],
     },
