@@ -450,6 +450,13 @@
 
 .close-btn:active {
   transform: scale(0.85);
+  background: none !important;
+  color: #64748b;
+}
+
+.close-btn:active:hover {
+  background: none !important;
+  transform: scale(0.85);
 }
 
 /* Responsive pour petits écrans */
