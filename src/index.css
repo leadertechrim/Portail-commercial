@@ -11,3 +11,69 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ==================== STYLE GLOBAL MODAL CLOSE BUTTON ==================== */
+.modal-close,
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  min-width: 16px;
+  min-height: 16px;
+  margin-left: auto;
+  line-height: 1;
+}
+
+.modal-close i,
+.close-btn i {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.modal-close:hover,
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  transform: rotate(90deg) scale(1.15);
+}
+
+.modal-close:active,
+.close-btn:active {
+  transform: scale(0.85);
+  background: none !important;
+  color: #64748b;
+}
+
+.modal-close:active:hover,
+.close-btn:active:hover {
+  background: none !important;
+  transform: scale(0.85);
+}
+
+/* Style spécial pour modal avec fond sombre (ex: CartModal) */
+.cart-header .modal-close,
+.cart-header .close-btn {
+  color: white;
+}
+
+.cart-header .modal-close:hover,
+.cart-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fca5a5;
+}
+
+.cart-header .modal-close:active,
+.cart-header .close-btn:active {
+  color: rgba(255, 255, 255, 0.7);
+}

@@ -1096,12 +1096,6 @@
   .close-btn {
     align-self: flex-end;
     margin-top: -10px;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    font-size: 1.2rem;
-    padding: 6px;
   }
 
   .modal-body {
@@ -1150,14 +1144,6 @@
     font-size: 1.2rem;
   }
 
-  .close-btn {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
-    font-size: 1rem;
-    padding: 4px;
-  }
   
   .permissions-count {
     font-size: 12px;
