@@ -1,8 +1,9 @@
 import { logger } from "./utils/logger";
 
-let API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  "https://applesoffres-production.up.railway.app";
+let API_BASE_URL = 
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : (process.env.REACT_APP_API_URL || "https://applesoffres-production.up.railway.app");
 
 if (API_BASE_URL && API_BASE_URL.includes("0.0.0.0")) {
   logger.warn("Correction automatique: 0.0.0.0 remplacé par localhost");
