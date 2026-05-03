@@ -180,6 +180,35 @@ export async function deleteSource(token, sourceId) {
   return await res.json();
 }
 
+export async function exportSourcesDocx(token) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sources/export-docx`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Erreur HTTP: ${res.status}`);
+    }
+
+    // Gérer le téléchargement du blob
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Sources_Appels_Offres.docx";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur export Word:", error);
+    throw error;
+  }
+}
+
+
 export async function fetchUsers(token) {
   console.log("🔍 API fetchUsers - Début");
   const res = await fetch(`${API_BASE_URL}/api/users`, {

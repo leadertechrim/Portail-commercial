@@ -5,6 +5,7 @@ import {
   addSource,
   updateSource,
   deleteSource,
+  exportSourcesDocx,
 } from "../api";
 import { useCart } from "../hooks/useCart";
 import { usePermissionsImproved as usePermissions } from "../hooks/usePermissionsImproved";
@@ -31,6 +32,8 @@ export default function SourcesPage() {
   const [isReorganizing, setIsReorganizing] = useState(false); // Loader réorganisation
   const [reorganizingProgress, setReorganizingProgress] = useState({ current: 0, total: 0 }); // Progression réorganisation
   const [newSourceId, setNewSourceId] = useState(null); // ID de la nouvelle source à scroller
+  const [isExporting, setIsExporting] = useState(false);
+
 
   const navigate = useNavigate();
   const { recentlyVisited, addToRecentlyVisited, clearHistory } = useCart();
@@ -379,7 +382,21 @@ export default function SourcesPage() {
     }
   };
 
+  const handleExportWord = async () => {
+    try {
+      setIsExporting(true);
+      const token = localStorage.getItem("token");
+      await exportSourcesDocx(token);
+      showSuccess("Le fichier Word a été généré avec succès !");
+    } catch (error) {
+      showError("Erreur lors de la génération du fichier Word.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const _handleLogout = () => {
+
     localStorage.clear();
     navigate("/login");
   };
@@ -467,7 +484,29 @@ export default function SourcesPage() {
           </div>
         </div>
         <div className="header-right">
+          <button 
+            className="export-word-btn" 
+            onClick={handleExportWord}
+            disabled={isExporting}
+            style={{ 
+              marginRight: '15px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '8px 15px',
+              backgroundColor: '#2b579a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              opacity: isExporting ? 0.7 : 1
+            }}
+          >
+            <i className={`fas ${isExporting ? 'fa-spinner fa-spin' : 'fa-file-word'}`}></i>
+            {isExporting ? 'Génération...' : 'Exporter en Word'}
+          </button>
           <div className="search-container">
+
             <i className="fas fa-search search-icon"></i>
             <input
               type="text"
