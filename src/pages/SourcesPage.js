@@ -389,10 +389,12 @@ export default function SourcesPage() {
       await exportSourcesDocx(token);
       showSuccess("Le fichier Word a été généré avec succès !");
     } catch (error) {
-      showError("Erreur lors de la génération du fichier Word.");
+      console.error("Erreur export Word:", error);
+      showError(error.message || "Erreur lors de la génération du fichier Word.");
     } finally {
       setIsExporting(false);
     }
+
   };
 
   const _handleLogout = () => {

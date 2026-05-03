@@ -187,8 +187,10 @@ export async function exportSourcesDocx(token) {
     });
 
     if (!res.ok) {
-      throw new Error(`Erreur HTTP: ${res.status}`);
+      const errorData = await res.json();
+      throw new Error(errorData.message || `Erreur HTTP: ${res.status}`);
     }
+
 
     // Gérer le téléchargement du blob
     const blob = await res.blob();
