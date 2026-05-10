@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchPersonnel, rolesAPI, fetchUserDecryptedPassword } from "../api";
+import { fetchPersonnel, rolesAPI } from "../api";
 import "./UserModal.css";
 
 const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
@@ -18,8 +18,6 @@ const UserModal = ({ user, onSave, onClose, isViewMode = false }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [personnel, setPersonnel] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [decryptedPassword, setDecryptedPassword] = useState(""); // Mot de passe déchiffré
-  const [loadingPassword, setLoadingPassword] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {

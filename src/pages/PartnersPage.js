@@ -7,7 +7,6 @@ import {
   deletePartner,
 } from "../api";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
-import PermissionGuard from "../components/PermissionGuard";
 import "./PartnersPage.css";
 
 /* ══════════════════════════════════════════
