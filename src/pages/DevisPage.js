@@ -813,55 +813,87 @@ const DevisPage = () => {
   return (
     <div className="devis-page">
       <div className="main-content">
-        <div className="devis-header">
-          <div className="devis-header-left"></div>
-          <div className="devis-header-actions">
+      <div className="devis-header">
+        <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button className="back-btn" onClick={() => _navigate(-1)}>
+            <i className="fas fa-arrow-left"></i>
+            Retour
+          </button>
+          <h1>
+            <i className="fas fa-file-invoice-dollar" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
+            Gestion des Devis
+          </h1>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Compteur */}
+          <span style={{
+            fontSize: ".8rem", fontWeight: 600,
+            color: "#6b7280", background: "#f8f9fa",
+            border: "1px solid #e2e8f0", borderRadius: 20,
+            padding: "4px 12px"
+          }}>
+            {filteredDevis.length} devis
+          </span>
+
+          {hasPermission("devis_create") && (
+            <button onClick={openAddModal} className="add-devis-btn">
+              <i className="fas fa-plus"></i>
+              Nouveau Devis
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="devis-content">
+        <div className="devis-search">
+          <div className="search-box">
+            <i className="fas fa-search"></i>
             <input
               type="text"
-              placeholder="Rechercher un devis..."
+              placeholder="Rechercher un devis par numéro, intitulé ou client…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
             />
-            {hasPermission("devis_create") && (
-              <button onClick={openAddModal} className="add-devis-btn">
-                <i className="fas fa-plus"></i>
-                Nouveau Devis
-              </button>
-            )}
           </div>
         </div>
 
-        <div className="devis-content">
-          {error && (
-            <div className="error-message">
-              <i className="fas fa-exclamation-triangle"></i>
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="error-message">
+            <i className="fas fa-exclamation-triangle"></i>
+            {error}
+          </div>
+        )}
 
-          {filteredDevis.length === 0 ? (
-            <div className="empty-devis">
-              <i className="fas fa-file-invoice"></i>
-              <h3>Aucun devis trouvé</h3>
-              <p>Commencez par créer votre premier devis</p>
+        {filteredDevis.length === 0 ? (
+          <div className="empty-devis">
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%",
+              background: "#fff7ed", border: "2px solid #fed7aa",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 16px"
+            }}>
+              <i className="fas fa-file-invoice-dollar" style={{ fontSize: "1.6rem", color: "#f67800" }}></i>
             </div>
-          ) : (
-            <div className="devis-table-container">
-              <table className="devis-table">
-                <thead>
-                  <tr>
-                    <th>Numéro</th>
-                    <th>Intitulé</th>
-                    <th>Client</th>
-                    <th>Offre</th>
-                    <th>Date d'émission</th>
-                    <th>État</th>
-                    <th>Documents</th>
-                    {hasPermission("view_all_quotes") && <th>Responsable</th>}
-                    <th>Gérer</th>
-                  </tr>
-                </thead>
+            <h3>Aucun devis trouvé</h3>
+            <p>Commencez par créer votre premier devis</p>
+          </div>
+        ) : (
+          <div className="devis-table-container">
+            <table className="devis-table">
+              <thead>
+                <tr>
+                  <th><i className="fas fa-hashtag" style={{ marginRight: 6, opacity: .6 }}></i>Numéro</th>
+                  <th><i className="fas fa-info-circle" style={{ marginRight: 6, opacity: .6 }}></i>Intitulé</th>
+                  <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Client</th>
+                  <th><i className="fas fa-lightbulb" style={{ marginRight: 6, opacity: .6 }}></i>Offre</th>
+                  <th><i className="fas fa-calendar-alt" style={{ marginRight: 6, opacity: .6 }}></i>Émission</th>
+                  <th><i className="fas fa-tasks" style={{ marginRight: 6, opacity: .6 }}></i>État</th>
+                  <th><i className="fas fa-file-alt" style={{ marginRight: 6, opacity: .6 }}></i>Docs</th>
+                  {hasPermission("view_all_quotes") && <th><i className="fas fa-user-shield" style={{ marginRight: 6, opacity: .6 }}></i>Responsable</th>}
+                  <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
+                </tr>
+              </thead>
                 <tbody>
                   {filteredDevis.map((devis) => (
                     <tr key={devis._id}>
@@ -1192,135 +1224,157 @@ const DevisModal = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button onClick={onClose} className="close-btn">
+        {/* Header orange — titre BLANC GRAND */}
+        <div className="modal-header" style={{ background: "#f67800", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 30px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.15rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 9,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className={`fas ${devis ? "fa-edit" : "fa-plus-circle"}`} style={{ fontSize: "1rem", opacity: .85 }}></i>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="numero_devis">Numéro de Devis *</label>
-            <input
-              type="text"
-              id="numero_devis"
-              name="numero_devis"
-              value={formData.numero_devis}
-              onChange={handleChange}
-              className={`readonly-field ${errors.numero_devis ? "error" : ""}`}
-              readOnly
-              placeholder="Généré automatiquement"
-            />
-            {errors.numero_devis && (
-              <span className="error-message">{errors.numero_devis}</span>
-            )}
-            <small className="form-help">
-              Le numéro est généré automatiquement selon le format :
-              Dev_Client_Offre
-            </small>
+        <form onSubmit={handleSubmit} className="modal-form-grid">
+          <div className="form-section-enhanced">
+            <h3 className="section-title-mini">Informations Devis</h3>
+            <div className="form-group-grid">
+              <div className="form-group full-width">
+                <label htmlFor="numero_devis">Numéro de Devis *</label>
+                <input
+                  type="text"
+                  id="numero_devis"
+                  name="numero_devis"
+                  value={formData.numero_devis}
+                  onChange={handleChange}
+                  className={`readonly-field ${errors.numero_devis ? "error" : ""}`}
+                  readOnly
+                  placeholder="Généré automatiquement"
+                />
+                {errors.numero_devis && (
+                  <span className="error-message">{errors.numero_devis}</span>
+                )}
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="intitule">Intitulé *</label>
+                <input
+                  type="text"
+                  id="intitule"
+                  name="intitule"
+                  value={formData.intitule}
+                  onChange={handleChange}
+                  className={errors.intitule ? "error" : ""}
+                  placeholder="Intitulé du devis"
+                />
+                {errors.intitule && (
+                  <span className="error-message">{errors.intitule}</span>
+                )}
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="date_emission">Date d'émission *</label>
+                <input
+                  type="date"
+                  id="date_emission"
+                  name="date_emission"
+                  value={formData.date_emission}
+                  onChange={handleChange}
+                  className={errors.date_emission ? "error" : ""}
+                />
+                {errors.date_emission && (
+                  <span className="error-message">{errors.date_emission}</span>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="intitule">Intitulé *</label>
-            <input
-              type="text"
-              id="intitule"
-              name="intitule"
-              value={formData.intitule}
-              onChange={handleChange}
-              className={errors.intitule ? "error" : ""}
-              placeholder="Intitulé du devis"
-            />
-            {errors.intitule && (
-              <span className="error-message">{errors.intitule}</span>
-            )}
+          <div className="form-section-enhanced">
+            <h3 className="section-title-mini">Liens & État</h3>
+            <div className="form-group-grid">
+              <div className="form-group full-width">
+                <label htmlFor="offre_id">Offre *</label>
+                <select
+                  id="offre_id"
+                  name="offre_id"
+                  value={formData.offre_id}
+                  onChange={handleChange}
+                  className={errors.offre_id ? "error" : ""}
+                >
+                  <option value="">Sélectionner une offre</option>
+                  {offers.map((offre) => (
+                    <option key={offre._id} value={offre._id}>
+                      {offre.intitulee}
+                    </option>
+                  ))}
+                </select>
+                {errors.offre_id && (
+                  <span className="error-message">{errors.offre_id}</span>
+                )}
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="client_id">Client *</label>
+                <select
+                  id="client_id"
+                  name="client_id"
+                  value={formData.client_id}
+                  onChange={handleChange}
+                  className={errors.client_id ? "error" : ""}
+                >
+                  <option value="">Sélectionner un client</option>
+                  {clients.map((client) => (
+                    <option key={client._id} value={client._id}>
+                      {client.raison_sociale}
+                    </option>
+                  ))}
+                </select>
+                {errors.client_id && (
+                  <span className="error-message">{errors.client_id}</span>
+                )}
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="etat">État *</label>
+                <select
+                  id="etat"
+                  name="etat"
+                  value={formData.etat}
+                  onChange={handleChange}
+                  className={errors.etat ? "error" : ""}
+                >
+                  <option value="">Sélectionner un état</option>
+                  {etats.map((etat) => (
+                    <option key={etat._id || etat.nom} value={etat.nom}>
+                      {etat.nom}
+                    </option>
+                  ))}
+                </select>
+                {errors.etat && (
+                  <span className="error-message">{errors.etat}</span>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="date_emission">Date d'émission *</label>
-            <input
-              type="date"
-              id="date_emission"
-              name="date_emission"
-              value={formData.date_emission}
-              onChange={handleChange}
-              className={errors.date_emission ? "error" : ""}
-            />
-            {errors.date_emission && (
-              <span className="error-message">{errors.date_emission}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="offre_id">Offre *</label>
-            <select
-              id="offre_id"
-              name="offre_id"
-              value={formData.offre_id}
-              onChange={handleChange}
-              className={errors.offre_id ? "error" : ""}
-            >
-              <option value="">Sélectionner une offre</option>
-              {offers.map((offre) => (
-                <option key={offre._id} value={offre._id}>
-                  {offre.intitulee}
-                </option>
-              ))}
-            </select>
-            {errors.offre_id && (
-              <span className="error-message">{errors.offre_id}</span>
-            )}
-            {offers.length === 0 && (
-              <small className="form-help" style={{ color: "#dc3545" }}>
-                ⚠️ Aucune offre trouvée. Contactez l'administrateur.
-              </small>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="client_id">Client *</label>
-            <select
-              id="client_id"
-              name="client_id"
-              value={formData.client_id}
-              onChange={handleChange}
-              className={errors.client_id ? "error" : ""}
-            >
-              <option value="">Sélectionner un client</option>
-              {clients.map((client) => (
-                <option key={client._id} value={client._id}>
-                  {client.raison_sociale}
-                </option>
-              ))}
-            </select>
-            {errors.client_id && (
-              <span className="error-message">{errors.client_id}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="etat">État *</label>
-            <select
-              id="etat"
-              name="etat"
-              value={formData.etat}
-              onChange={handleChange}
-              className={errors.etat ? "error" : ""}
-            >
-              <option value="">Sélectionner un état</option>
-              {etats.map((etat) => (
-                <option key={etat._id || etat.nom} value={etat.nom}>
-                  {etat.nom}
-                </option>
-              ))}
-            </select>
-            {errors.etat && (
-              <span className="error-message">{errors.etat}</span>
-            )}
-          </div>
-
-          <div className="form-group">
+          <div className="form-group full-width">
             <label htmlFor="documents">Documents</label>
             <SimpleFilestackUploader
               multiple={true}
@@ -1338,31 +1392,17 @@ const DevisModal = ({
               }}
             />
             {formData.documents && formData.documents.length > 0 && (
-              <div className="documents-list">
-                <h4>Documents uploadés:</h4>
+              <div className="documents-list-enhanced">
                 {formData.documents.map((file, index) => (
-                  <div key={file.id || index} className="document-item">
+                  <div key={file.id || index} className="document-item-enhanced">
                     <i className="fas fa-file"></i>
-                    <div className="file-details">
-                      <span className="file-name">
-                        {file.filename || file.name}
-                      </span>
-                      {file.url && (
-                        <a
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="file-url"
-                        >
-                          Voir le fichier
-                        </a>
-                      )}
-                    </div>
+                    <span className="file-name">
+                      {file.filename || file.name}
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeDocument(index)}
-                      className="remove-document"
-                      title="Supprimer le document"
+                      className="remove-btn-mini"
                     >
                       <i className="fas fa-times"></i>
                     </button>
@@ -1370,19 +1410,36 @@ const DevisModal = ({
                 ))}
               </div>
             )}
-            {formData.document && (
-              <div className="file-info">
-                <small>Fichier sélectionné: {formData.document}</small>
-              </div>
-            )}
           </div>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="cancel-btn">
+          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
+            <button
+              type="button"
+              className="cancel-btn"
+              onClick={onClose}
+              disabled={loading}
+              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
+            >
+              <i className="fas fa-times"></i>
               Annuler
             </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "En cours..." : "Enregistrer"}
+            <button 
+              type="submit" 
+              className="save-btn" 
+              disabled={loading}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "6px",
+                background: "#f67800", color: "white", border: "none",
+                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
+                height: "38px", cursor: "pointer"
+              }}
+            >
+              {loading ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className="fas fa-check"></i>
+              )}
+              {devis ? "Mettre à jour" : "Créer le Devis"}
             </button>
           </div>
         </form>

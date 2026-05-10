@@ -227,21 +227,40 @@ const AdminPage = () => {
 
   return (
     <div className="admin-page">
+      {/* ══ HEADER ══ */}
       <div className="admin-header">
-        <button className="back-btn" onClick={() => navigate("/sources")}>
-          <i className="fas fa-arrow-left"></i>
-          Retour
-        </button>
-        {/* <h1>Gestion des Utilisateurs</h1> */}
-        {hasPermission("users_manage") && (
-          <button
-            className="add-user-btn"
-            onClick={() => setIsUserModalOpen(true)}
-          >
-            <i className="fas fa-plus"></i>
-            Nouvel Utilisateur
+        <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button className="back-btn" onClick={() => navigate("/sources")}>
+            <i className="fas fa-arrow-left"></i>
+            Retour
           </button>
-        )}
+          <h1>
+            <i className="fas fa-users-cog" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
+            Gestion des Utilisateurs
+          </h1>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Compteur */}
+          <span style={{
+            fontSize: ".8rem", fontWeight: 600,
+            color: "#6b7280", background: "#f8f9fa",
+            border: "1px solid #e2e8f0", borderRadius: 20,
+            padding: "4px 12px"
+          }}>
+            {users.length} utilisateur{users.length !== 1 ? "s" : ""}
+          </span>
+
+          {hasPermission("users_manage") && (
+            <button
+              className="add-user-btn"
+              onClick={() => setIsUserModalOpen(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Nouvel Utilisateur
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -253,8 +272,8 @@ const AdminPage = () => {
 
       <div className="admin-content">
         {loading ? (
-          <div className="loading">
-            <i className="fas fa-spinner fa-spin"></i>
+          <div className="loading" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px" }}>
+            <i className="fas fa-circle-notch fa-spin" style={{ marginRight: 10, color: "#f67800" }}></i>
             Chargement des utilisateurs...
           </div>
         ) : (
@@ -262,11 +281,11 @@ const AdminPage = () => {
             <table className="users-table">
               <thead>
                 <tr>
-                  <th>Nom et prénom</th>
-                  <th>Fonction</th>
-                  <th>Rôle</th>
-                  <th>Statut</th>
-                  <th>Gérer</th>
+                  <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Nom et prénom</th>
+                  <th><i className="fas fa-briefcase" style={{ marginRight: 6, opacity: .6 }}></i>Fonction</th>
+                  <th><i className="fas fa-user-shield" style={{ marginRight: 6, opacity: .6 }}></i>Rôle</th>
+                  <th><i className="fas fa-info-circle" style={{ marginRight: 6, opacity: .6 }}></i>Statut</th>
+                  <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
                 </tr>
               </thead>
               <tbody>

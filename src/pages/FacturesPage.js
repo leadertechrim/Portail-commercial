@@ -638,15 +638,28 @@ const FacturesPage = () => {
     <div className="factures-page">
       <div className="main-content">
         <div className="factures-header">
-          <div className="factures-header-left"></div>
-          <div className="factures-header-actions">
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+          <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            <h1>
+              <i className="fas fa-file-invoice" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
+              Gestion des Factures
+            </h1>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Compteur */}
+            <span style={{
+              fontSize: ".8rem", fontWeight: 600,
+              color: "#6b7280", background: "#f8f9fa",
+              border: "1px solid #e2e8f0", borderRadius: 20,
+              padding: "4px 12px"
+            }}>
+              {filteredFactures.length} facture{filteredFactures.length !== 1 ? "s" : ""}
+            </span>
+
             {hasPermission("factures_create") && (
               <button
                 className="add-facture-btn"
@@ -660,6 +673,18 @@ const FacturesPage = () => {
         </div>
 
         <div className="factures-content">
+          <div className="factures-search">
+            <div className="search-box">
+              <i className="fas fa-search"></i>
+              <input
+                type="text"
+                placeholder="Rechercher une facture par numéro, intitulé ou client…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
           {error && (
             <div className="error-message">
               <i className="fas fa-exclamation-triangle"></i>
@@ -667,11 +692,16 @@ const FacturesPage = () => {
             </div>
           )}
 
-          {/* Section de debug temporaire */}
-
           {filteredFactures.length === 0 ? (
             <div className="empty-factures">
-              <i className="fas fa-receipt"></i>
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%",
+                background: "#fff7ed", border: "2px solid #fed7aa",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                margin: "0 auto 16px"
+              }}>
+                <i className="fas fa-receipt" style={{ fontSize: "1.6rem", color: "#f67800" }}></i>
+              </div>
               <h3>Aucune facture trouvée</h3>
               <p>Commencez par créer votre première facture</p>
             </div>
@@ -680,15 +710,15 @@ const FacturesPage = () => {
               <table className="factures-table">
                 <thead>
                   <tr>
-                    <th>Numéro</th>
-                    <th>Intitulé</th>
-                    <th>Client</th>
-                    <th>Offre</th>
-                    <th>Date d'émission</th>
-                    <th>État</th>
-                    <th>Documents</th>
-                    {hasPermission("factures_view_all") && <th>Responsable</th>}
-                    <th>Gérer</th>
+                    <th><i className="fas fa-hashtag" style={{ marginRight: 6, opacity: .6 }}></i>Numéro</th>
+                    <th><i className="fas fa-info-circle" style={{ marginRight: 6, opacity: .6 }}></i>Intitulé</th>
+                    <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Client</th>
+                    <th><i className="fas fa-lightbulb" style={{ marginRight: 6, opacity: .6 }}></i>Offre</th>
+                    <th><i className="fas fa-calendar-alt" style={{ marginRight: 6, opacity: .6 }}></i>Émission</th>
+                    <th><i className="fas fa-tasks" style={{ marginRight: 6, opacity: .6 }}></i>État</th>
+                    <th><i className="fas fa-file-alt" style={{ marginRight: 6, opacity: .6 }}></i>Docs</th>
+                    {hasPermission("factures_view_all") && <th><i className="fas fa-user-shield" style={{ marginRight: 6, opacity: .6 }}></i>Responsable</th>}
+                    <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1037,15 +1067,36 @@ const FactureModal = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button className="close-btn" onClick={onClose}>
+        {/* Header orange — titre BLANC GRAND */}
+        <div className="modal-header" style={{ background: "#f67800", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 30px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.15rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 9,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className={`fas ${facture ? "fa-file-invoice-dollar" : "fa-file-medical"}`} style={{ fontSize: "1rem", opacity: .85 }}></i>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
+        <form onSubmit={handleSubmit} className="modal-form-grid" style={{ padding: "30px" }}>
+          <div className="form-group full-width">
             <label htmlFor="numero_facture">Numéro de facture</label>
             <input
               type="text"
@@ -1213,12 +1264,34 @@ const FactureModal = ({
             )}
           </div>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="cancel-btn">
+          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
+            <button
+              type="button"
+              className="cancel-btn"
+              onClick={onClose}
+              disabled={loading}
+              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
+            >
+              <i className="fas fa-times"></i>
               Annuler
             </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "En cours..." : "Enregistrer"}
+            <button 
+              type="submit" 
+              className="save-btn" 
+              disabled={loading}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "6px",
+                background: "#f67800", color: "white", border: "none",
+                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
+                height: "38px", cursor: "pointer"
+              }}
+            >
+              {loading ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className="fas fa-check"></i>
+              )}
+              {facture ? "Mettre à jour" : "Créer la Facture"}
             </button>
           </div>
         </form>

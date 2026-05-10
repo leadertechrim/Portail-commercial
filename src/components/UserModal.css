@@ -35,22 +35,69 @@
   }
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 30px 20px;
-  border-bottom: 1px solid #e9ecef;
+/* Layout Grille */
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
 }
 
-.modal-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
+.modal-form-grid .form-group {
+  margin-bottom: 0;
+}
+
+.modal-form-grid .form-group.full-width {
+  grid-column: span 2;
+}
+
+/* Style des labels */
+.modal-form-grid label {
+  display: block;
+  font-size: .8rem;
   font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 6px;
 }
 
-/* Style .close-btn défini dans global.css */
+/* Style des champs input/select */
+.modal-form-grid input,
+.modal-form-grid select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  background: #f8f9fa;
+  color: #1a202c;
+  transition: all 0.22s ease;
+  box-sizing: border-box;
+}
+
+.modal-form-grid input:focus,
+.modal-form-grid select:focus {
+  outline: none;
+  border-color: #f67800;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(246, 120, 0, 0.1);
+}
+
+.modal-form-grid input.error,
+.modal-form-grid select.error {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+/* REQUIRED STAR */
+.required-star { color: #dc3545; margin-left: 2px; }
+
+/* ERROR MESSAGE */
+.error-message {
+  color: #dc3545;
+  font-size: .78rem;
+  margin-top: 4px;
+  display: block;
+}
 
 .user-form {
   padding: 30px;

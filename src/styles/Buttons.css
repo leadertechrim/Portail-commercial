@@ -1,233 +1,260 @@
-/* Buttons.css - Styles unifiés pour tous les boutons */
+/* ============================================================
+   BUTTONS.CSS — Système de boutons unifié
+   Cohérent avec ClientsPage, AdminPage, AIOffersPage
+   Palette : primary #2d3748 | accent #f67800 | DM Sans
+   ============================================================ */
 
-/* Boutons principaux */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+:root {
+  --btn-primary:       #2d3748;
+  --btn-primary-hover: #1a202c;
+  --btn-accent:        #f67800;
+  --btn-accent-hover:  #e06000;
+  --btn-border:        #cbd5e0;
+  --btn-surface:       #f8f9fa;
+  --btn-white:         #ffffff;
+  --btn-danger:        #dc3545;
+  --btn-danger-hover:  #b91c1c;
+  --btn-radius:        8px;
+  --btn-transition:    all 0.22s cubic-bezier(.4,0,.2,1);
+  --btn-font:          'DM Sans', sans-serif;
+}
+
+/* ── Base commune ── */
+.btn-primary,
+.btn-secondary,
+.btn-action,
+.btn-form,
+.btn-menu,
+.btn-logout {
+  font-family: var(--btn-font);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--btn-transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  outline: none;
+  letter-spacing: .2px;
+}
+
+/* ══════════════════════════════════════════
+   BOUTONS PRINCIPAUX
+══════════════════════════════════════════ */
+
+/* Primary — anthracite (action principale) */
 .btn-primary {
-  background: linear-gradient(135deg, #f67800, #f68215);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  box-shadow: 0 2px 8px rgba(246, 120, 0, 0.25);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #e66a00, #e67e22);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.4);
-}
-
-/* Boutons secondaires */
-.btn-secondary {
-  background: linear-gradient(135deg, #6c757d, #5a6268);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-
-.btn-secondary:hover {
-  background: linear-gradient(135deg, #5a6268, #495057);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Boutons d'action (petits) */
-.btn-action {
-  border: none;
-  padding: 6px 10px;
-  border-radius: 5px;
-  cursor: pointer;
+  background: var(--btn-primary);
+  color: var(--btn-white);
+  padding: 0 18px;
+  border-radius: var(--btn-radius);
   font-size: 0.85rem;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
+  height: 38px;
+  text-transform: uppercase;
+  letter-spacing: .35px;
+  box-shadow: 0 2px 8px rgba(45,55,72,.2);
+  border: 1px solid var(--btn-primary);
+}
+.btn-primary:hover {
+  background: var(--btn-primary-hover);
+  border-color: var(--btn-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(45,55,72,.28);
 }
 
+/* Secondary — contour sobre */
+.btn-secondary {
+  background: var(--btn-white);
+  color: #4a5568;
+  padding: 0 18px;
+  border-radius: var(--btn-radius);
+  font-size: 0.85rem;
+  height: 38px;
+  border: 1.5px solid var(--btn-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.btn-secondary:hover {
+  background: var(--btn-surface);
+  color: var(--btn-primary);
+  border-color: #9aa5b4;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,.1);
+}
+
+/* ══════════════════════════════════════════
+   BOUTONS D'ACTION (icônes)
+══════════════════════════════════════════ */
+.btn-action {
+  padding: 0;
+  border-radius: var(--btn-radius);
+  font-size: 0.82rem;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-white);
+  color: #4a5568;
+}
+
+/* Modifier — devient anthracite au hover */
 .btn-edit {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  color: #4a5568;
+  border-color: var(--btn-border);
 }
-
 .btn-edit:hover {
-  background: linear-gradient(135deg, #0056b3, #004085);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  background: var(--btn-primary);
+  color: var(--btn-white);
+  border-color: var(--btn-primary);
+  box-shadow: 0 2px 8px rgba(45,55,72,.25);
+  transform: translateY(-1px);
 }
 
+/* Mot de passe — devient orange au hover */
 .btn-password {
-  background: linear-gradient(135deg, #ffc107, #e0a800);
-  color: #212529;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
 }
-
 .btn-password:hover {
-  background: linear-gradient(135deg, #e0a800, #d39e00);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  background: var(--btn-accent);
+  color: var(--btn-white);
+  border-color: var(--btn-accent);
+  box-shadow: 0 2px 8px rgba(246,120,0,.3);
+  transform: translateY(-1px);
 }
 
+/* Supprimer — rouge */
 .btn-delete {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color: white;
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+  color: var(--btn-danger);
+  background: #fff5f5;
+  border-color: #fecaca;
 }
-
 .btn-delete:hover {
-  background: linear-gradient(135deg, #c82333, #bd2130);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  background: var(--btn-danger);
+  color: var(--btn-white);
+  border-color: var(--btn-danger);
+  box-shadow: 0 2px 8px rgba(220,53,69,.3);
+  transform: translateY(-1px);
 }
 
-/* Bouton menu */
+/* ══════════════════════════════════════════
+   BOUTON MENU (header / sidebar)
+══════════════════════════════════════════ */
 .btn-menu {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.2);
+  color: var(--btn-white);
+  padding: 0;
+  border-radius: var(--btn-radius);
+  font-size: 1rem;
   min-width: 36px;
   height: 36px;
 }
-
 .btn-menu:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  background: rgba(255,255,255,.25);
+  border-color: rgba(255,255,255,.35);
+  transform: scale(1.04);
 }
 
-/* Bouton logout */
+/* ══════════════════════════════════════════
+   BOUTON LOGOUT
+══════════════════════════════════════════ */
 .btn-logout {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  background: #fff;
-  color: #f67800;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  padding: 0 14px;
+  border-radius: var(--btn-radius);
+  background: var(--btn-white);
+  color: var(--btn-accent);
+  font-size: 0.82rem;
   height: 32px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #fed7aa;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
-
 .btn-logout:hover {
-  background: #f67800;
-  color: #fff;
+  background: var(--btn-accent);
+  color: var(--btn-white);
+  border-color: var(--btn-accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(246, 120, 0, 0.3);
+  box-shadow: 0 3px 10px rgba(246,120,0,.3);
 }
 
-/* Boutons de formulaire */
+/* ══════════════════════════════════════════
+   BOUTONS DE FORMULAIRE (modals)
+══════════════════════════════════════════ */
 .btn-form {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  padding: 0 22px;
+  border-radius: var(--btn-radius);
+  font-size: 0.85rem;
+  height: 38px;
   min-width: 100px;
-  height: 36px;
-  justify-content: center;
 }
 
+/* Enregistrer — orange */
 .btn-save {
-  background: linear-gradient(135deg, #f67800, #f68215);
-  color: white;
-  box-shadow: 0 4px 12px rgba(246, 120, 0, 0.3);
+  background: var(--btn-accent);
+  color: var(--btn-white);
+  border: 1.5px solid var(--btn-accent);
+  box-shadow: 0 2px 8px rgba(246,120,0,.25);
 }
-
 .btn-save:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e66a00, #e67e22);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(246, 120, 0, 0.4);
+  background: var(--btn-accent-hover);
+  border-color: var(--btn-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(246,120,0,.35);
 }
 
+/* Annuler — contour sobre */
 .btn-cancel {
-  background: #6c757d;
-  color: white;
+  background: var(--btn-white);
+  color: #4a5568;
+  border: 1.5px solid var(--btn-border);
 }
-
 .btn-cancel:hover:not(:disabled) {
-  background: #5a6268;
+  background: var(--btn-surface);
+  color: var(--btn-primary);
+  border-color: #9aa5b4;
   transform: translateY(-1px);
 }
 
-/* États désactivés */
+/* ── États désactivés ── */
 .btn-primary:disabled,
 .btn-secondary:disabled,
 .btn-action:disabled,
 .btn-form:disabled {
-  opacity: 0.6;
+  opacity: .5;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-/* Responsive */
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .btn-primary,
   .btn-secondary {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    height: 32px;
+    padding: 0 14px;
+    font-size: 0.82rem;
+    height: 34px;
   }
-  
   .btn-action {
-    min-width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
+    min-width: 30px;
+    height: 30px;
+    font-size: 0.78rem;
   }
-  
   .btn-menu {
     min-width: 32px;
     height: 32px;
-    padding: 6px 8px;
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
-  
   .btn-logout {
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    height: 28px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+    height: 30px;
   }
-  
   .btn-form {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    height: 32px;
+    padding: 0 16px;
+    font-size: 0.82rem;
+    height: 34px;
     min-width: 80px;
   }
 }
-

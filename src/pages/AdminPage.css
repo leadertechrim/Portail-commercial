@@ -1,10 +1,11 @@
 /* AdminPage.css */
 .admin-page {
-  padding: 20px;
-  max-width: 1400px;
+  padding: 28px 32px;
+  max-width: 1460px;
   margin: 0 auto;
   background: #f8f9fa;
   min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .admin-header {
@@ -21,11 +22,16 @@
   border: 1px solid #e9ecef;
 }
 
-.admin-header h1 {
+.header-left h1 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: #333;
   margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
+  letter-spacing: -.2px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .back-btn,
@@ -134,7 +140,7 @@
 .users-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1rem;
+  font-size: 0.85rem;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);

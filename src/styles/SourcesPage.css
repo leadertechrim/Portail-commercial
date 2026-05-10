@@ -495,9 +495,8 @@ h2::after {
 .links-list {
   list-style: none;
   padding: 0;
-  /* display: grid; */
-  display: flex;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 25px;
   margin-top: 30px;
 }
@@ -844,8 +843,8 @@ h2::after {
   list-style: none;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 /* Tool cards - 2 colonnes minimum sur mobile */
@@ -1081,18 +1080,37 @@ h2::after {
 /* Position relative pour les cartes avec actions */
 .link-item {
   position: relative;
-  padding-right: 50px !important; /* Espace pour le bouton edit */
-  padding-top: 40px !important; /* Espace pour le badge d'ordre */
-  overflow: visible;
+  padding: 20px;
+  padding-right: 50px !important;
+  padding-top: 40px !important;
+  overflow: hidden;
   background: #f9f9f9;
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 20px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.link-item:hover {
+.link-item h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.3;
+  font-weight: 600;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+link-item:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   border-color: #f67800;

@@ -300,17 +300,38 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content edit-call-modal">
-        <div className="modal-header">
-          <h2>Modifier l'Offre</h2>
-          <button className="modal-close" onClick={handleClose}>
+      <div className="modal-content">
+        {/* Header orange — titre BLANC GRAND */}
+        <div className="modal-header" style={{ background: "#f67800", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 30px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.15rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 9,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-edit" style={{ fontSize: "1rem", opacity: .85 }}></i>
+            Modifier l'Offre
+          </h2>
+          <button
+            onClick={handleClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="edit-call-form">
-          <div className="form-group">
-            <label htmlFor="intitulee">Intitulé *</label>
+        <form onSubmit={handleSubmit} className="modal-form-grid" style={{ padding: "30px" }}>
+          <div className="form-group full-width">
+            <label htmlFor="intitulee">Intitulé <span className="required-star">*</span></label>
             <input
               type="text"
               id="intitulee"
@@ -320,29 +341,25 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
               placeholder="Intitulé de l'offre"
               className={errors.intitulee ? "error" : ""}
             />
-            {errors.intitulee && (
-              <span className="error-message">{errors.intitulee}</span>
-            )}
+            {errors.intitulee && <span className="error-message">{errors.intitulee}</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="lien">Lien *</label>
+          <div className="form-group full-width">
+            <label htmlFor="lien">Lien <span className="required-star">*</span></label>
             <input
               type="url"
               id="lien"
               name="lien"
               value={formData.lien}
               onChange={handleChange}
-              placeholder="Lien vers l'offre"
+              placeholder="Lien vers l'offre (ex: https://...)"
               className={errors.lien ? "error" : ""}
             />
-            {errors.lien && (
-              <span className="error-message">{errors.lien}</span>
-            )}
+            {errors.lien && <span className="error-message">{errors.lien}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="client">Client *</label>
+            <label htmlFor="client">Client <span className="required-star">*</span></label>
             <select
               id="client"
               name="client"
@@ -351,19 +368,13 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
               className={errors.client ? "error" : ""}
             >
               <option value="">Sélectionner un client</option>
-              {clients.length > 0 ? (
-                clients.map((client) => (
-                  <option key={client._id} value={client.raison_sociale}>
-                    {client.raison_sociale}
-                  </option>
-                ))
-              ) : (
-                <option disabled>Aucun client disponible</option>
-              )}
+              {clients.map((client) => (
+                <option key={client._id} value={client.raison_sociale}>
+                  {client.raison_sociale}
+                </option>
+              ))}
             </select>
-            {errors.client && (
-              <span className="error-message">{errors.client}</span>
-            )}
+            {errors.client && <span className="error-message">{errors.client}</span>}
           </div>
 
           <div className="form-group">
@@ -373,15 +384,11 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
               name="categorie"
               value={formData.categorie}
               onChange={handleChange}
-              className={errors.categorie ? "error" : ""}
             >
               <option value="">Sélectionner une catégorie</option>
               <option value="nationale">Nationale</option>
               <option value="internationale">Internationale</option>
             </select>
-            {errors.categorie && (
-              <span className="error-message">{errors.categorie}</span>
-            )}
           </div>
 
           <div className="form-group">
@@ -393,11 +400,20 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
               value={formData.numero}
               onChange={handleChange}
               placeholder="Numéro de l'offre"
-              className={errors.numero ? "error" : ""}
             />
-            {errors.numero && (
-              <span className="error-message">{errors.numero}</span>
-            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="date_limite">Date limite <span className="required-star">*</span></label>
+            <input
+              type="date"
+              id="date_limite"
+              name="date_limite"
+              value={formData.date_limite}
+              onChange={handleChange}
+              className={errors.date_limite ? "error" : ""}
+            />
+            {errors.date_limite && <span className="error-message">{errors.date_limite}</span>}
           </div>
 
           <div className="form-group">
@@ -409,7 +425,7 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="statut">Statut *</label>
+            <label htmlFor="statut">Statut <span className="required-star">*</span></label>
             <select
               id="statut"
               name="statut"
@@ -424,40 +440,23 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
                 </option>
               ))}
             </select>
-            {errors.statut && (
-              <span className="error-message">{errors.statut}</span>
-            )}
+            {errors.statut && <span className="error-message">{errors.statut}</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="date_limite">Date limite *</label>
-            <input
-              type="date"
-              id="date_limite"
-              name="date_limite"
-              value={formData.date_limite}
-              onChange={handleChange}
-              className={errors.date_limite ? "error" : ""}
-            />
-            {errors.date_limite && (
-              <span className="error-message">{errors.date_limite}</span>
-            )}
-          </div>
-
-          <div className="form-group">
+          <div className="form-group full-width">
             <label htmlFor="note_commentaire">Commentaire</label>
             <textarea
               id="note_commentaire"
               name="note_commentaire"
               value={formData.note_commentaire}
               onChange={handleChange}
-              placeholder="Commentaire sur l'offre"
-              rows="4"
+              placeholder="Commentaire ou notes sur l'offre..."
+              rows="3"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="documents">Documents</label>
+          <div className="form-group full-width">
+            <label>Documents</label>
             <SimpleFilestackUploader
               multiple={true}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
@@ -466,30 +465,17 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
               onUploadError={handleUploadError}
             />
             {formData.documents.length > 0 && (
-              <div className="uploaded-files-list">
-                <h4>Fichiers uploadés ({formData.documents.length}):</h4>
+              <div className="uploaded-files-list" style={{ marginTop: "15px" }}>
                 {formData.documents.map((file) => (
-                  <div key={file.id} className="uploaded-file-item">
-                    <div className="file-info">
-                      <i className="fas fa-file"></i>
-                      <div className="file-details">
-                        <span className="file-name">{file.filename}</span>
-                        <span className="file-url">
-                          <a
-                            href={file.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Voir le fichier
-                          </a>
-                        </span>
-                      </div>
+                  <div key={file.id} className="uploaded-file-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px", background: "#f8f9fa", borderRadius: "8px", marginBottom: "8px", border: "1px solid #e9ecef" }}>
+                    <div className="file-info" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <i className="fas fa-file-pdf" style={{ color: "#ef4444" }}></i>
+                      <span className="file-name" style={{ fontSize: "0.85rem", fontWeight: "500" }}>{file.filename}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeDocument(file.id)}
-                      className="remove-file-btn"
-                      title="Supprimer le fichier"
+                      style={{ background: "none", border: "none", color: "#dc3545", cursor: "pointer" }}
                     >
                       <i className="fas fa-trash"></i>
                     </button>
@@ -499,28 +485,34 @@ const EditCallForTenderModal = ({ isOpen, onClose, call, onSave }) => {
             )}
           </div>
 
-          <div className="form-actions">
-            {/* <button
+          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
+            <button
               type="button"
-              onClick={handleClose}
               className="cancel-btn"
+              onClick={handleClose}
               disabled={loading}
+              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
             >
               <i className="fas fa-times"></i>
               Annuler
-            </button> */}
-            <button type="submit" className="save-btn" disabled={loading}>
+            </button>
+            <button 
+              type="submit" 
+              className="save-btn" 
+              disabled={loading}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "6px",
+                background: "#f67800", color: "white", border: "none",
+                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
+                height: "38px", cursor: "pointer"
+              }}
+            >
               {loading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin"></i>
-                  Modification...
-                </>
+                <i className="fas fa-spinner fa-spin"></i>
               ) : (
-                <>
-                  <i className="fas fa-save"></i>
-                  Modifier l'offre
-                </>
+                <i className="fas fa-check"></i>
               )}
+              Enregistrer les modifications
             </button>
           </div>
         </form>
