@@ -6,7 +6,7 @@ import { logger } from "./logger";
 
 let API_BASE_URL =
   process.env.REACT_APP_API_URL ||
-  "https://applesoffres-production.up.railway.app";
+  "https://back-portail-commercial-32528505fc5a.herokuapp.com";
 
 // Correction automatique de l'URL si elle contient 0.0.0.0
 // IMPORTANT: 0.0.0.0 est utilisé côté serveur Flask pour écouter sur toutes les interfaces

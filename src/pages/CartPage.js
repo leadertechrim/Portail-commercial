@@ -199,7 +199,7 @@ const CartPage = () => {
         "🌐 URL API:",
         `${
           process.env.REACT_APP_API_URL ||
-          "https://applesoffres-production.up.railway.app"
+          "https://back-portail-commercial-32528505fc5a.herokuapp.com"
         }/api/offres`
       );
 

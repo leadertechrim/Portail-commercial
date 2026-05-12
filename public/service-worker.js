@@ -6,7 +6,7 @@ const urlsToCache = [
   "/manifest.json",
   "/logo192.png",
   "/logo512.png",
-  "https://applesoffres-production.up.railway.app/api/sources",
+  "https://back-portail-commercial-32528505fc5a.herokuapp.com/api/sources",
 ];
 
 // Installation du Service Worker
