@@ -1,6 +1,9 @@
 import { logger } from "./utils/logger";
 
-let API_BASE_URL = "https://back-portail-commercial-32528505fc5a.herokuapp.com";
+let API_BASE_URL = process.env.REACT_APP_API_URL || 
+  ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : "https://back-portail-commercial-32528505fc5a.herokuapp.com");
 
 
 
