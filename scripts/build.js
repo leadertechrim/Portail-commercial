@@ -42,7 +42,7 @@ function createEnvFile(environment) {
   const envContent = `# Configuration pour ${environment}
 REACT_APP_API_URL=${
     environment === "production"
-      ? "https://your-api-domain.com"
+      ? "https://back-portail-commercial-32528505fc5a.herokuapp.com"
       : "http://localhost:8000"
   }
 REACT_APP_ENVIRONMENT=${environment}
