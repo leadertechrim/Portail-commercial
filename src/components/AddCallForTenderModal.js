@@ -237,14 +237,14 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         {/* Header orange — titre BLANC GRAND */}
-        <div className="modal-header" style={{ background: "#f67800", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 30px", borderRadius: "16px 16px 0 0" }}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
           <h2 style={{
             margin: 0, color: "#ffffff",
-            fontSize: "1.15rem", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 9,
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
             textShadow: "0 1px 3px rgba(0,0,0,.18)"
           }}>
-            <i className="fas fa-plus-circle" style={{ fontSize: "1rem", opacity: .85 }}></i>
+            <i className="fas fa-plus-circle" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             Ajouter une Offre
           </h2>
           <button
@@ -420,34 +420,15 @@ const AddCallForTenderModal = ({ isOpen, onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={handleClose}
-              disabled={loading}
-              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
-            >
-              <i className="fas fa-times"></i>
-              Annuler
+          <div className="modal-actions-enhanced full-width">
+            <button type="button" onClick={handleClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
             </button>
-            <button 
-              type="submit" 
-              className="save-btn" 
-              disabled={loading}
-              style={{ 
-                display: "flex", alignItems: "center", gap: "6px",
-                background: "#f67800", color: "white", border: "none",
-                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
-                height: "38px", cursor: "pointer"
-              }}
-            >
-              {loading ? (
-                <i className="fas fa-spinner fa-spin"></i>
-              ) : (
-                <i className="fas fa-check"></i>
-              )}
-              Créer l'offre
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading
+                ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 7 }}></i>Création…</>
+                : <><i className="fas fa-check" style={{ marginRight: 7 }}></i>Créer l'offre</>
+              }
             </button>
           </div>
         </form>

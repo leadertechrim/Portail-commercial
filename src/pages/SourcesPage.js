@@ -478,57 +478,63 @@ export default function SourcesPage() {
         </div>
       )}
 
-      <header className="header">
-        <div className="header-left">
-          <div className="logo">
-            {/* <img src="/logo512.png" alt="Logo" className="logo-img" />
-            <span className="logo-text">Portail des appels d'offres</span> */}
-          </div>
-        </div>
-        <div className="header-right">
-          <button 
-            className="export-word-btn" 
-            onClick={handleExportWord}
-            disabled={isExporting}
-            style={{ 
-              marginRight: '15px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px',
-              padding: '8px 15px',
-              backgroundColor: '#2b579a',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: isExporting ? 'not-allowed' : 'pointer',
-              opacity: isExporting ? 0.7 : 1
-            }}
-          >
-            <i className={`fas ${isExporting ? 'fa-spinner fa-spin' : 'fa-file-word'}`}></i>
-            {isExporting ? 'Génération...' : 'Exporter en Word'}
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+            <i className="fas fa-arrow-left"></i>
+            Retour
           </button>
-          <div className="search-container">
+          <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+            <i className="fas fa-shopping-cart" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+            Offres
+          </h1>
+        </div>
 
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="search-container" style={{ margin: 0 }}>
             <i className="fas fa-search search-icon"></i>
             <input
               type="text"
-              placeholder="Rechercher par nom d'entité, catégorie ou URL..."
+              placeholder="Rechercher..."
               value={q}
               onChange={handleSearch}
               className="search-input-enhanced"
+              style={{ height: "36px", fontSize: "0.85rem", padding: "0 10px 0 35px", width: "250px" }}
             />
             {q && (
               <button
                 className="clear-search-btn"
                 onClick={() => setQ("")}
-                title="Effacer la recherche"
+                style={{ right: "10px" }}
               >
                 <i className="fas fa-times"></i>
               </button>
             )}
           </div>
+          <button 
+            className="export-word-btn" 
+            onClick={handleExportWord}
+            disabled={isExporting}
+            style={{ 
+              height: "36px",
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '0 15px',
+              backgroundColor: '#2b579a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              opacity: isExporting ? 0.7 : 1,
+              fontSize: "0.82rem"
+            }}
+          >
+            <i className={`fas ${isExporting ? 'fa-spinner fa-spin' : 'fa-file-word'}`}></i>
+            {isExporting ? 'Génération...' : 'Exporter Word'}
+          </button>
         </div>
-      </header>
+      </div>
 
       <main className="main-content">
         <Section

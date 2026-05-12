@@ -443,24 +443,36 @@ const RolesPage = () => {
   return (
     <div className="roles-page">
       <div className="main-content">
-        <div className="roles-header">
-          <div className="roles-header-left"></div>
-          <div className="roles-header-actions">
+        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+            <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              <i className="fas fa-user-shield" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+              Rôles & permissions
+            </h1>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="text"
               placeholder="Rechercher un rôle..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
+              style={{ height: "36px", fontSize: "0.85rem", padding: "0 12px", minWidth: "200px" }}
             />
             <button
               className="add-role-btn"
               onClick={handleAddRole}
               title="Ajouter un nouveau rôle"
               disabled={!hasPermission("roles_manage")}
+              style={{ height: "36px", fontSize: "0.82rem" }}
             >
               <i className="fas fa-plus"></i>
-              Ajouter un rôle
+              Nouveau Rôle
             </button>
           </div>
         </div>
@@ -481,14 +493,14 @@ const RolesPage = () => {
 
         <div className="roles-table-container">
           <table className="roles-table">
-            <thead>
+            <thead style={{ background: "#f67800", color: "white" }}>
               <tr>
-                <th>Nom</th>
-                <th>Description</th>
-                <th>Couleur</th>
-                <th>Permissions</th>
-                <th>Ordre</th>
-                <th>Gérer</th>
+                <th style={{ color: "white" }}><i className="fas fa-user-tag" style={{ marginRight: 8, opacity: 0.8 }}></i>Nom</th>
+                <th style={{ color: "white" }}><i className="fas fa-info-circle" style={{ marginRight: 8, opacity: 0.8 }}></i>Description</th>
+                <th style={{ color: "white" }}><i className="fas fa-palette" style={{ marginRight: 8, opacity: 0.8 }}></i>Couleur</th>
+                <th style={{ color: "white" }}><i className="fas fa-key" style={{ marginRight: 8, opacity: 0.8 }}></i>Permissions</th>
+                <th style={{ color: "white" }}><i className="fas fa-sort-numeric-up" style={{ marginRight: 8, opacity: 0.8 }}></i>Ordre</th>
+                <th style={{ textAlign: "right", paddingRight: 24, color: "white" }}>Gérer</th>
               </tr>
             </thead>
             <tbody>
@@ -578,18 +590,34 @@ const RolesPage = () => {
       {isAddModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h3>
-                Ajouter un nouveau rôle
+            <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+              <h3 style={{
+                margin: 0, color: "#ffffff",
+                fontSize: "1.25rem", fontWeight: 700,
+                display: "flex", alignItems: "center", gap: 10,
+                textShadow: "0 1px 3px rgba(0,0,0,.18)"
+              }}>
+                <i className="fas fa-plus-circle" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+                Nouveau rôle
                 {formData.permissions.length > 0 && (
-                  <span className="permissions-count">
-                    ({formData.permissions.length} permission
-                    {formData.permissions.length > 1 ? "s" : ""} sélectionnée
-                    {formData.permissions.length > 1 ? "s" : ""})
+                  <span style={{ fontSize: "0.85rem", opacity: 0.9, fontWeight: 500, marginLeft: 8 }}>
+                    ({formData.permissions.length} sélectionnée{formData.permissions.length > 1 ? "s" : ""})
                   </span>
                 )}
               </h3>
-              <button className="close-btn" onClick={closeModals}>
+              <button
+                onClick={closeModals}
+                style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(255,255,255,.2)",
+                  border: "1px solid rgba(255,255,255,.35)",
+                  color: "#ffffff", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -762,17 +790,12 @@ const RolesPage = () => {
                   </div>
                 </div>
               </form>
-              <div className="modal-actions">
-                <button
-                  className="save-btn"
-                  onClick={() => handleSaveRole(formData)}
-                >
-                  <i className="fas fa-save"></i>
-                  Enregistrer
+              <div className="modal-actions-enhanced full-width">
+                <button type="button" onClick={closeModals} className="cancel-btn">
+                  <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
                 </button>
-                <button className="cancel-btn" onClick={closeModals}>
-                  <i className="fas fa-times"></i>
-                  Annuler
+                <button type="button" onClick={() => handleSaveRole(formData)} className="save-btn">
+                  <i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer
                 </button>
               </div>
             </div>
@@ -783,18 +806,29 @@ const RolesPage = () => {
       {isEditModalOpen && editingRole && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h3>
+            <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+              <h3 style={{
+                margin: 0, color: "#ffffff",
+                fontSize: "1.25rem", fontWeight: 700,
+                display: "flex", alignItems: "center", gap: 10,
+                textShadow: "0 1px 3px rgba(0,0,0,.18)"
+              }}>
+                <i className="fas fa-edit" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
                 Modifier le rôle: {editingRole.nom}
-                {formData.permissions.length > 0 && (
-                  <span className="permissions-count">
-                    ({formData.permissions.length} permission
-                    {formData.permissions.length > 1 ? "s" : ""} sélectionnée
-                    {formData.permissions.length > 1 ? "s" : ""})
-                  </span>
-                )}
               </h3>
-              <button className="close-btn" onClick={closeModals}>
+              <button
+                onClick={closeModals}
+                style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(255,255,255,.2)",
+                  border: "1px solid rgba(255,255,255,.35)",
+                  color: "#ffffff", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -967,17 +1001,12 @@ const RolesPage = () => {
                   </div>
                 </div>
               </form>
-              <div className="modal-actions">
-                <button
-                  className="save-btn"
-                  onClick={() => handleSaveRole(formData)}
-                >
-                  <i className="fas fa-save"></i>
-                  Enregistrer
+              <div className="modal-actions-enhanced full-width">
+                <button type="button" onClick={closeModals} className="cancel-btn">
+                  <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
                 </button>
-                <button className="cancel-btn" onClick={closeModals}>
-                  <i className="fas fa-times"></i>
-                  Annuler
+                <button type="button" onClick={() => handleSaveRole(formData)} className="save-btn">
+                  <i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer
                 </button>
               </div>
             </div>
@@ -988,9 +1017,29 @@ const RolesPage = () => {
       {isViewModalOpen && viewingRole && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h3>Détails du rôle: {viewingRole.nom}</h3>
-              <button className="close-btn" onClick={closeModals}>
+            <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+              <h3 style={{
+                margin: 0, color: "#ffffff",
+                fontSize: "1.25rem", fontWeight: 700,
+                display: "flex", alignItems: "center", gap: 10,
+                textShadow: "0 1px 3px rgba(0,0,0,.18)"
+              }}>
+                <i className="fas fa-eye" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+                Détails du rôle: {viewingRole.nom}
+              </h3>
+              <button
+                onClick={closeModals}
+                style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(255,255,255,.2)",
+                  border: "1px solid rgba(255,255,255,.35)",
+                  color: "#ffffff", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -1035,9 +1084,8 @@ const RolesPage = () => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button className="close-btn" onClick={closeModals}>
-                  <i className="fas fa-times"></i>
-                  Fermer
+                <button type="button" onClick={closeModals} className="cancel-btn">
+                  <i className="fas fa-times" style={{ marginRight: 6 }}></i>Fermer
                 </button>
               </div>
             </div>

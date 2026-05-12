@@ -43,10 +43,28 @@ const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Modifier l'entité</h3>
-          <button className="close-btn" onClick={onClose}>
-            <FaTimes />
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h3 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-edit" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+            {source ? "Modifier l'entité" : "Ajouter une entité"}
+          </h3>
+          <button onClick={onClose} style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
+            <i className="fas fa-times"></i>
           </button>
         </div>
 
@@ -105,16 +123,18 @@ const EditSourceModal = ({ isOpen, onClose, source, onSave, onDelete }) => {
             <small>Les entités sont triées par ordre croissant</small>
           </div>
 
-          <div className="form-actions">
-            {canDelete && onDelete && (
-              <button type="button" className="Delete-btn" onClick={handleDelete}>
-                <FaTrash />
+          <div className="modal-actions-enhanced full-width">
+            {canDelete && onDelete && source && (
+              <button type="button" className="delete-btn-enhanced" onClick={handleDelete} style={{ background: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", padding: "0 20px", borderRadius: "8px", fontWeight: "600", height: "38px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                <i className="fas fa-trash"></i>
                 Supprimer
               </button>
             )}
+            <button type="button" onClick={onClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
+            </button>
             <button type="submit" className="save-btn">
-              <FaSave />
-              Enregistrer
+              <i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer
             </button>
           </div>
         </form>

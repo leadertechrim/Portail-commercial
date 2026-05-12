@@ -270,20 +270,34 @@ const OfferStatusPage = () => {
   return (
     <div className="offer-status-page">
       <div className="main-content">
-        <div className="status-header">
-          <div className="status-header-left"></div>
-          <div className="status-header-actions">
-            <input
-              type="text"
-              placeholder="Rechercher un statut..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button className="back-btn" onClick={() => _navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem" }}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              <i className="fas fa-tags" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+              Statuts des Offres
+            </h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="search-container" style={{ margin: 0 }}>
+              <i className="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                placeholder="Rechercher un statut..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input-enhanced"
+                style={{ height: "36px", fontSize: "0.85rem", padding: "0 10px 0 35px", width: "220px" }}
+              />
+            </div>
             {hasPermission("offer_status_manage") && (
               <button
                 className="add-status-btn"
                 onClick={() => setIsAddModalOpen(true)}
+                style={{ height: "36px", fontSize: "0.82rem" }}
               >
                 <i className="fas fa-plus"></i>
                 Nouveau Statut
@@ -455,9 +469,27 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button className="close-btn" onClick={onClose}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-tag" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+            {title}
+          </h2>
+          <button onClick={onClose} style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -548,12 +580,15 @@ const StatusModal = ({ isOpen, onClose, onSubmit, status, title }) => {
             />
           </div>
 
-          <div className="modal-actions">
+          <div className="modal-actions-enhanced full-width">
             <button type="button" onClick={onClose} className="cancel-btn">
-              Annuler
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
             </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "En cours..." : "Enregistrer"}
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading
+                ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 7 }}></i>Enregistrement…</>
+                : <><i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer</>
+              }
             </button>
           </div>
         </form>

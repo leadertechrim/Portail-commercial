@@ -363,9 +363,18 @@ const SettingsPage = () => {
     <Layout>
       <div className="settings-page">
         <div className="main-content">
-          <div className="settings-header">
-            <h1>Paramétrage de l'Application</h1>
-            <p>Configurez tous les paramètres de votre application</p>
+          <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+              <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                <i className="fas fa-arrow-left"></i>
+                Retour
+              </button>
+              <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+                <i className="fas fa-cog" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+                Paramétrage
+              </h1>
+            </div>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#6b7280" }}>Configuration globale du système</p>
           </div>
 
           <div className="settings-content">

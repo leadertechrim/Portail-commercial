@@ -134,7 +134,7 @@
 .calls-table-container { overflow-x: auto; }
 .calls-table { width: 100%; border-collapse: collapse; font-family: var(--font); font-size: .9rem; }
 .calls-table thead { background: linear-gradient(180deg, #edf0f4 0%, #e2e8f0 100%); }
-.calls-table th { padding: 14px 18px; text-align: left; font-size: .76rem; font-weight: 700; color: #343a40; border-bottom: 2px solid var(--border-dark); white-space: nowrap; text-transform: uppercase; letter-spacing: .5px; }
+.calls-table th { padding: 14px 18px; text-align: left; font-size: .76rem; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--border-dark); white-space: nowrap; text-transform: uppercase; letter-spacing: .5px; }
 .calls-table th:first-child { padding-left: 24px; }
 .calls-table td { padding: 13px 18px; border-bottom: 1px solid #edf0f4; color: var(--text-primary); vertical-align: middle; transition: background .15s; }
 .calls-table td:first-child { padding-left: 24px; }

@@ -25,6 +25,7 @@ const CartPage = () => {
   const [filteredOffers, setFilteredOffers] = useState([]);
   const [offerStatuses, setOfferStatuses] = useState([]);
 
+
   // États pour les filtres
   const [filters, setFilters] = useState({
     categorie: "",
@@ -647,23 +648,28 @@ const CartPage = () => {
 
   return (
     <div className="cart-page">
-      <div className="cart-header">
-        <div className="cart-header-left">
-          <button className="back-btn" onClick={() => navigate("/sources")}>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <button className="back-btn" onClick={() => navigate("/sources")} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
             <i className="fas fa-arrow-left"></i>
             Retour
           </button>
-          {/* <h1>Mon Panier - Appels d'Offres</h1> */}
+          <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+            <i className="fas fa-shopping-cart" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+            Panier
+          </h1>
         </div>
-        <div className="cart-header-actions">
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {hasPermission(PERMISSIONS_CART.ADD) && (
             <button
               className="add-offer-btn"
               onClick={() => setIsAddModalOpen(true)}
               title="Ajouter une nouvelle offre"
+              style={{ height: "36px", fontSize: "0.82rem" }}
             >
               <i className="fas fa-plus"></i>
-              Ajouter une offre
+              Nouvelle Offre
             </button>
           )}
         </div>
@@ -732,11 +738,21 @@ const CartPage = () => {
         )} */}
 
         {offers.length === 0 ? (
-          <div className="empty-cart">
-            <i className="fas fa-shopping-basket"></i>
-            <h3>Panier vide</h3>
-            <p>Aucune offre n’a encore été ajoutée.</p>
-            {/* Bouton d'ajout disponible uniquement dans l'entête */}
+          <div className="empty-state-enhanced">
+            <div className="empty-graphic">
+              <div className="icon-circle">
+                <i className="fas fa-shopping-basket"></i>
+              </div>
+              <div className="pulse-ring"></div>
+            </div>
+            <h2>Votre panier est vide</h2>
+            <p>Commencez à ajouter des offres pour les gérer ici.</p>
+            <div className="empty-actions">
+              <button className="primary-empty-btn" onClick={() => navigate("/sources")}>
+                <i className="fas fa-search"></i>
+                Parcourir les sources
+              </button>
+            </div>
           </div>
         ) : (
           <>

@@ -105,7 +105,6 @@ const ClientsPage = () => {
     client.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  /* ── Loading ── */
   if (loading) {
     return (
       <div className="clients-page">
@@ -121,22 +120,21 @@ const ClientsPage = () => {
     <div className="clients-page">
 
       {/* ══ HEADER ══ */}
-      <div className="clients-header">
-        <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <button className="back-btn" onClick={() => navigate(-1)}>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
             <i className="fas fa-arrow-left"></i>
             Retour
           </button>
-          <h1>
-            <i className="fas fa-users" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
-            Gestion des Clients
+          <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+            <i className="fas fa-users" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+            Clients
           </h1>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Compteur */}
           <span style={{
-            fontSize: ".8rem", fontWeight: 600,
+            fontSize: ".75rem", fontWeight: 600,
             color: "#6b7280", background: "#f8f9fa",
             border: "1px solid #e2e8f0", borderRadius: 20,
             padding: "4px 12px"
@@ -145,7 +143,7 @@ const ClientsPage = () => {
           </span>
 
           <PermissionGuard permission="clients_create" fallback={null}>
-            <button className="add-client-btn" onClick={() => setIsAddModalOpen(true)}>
+            <button className="add-client-btn" onClick={() => setIsAddModalOpen(true)} style={{ height: "36px", fontSize: "0.82rem" }}>
               <i className="fas fa-plus"></i>
               Nouveau Client
             </button>
@@ -183,15 +181,15 @@ const ClientsPage = () => {
       {/* ══ TABLE ══ */}
       <div className="clients-table-container">
         <table className="clients-table">
-          <thead>
+          <thead style={{ background: "#f67800", color: "white" }}>
             <tr>
-              <th><i className="fas fa-building" style={{ marginRight: 6, opacity: .6 }}></i>Raison Sociale</th>
-              <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Nom &amp; Prénom</th>
-              <th><i className="fas fa-phone" style={{ marginRight: 6, opacity: .6 }}></i>Téléphone</th>
-              <th><i className="fas fa-envelope" style={{ marginRight: 6, opacity: .6 }}></i>Email</th>
-              <th><i className="fab fa-whatsapp" style={{ marginRight: 6, opacity: .6 }}></i>WhatsApp</th>
-              <th><i className="fas fa-map-marker-alt" style={{ marginRight: 6, opacity: .6 }}></i>Adresse</th>
-              <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
+              <th style={{ color: "white" }}><i className="fas fa-building" style={{ marginRight: 6, opacity: .8 }}></i>Raison Sociale</th>
+              <th style={{ color: "white" }}><i className="fas fa-user" style={{ marginRight: 6, opacity: .8 }}></i>Nom &amp; Prénom</th>
+              <th style={{ color: "white" }}><i className="fas fa-phone" style={{ marginRight: 6, opacity: .8 }}></i>Téléphone</th>
+              <th style={{ color: "white" }}><i className="fas fa-envelope" style={{ marginRight: 6, opacity: .8 }}></i>Email</th>
+              <th style={{ color: "white" }}><i className="fab fa-whatsapp" style={{ marginRight: 6, opacity: .8 }}></i>WhatsApp</th>
+              <th style={{ color: "white" }}><i className="fas fa-map-marker-alt" style={{ marginRight: 6, opacity: .8 }}></i>Adresse</th>
+              <th style={{ textAlign: "right", paddingRight: 24, color: "white" }}>Gérer</th>
             </tr>
           </thead>
           <tbody>
@@ -376,27 +374,27 @@ const ClientModal = ({ isOpen, onClose, onSubmit, client, title }) => {
     <div className="modal-overlay">
       <div className="modal-content client-modal-enhanced">
 
-        {/* Header orange — titre BLANC GRAND */}
-        <div className="modal-header" style={{ background: "#f67800" }}>
+        {/* SEUL CHANGEMENT : padding-top augmenté pour descendre le titre */}
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
           <h2 style={{
             margin: 0, color: "#ffffff",
-            fontSize: "1.15rem", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 9,
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
             textShadow: "0 1px 3px rgba(0,0,0,.18)"
           }}>
-            <i className="fas fa-user-plus" style={{ fontSize: "1rem", opacity: .85 }}></i>
+            <i className="fas fa-user-plus" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             {title}
           </h2>
           <button
             onClick={onClose}
             style={{
+              
               width: 32, height: 32, borderRadius: "50%",
               background: "rgba(255,255,255,.2)",
               border: "1px solid rgba(255,255,255,.35)",
               color: "#ffffff", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: ".9rem", transition: "all .22s",
-              flexShrink: 0
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
             }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
@@ -500,20 +498,21 @@ const ClientViewModal = ({ isOpen, onClose, client, title }) => {
     <div className="modal-overlay">
       <div className="modal-content">
 
-        {/* Header orange — titre BLANC GRAND */}
-        <div className="modal-header" style={{ background: "#f67800" }}>
+        {/* SEUL CHANGEMENT : padding-top augmenté pour descendre le titre */}
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
           <h2 style={{
             margin: 0, color: "#ffffff",
-            fontSize: "1.15rem", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 9,
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
             textShadow: "0 1px 3px rgba(0,0,0,.18)"
           }}>
-            <i className="fas fa-id-card" style={{ fontSize: "1rem", opacity: .85 }}></i>
+            <i className="fas fa-id-card" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             {title}
           </h2>
           <button
             onClick={onClose}
             style={{
+              
               width: 32, height: 32, borderRadius: "50%",
               background: "rgba(255,255,255,.2)",
               border: "1px solid rgba(255,255,255,.35)",

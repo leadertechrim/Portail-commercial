@@ -13,31 +13,35 @@ const AIOffersPage = () => {
 
       <div className="ai-offers-page">
         <div className="main-content">
-          <div className="ai-offers-container">
-            <div className="ai-offers-header">
-              <button className="back-button" onClick={handleGoBack}>
+          <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button className="back-btn" onClick={handleGoBack} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem" }}>
                 <i className="fas fa-arrow-left"></i>
                 Retour
               </button>
+              <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <i className="fas fa-robot" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+                Offres IA (En construction)
+              </h1>
             </div>
+          </div>
 
             <div className="ai-offers-content">
-              <div className="empty-state">
-                <div className="empty-icon">
-                  <i className="fas fa-robot"></i>
-                  {/* Icône SVG de l'œil - Commentée pour le moment */}
-                  {/* 
-                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 576 512" className="empty-icon" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M572.52 241.4C518.29 135.59 410.93 64 288 64S57.68 135.64 3.48 241.41a32.35 32.35 0 0 0 0 29.19C57.71 376.41 165.07 448 288 448s230.32-71.64 284.52-177.41a32.35 32.35 0 0 0 0-29.19zM288 400a144 144 0 1 1 144-144 143.93 143.93 0 0 1-144 144zm0-240a95.31 95.31 0 0 0-25.31 3.79 47.85 47.85 0 0 1-66.9 66.9A95.78 95.78 0 1 0 288 160z"></path>
-                </svg>
-                */}
+              <div className="empty-state-enhanced" style={{ padding: "80px 20px" }}>
+                <div className="empty-graphic">
+                  <div className="icon-circle">
+                    <i className="fas fa-robot"></i>
+                  </div>
+                  <div className="pulse-ring"></div>
                 </div>
-                <h2>Page en construction</h2>
-                <p>Cette fonctionnalité sera bientôt disponible.</p>
-                <p>
-                  Les offres d'emploi avec intelligence artificielle arrivent
-                  prochainement !
-                </p>
+                <h2>Offres IA en Construction</h2>
+                <p>Cette fonctionnalité innovante sera bientôt disponible.</p>
+                <div className="empty-actions">
+                  <button className="primary-empty-btn" onClick={() => navigate(-1)}>
+                    <i className="fas fa-arrow-left"></i>
+                    Retour au Portail
+                  </button>
+                </div>
               </div>
 
               {/* Section des outils - Commentée pour le moment */}
@@ -62,12 +66,10 @@ const AIOffersPage = () => {
               </div>
             </section>
             */}
-            </div>
           </div>
         </div>
       </div>
-
-  );
+    );
 };
 
 export default AIOffersPage;

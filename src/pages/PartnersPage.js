@@ -123,22 +123,22 @@ const PartnersPage = () => {
   return (
     <div className="partners-page">
       {/* ══ HEADER ══ */}
-      <div className="partners-header">
-        <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <button className="back-btn" onClick={() => navigate(-1)}>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
             <i className="fas fa-arrow-left"></i>
             Retour
           </button>
-          <h1>
-            <i className="fas fa-handshake" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
-            Gestion des Partenaires
+          <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+            <i className="fas fa-handshake" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+            Partenaires
           </h1>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* Compteur */}
           <span style={{
-            fontSize: ".8rem", fontWeight: 600,
+            fontSize: ".75rem", fontWeight: 600,
             color: "#6b7280", background: "#f8f9fa",
             border: "1px solid #e2e8f0", borderRadius: 20,
             padding: "4px 12px"
@@ -147,7 +147,7 @@ const PartnersPage = () => {
           </span>
 
           {canCreate && (
-            <button className="add-partner-btn" onClick={() => setIsAddModalOpen(true)}>
+            <button className="add-partner-btn" onClick={() => setIsAddModalOpen(true)} style={{ height: "36px", fontSize: "0.82rem" }}>
               <i className="fas fa-plus"></i>
               Nouveau Partenaire
             </button>
@@ -185,15 +185,15 @@ const PartnersPage = () => {
       {/* ══ TABLE ══ */}
       <div className="partners-table-container">
         <table className="partners-table">
-          <thead>
+          <thead style={{ background: "#f67800", color: "white" }}>
             <tr>
-              <th><i className="fas fa-building" style={{ marginRight: 6, opacity: .6 }}></i>Raison Sociale</th>
-              <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Nom &amp; Prénom</th>
-              <th><i className="fas fa-phone" style={{ marginRight: 6, opacity: .6 }}></i>Téléphone</th>
-              <th><i className="fas fa-envelope" style={{ marginRight: 6, opacity: .6 }}></i>Email</th>
-              <th><i className="fab fa-whatsapp" style={{ marginRight: 6, opacity: .6 }}></i>WhatsApp</th>
-              <th><i className="fas fa-map-marker-alt" style={{ marginRight: 6, opacity: .6 }}></i>Adresse</th>
-              <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
+              <th style={{ color: "white" }}><i className="fas fa-building" style={{ marginRight: 6, opacity: .8 }}></i>Raison Sociale</th>
+              <th style={{ color: "white" }}><i className="fas fa-user" style={{ marginRight: 6, opacity: .8 }}></i>Nom &amp; Prénom</th>
+              <th style={{ color: "white" }}><i className="fas fa-phone" style={{ marginRight: 6, opacity: .8 }}></i>Téléphone</th>
+              <th style={{ color: "white" }}><i className="fas fa-envelope" style={{ marginRight: 6, opacity: .8 }}></i>Email</th>
+              <th style={{ color: "white" }}><i className="fab fa-whatsapp" style={{ marginRight: 6, opacity: .8 }}></i>WhatsApp</th>
+              <th style={{ color: "white" }}><i className="fas fa-map-marker-alt" style={{ marginRight: 6, opacity: .8 }}></i>Adresse</th>
+              <th style={{ textAlign: "right", paddingRight: 24, color: "white" }}>Gérer</th>
             </tr>
           </thead>
           <tbody>
@@ -225,15 +225,28 @@ const PartnersPage = () => {
               </tr>
             ) : (
               filteredPartners.map((partner) => (
-                <tr key={partner._id}>
+                <tr key={partner._id} id={`item-${partner._id}`}>
                   <td>
                     <span style={{ fontWeight: 600, color: "#1a1d21" }}>
                       {partner.raison_sociale || "—"}
                     </span>
                   </td>
                   <td>{partner.nom_prenom || "—"}</td>
-                  <td>{partner.telephone || "—"}</td>
-                  <td>{partner.email || "—"}</td>
+                  <td>
+                    {partner.telephone
+                      ? <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <i className="fas fa-phone" style={{ color: "#f67800", fontSize: ".75rem" }}></i>
+                          {partner.telephone}
+                        </span>
+                      : "—"}
+                  </td>
+                  <td>
+                    {partner.email
+                      ? <a href={`mailto:${partner.email}`} style={{ color: "#f67800", textDecoration: "none", fontSize: ".88rem" }}>
+                          {partner.email}
+                        </a>
+                      : "—"}
+                  </td>
                   <td>{partner.whatsapp || "—"}</td>
                   <td style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#6b7280" }}>
                     {partner.adresse || "—"}
@@ -361,14 +374,14 @@ const PartnerModal = ({ isOpen, onClose, onSubmit, partner, title }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content partner-modal-enhanced">
-        <div className="modal-header" style={{ background: "#f67800" }}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
           <h2 style={{
             margin: 0, color: "#ffffff",
-            fontSize: "1.15rem", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 9,
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
             textShadow: "0 1px 3px rgba(0,0,0,.18)"
           }}>
-            <i className="fas fa-handshake" style={{ fontSize: "1rem", opacity: .85 }}></i>
+            <i className="fas fa-handshake" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             {title}
           </h2>
           <button onClick={onClose} style={{
@@ -377,8 +390,11 @@ const PartnerModal = ({ isOpen, onClose, onSubmit, partner, title }) => {
               border: "1px solid rgba(255,255,255,.35)",
               color: "#ffffff", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: ".9rem", transition: "all .22s"
-            }}>
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -434,34 +450,15 @@ const PartnerModal = ({ isOpen, onClose, onSubmit, partner, title }) => {
               onChange={handleChange} placeholder="Commentaires ou notes…" rows="2" />
           </div>
 
-          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={onClose}
-              disabled={loading}
-              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
-            >
-              <i className="fas fa-times"></i>
-              Annuler
+          <div className="modal-actions-enhanced full-width">
+            <button type="button" onClick={onClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
             </button>
-            <button 
-              type="submit" 
-              className="save-btn" 
-              disabled={loading}
-              style={{ 
-                display: "flex", alignItems: "center", gap: "6px",
-                background: "#f67800", color: "white", border: "none",
-                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
-                height: "38px", cursor: "pointer"
-              }}
-            >
-              {loading ? (
-                <i className="fas fa-spinner fa-spin"></i>
-              ) : (
-                <i className="fas fa-check"></i>
-              )}
-              Enregistrer
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading
+                ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 7 }}></i>Enregistrement…</>
+                : <><i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer</>
+              }
             </button>
           </div>
         </form>
@@ -485,12 +482,27 @@ const PartnerViewModal = ({ isOpen, onClose, partner, title }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header" style={{ background: "#f67800" }}>
-          <h2 style={{ margin: 0, color: "#ffffff", fontSize: "1.15rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 9 }}>
-            <i className="fas fa-id-card" style={{ fontSize: "1rem", opacity: .85 }}></i>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-id-card" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             {title}
           </h2>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.2)", border: "1px solid rgba(255,255,255,.35)", color: "#ffffff", cursor: "pointer" }}>
+          <button onClick={onClose} style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>

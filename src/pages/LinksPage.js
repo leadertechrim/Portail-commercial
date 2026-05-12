@@ -5,6 +5,7 @@ import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./LinksPage.css";
 
 const LinksPage = () => {
+  const navigate = useNavigate();
   const [links, setLinks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,7 @@ const LinksPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const navigate = useNavigate();
+
   const { hasPermission, loading: permissionsLoading } =
     usePermissionsImproved();
   const role = localStorage.getItem("role");
@@ -315,20 +316,32 @@ const LinksPage = () => {
   return (
     <div className="links-page">
       <div className="main-content">
-        <div className="links-header">
-          <div className="links-header-left"></div>
-          <div className="links-header-actions">
+        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+            <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+              <i className="fas fa-arrow-left"></i>
+              Retour
+            </button>
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              <i className="fas fa-link" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+              Liens Utiles
+            </h1>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="text"
               placeholder="Rechercher..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
+              style={{ height: "36px", fontSize: "0.85rem", padding: "0 12px", minWidth: "200px" }}
             />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="category-filter"
+              style={{ height: "36px", fontSize: "0.85rem", padding: "0 8px" }}
             >
               <option value="">Toutes les catégories</option>
               {categories.map((category) => (
@@ -341,6 +354,7 @@ const LinksPage = () => {
               <button
                 className="add-link-btn"
                 onClick={() => setIsAddModalOpen(true)}
+                style={{ height: "36px", fontSize: "0.82rem", whiteSpace: "nowrap" }}
               >
                 <i className="fas fa-plus"></i>
                 Nouveau Lien
@@ -359,78 +373,85 @@ const LinksPage = () => {
 
           {Object.keys(groupedLinks).length === 0 ? (
             <div className="empty-links">
-              <i className="fas fa-link"></i>
-              <h3>Aucun lien trouvé</h3>
-              <p>Commencez par créer votre premier lien utile</p>
+              <div style={{
+                display: "flex", flexDirection: "column",
+                alignItems: "center", padding: "56px 20px",
+                gap: 12
+              }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: "50%",
+                  background: "#fff7ed", border: "2px solid #fed7aa",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                  <i className="fas fa-link" style={{ fontSize: "1.6rem", color: "#f67800" }}></i>
+                </div>
+                <p style={{ margin: 0, fontWeight: 700, color: "#1a1d21", fontSize: "1rem" }}>
+                  {searchTerm ? "Aucun lien trouvé" : "Aucun lien enregistré"}
+                </p>
+                <p style={{ margin: 0, color: "#6b7280", fontSize: ".88rem" }}>
+                  {searchTerm
+                    ? `Aucun résultat pour « ${searchTerm} »`
+                    : "Cliquez sur « Nouveau Lien » pour commencer"}
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="links-sections">
-              {Object.entries(groupedLinks).map(([category, categoryLinks]) => (
-                <div key={category} className="links-section">
-                  <h2 className="section-title">
-                    <i className="fas fa-folder"></i>
-                    {category}
-                    <span className="count">({categoryLinks.length})</span>
-                  </h2>
-                  <div className="links-grid">
-                    {categoryLinks.map((link) => (
-                      <div key={link._id} className="link-card">
-                        <div className="link-header">
-                          <h3>{link.nom}</h3>
-                          <div className="link-actions-cell">
-                            <button
-                              className="view-btn"
-                              onClick={() => openViewModal(link)}
-                              title="Voir les détails"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            {hasPermission("links_manage") && (
-                              <>
-                                <button
-                                  className="edit-btn"
-                                  onClick={() => openEditModal(link)}
-                                  title="Modifier"
-                                >
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                  className="delete-btn"
-                                  onClick={() => handleDeleteLink(link._id)}
-                                  title="Supprimer"
-                                >
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <p className="link-description">{link.description}</p>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="link-url"
-                        >
-                          <i className="fas fa-external-link-alt"></i>
-                          {link.url}
-                        </a>
-                        <div className="link-meta">
-                          <span className="link-category">
-                            <i className="fas fa-tag"></i>
-                            {link.categorie}
-                          </span>
-                          <span className="link-order">
-                            <i className="fas fa-sort-numeric-up"></i>
-                            Ordre: {link.ordre}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          <div className="links-sections">
+            {Object.entries(groupedLinks).map(([category, categoryLinks]) => (
+              <div key={category} className="links-section" style={{ marginBottom: "30px", background: "white", borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", overflow: "hidden", border: "1px solid #eee" }}>
+                <h2 className="section-title" style={{ background: "#f8f9fa", borderBottom: "1px solid #eee", padding: "12px 20px", fontSize: "1rem", color: "#2c3e50", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+                  <i className="fas fa-folder" style={{ color: "#f67800" }}></i>
+                  {category}
+                  <span className="count" style={{ fontSize: "0.8rem", background: "#eee", padding: "2px 8px", borderRadius: "10px", marginLeft: "auto", color: "#666" }}>{categoryLinks.length}</span>
+                </h2>
+                <div className="table-container">
+                  <table className="links-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#f67800", color: "white" }}>
+                        <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "0.85rem", fontWeight: 600 }}><i className="fas fa-tag" style={{ marginRight: 8, opacity: 0.8 }}></i>Nom</th>
+                        <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "0.85rem", fontWeight: 600 }}><i className="fas fa-info-circle" style={{ marginRight: 8, opacity: 0.8 }}></i>Description</th>
+                        <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "0.85rem", fontWeight: 600 }}><i className="fas fa-globe" style={{ marginRight: 8, opacity: 0.8 }}></i>URL</th>
+                        <th style={{ padding: "12px 20px", textAlign: "center", fontSize: "0.85rem", fontWeight: 600 }}><i className="fas fa-sort-numeric-up" style={{ marginRight: 8, opacity: 0.8 }}></i>Ordre</th>
+                        <th style={{ padding: "12px 20px", textAlign: "right", fontSize: "0.85rem", fontWeight: 600 }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categoryLinks.map((link) => (
+                        <tr key={link._id} style={{ borderBottom: "1px solid #eee" }}>
+                          <td style={{ padding: "12px 20px", fontSize: "0.9rem", fontWeight: 500, color: "#2c3e50" }}>{link.nom}</td>
+                          <td style={{ padding: "12px 20px", fontSize: "0.85rem", color: "#666" }}>{link.description || "-"}</td>
+                          <td style={{ padding: "12px 20px" }}>
+                            <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: "#f67800", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 5 }}>
+                              <i className="fas fa-external-link-alt" style={{ fontSize: "0.75rem" }}></i>
+                              Visiter
+                            </a>
+                          </td>
+                          <td style={{ padding: "12px 20px", textAlign: "center", fontSize: "0.85rem" }}>{link.ordre || 1}</td>
+                          <td style={{ padding: "12px 20px", textAlign: "right" }}>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                              <button onClick={() => openViewModal(link)} style={{ background: "none", border: "none", color: "#f67800", cursor: "pointer", padding: 5 }} title="Détails">
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              {hasPermission("links_manage") && (
+                                <>
+                                  <button onClick={() => openEditModal(link)} style={{ background: "none", border: "none", color: "#6c757d", cursor: "pointer", padding: 5 }} title="Modifier">
+                                    <i className="fas fa-edit"></i>
+                                  </button>
+                                  <button onClick={() => handleDeleteLink(link._id)} style={{ background: "none", border: "none", color: "#dc3545", cursor: "pointer", padding: 5 }} title="Supprimer">
+                                    <i className="fas fa-trash"></i>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           )}
         </div>
       </div>
@@ -538,9 +559,29 @@ const LinkModal = ({ isOpen, onClose, onSubmit, link, categories, title }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>{title}</h2>
-          <button className="close-btn" onClick={onClose}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-link" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -620,12 +661,15 @@ const LinkModal = ({ isOpen, onClose, onSubmit, link, categories, title }) => {
             />
           </div>
 
-          <div className="modal-actions">
+          <div className="modal-actions-enhanced full-width">
             <button type="button" onClick={onClose} className="cancel-btn">
-              Annuler
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
             </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "En cours..." : "Enregistrer"}
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading
+                ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 7 }}></i>Enregistrement…</>
+                : <><i className="fas fa-check" style={{ marginRight: 7 }}></i>Enregistrer</>
+              }
             </button>
           </div>
         </form>
@@ -641,9 +685,29 @@ const LinkViewModal = ({ isOpen, onClose, link }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>Détails du Lien</h2>
-          <button className="close-btn" onClick={onClose}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-id-card" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+            Détails du Lien
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -687,11 +751,11 @@ const LinkViewModal = ({ isOpen, onClose, link }) => {
           </div>
         </div>
 
-        <div className="modal-actions">
-          <button onClick={onClose} className="cancel-btn">
-            Fermer
-          </button>
-        </div>
+          <div className="modal-actions">
+            <button type="button" onClick={onClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Fermer
+            </button>
+          </div>
       </div>
     </div>
   );

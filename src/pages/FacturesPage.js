@@ -637,22 +637,21 @@ const FacturesPage = () => {
   return (
     <div className="factures-page">
       <div className="main-content">
-        <div className="factures-header">
-          <div className="header-left" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button className="back-btn" onClick={() => navigate(-1)}>
+        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+            <button className="back-btn" onClick={() => navigate(-1)} style={{ height: "36px", minWidth: "unset", padding: "0 14px", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
               <i className="fas fa-arrow-left"></i>
               Retour
             </button>
-            <h1>
-              <i className="fas fa-file-invoice" style={{ color: "#f67800", fontSize: "1.1rem" }}></i>
-              Gestion des Factures
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              <i className="fas fa-file-invoice" style={{ color: "#f67800", fontSize: "1rem" }}></i>
+              Factures
             </h1>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Compteur */}
             <span style={{
-              fontSize: ".8rem", fontWeight: 600,
+              fontSize: ".75rem", fontWeight: 600,
               color: "#6b7280", background: "#f8f9fa",
               border: "1px solid #e2e8f0", borderRadius: 20,
               padding: "4px 12px"
@@ -664,6 +663,7 @@ const FacturesPage = () => {
               <button
                 className="add-facture-btn"
                 onClick={() => setIsAddModalOpen(true)}
+                style={{ height: "36px", fontSize: "0.82rem" }}
               >
                 <i className="fas fa-plus"></i>
                 Nouvelle Facture
@@ -692,37 +692,48 @@ const FacturesPage = () => {
             </div>
           )}
 
-          {filteredFactures.length === 0 ? (
+          {factures.length === 0 ? (
             <div className="empty-factures">
               <div style={{
-                width: 64, height: 64, borderRadius: "50%",
-                background: "#fff7ed", border: "2px solid #fed7aa",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 16px"
+                display: "flex", flexDirection: "column",
+                alignItems: "center", padding: "56px 20px",
+                gap: 12
               }}>
-                <i className="fas fa-receipt" style={{ fontSize: "1.6rem", color: "#f67800" }}></i>
+                <div style={{
+                  width: 64, height: 64, borderRadius: "50%",
+                  background: "#fff7ed", border: "2px solid #fed7aa",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                  <i className="fas fa-file-invoice" style={{ fontSize: "1.6rem", color: "#f67800" }}></i>
+                </div>
+                <p style={{ margin: 0, fontWeight: 700, color: "#1a1d21", fontSize: "1rem" }}>
+                  {searchTerm ? "Aucune facture trouvée" : "Aucune facture enregistrée"}
+                </p>
+                <p style={{ margin: 0, color: "#6b7280", fontSize: ".88rem" }}>
+                  {searchTerm
+                    ? `Aucun résultat pour « ${searchTerm} »`
+                    : "Cliquez sur « Nouvelle Facture » pour commencer"}
+                </p>
               </div>
-              <h3>Aucune facture trouvée</h3>
-              <p>Commencez par créer votre première facture</p>
             </div>
           ) : (
             <div className="factures-table-container">
               <table className="factures-table">
-                <thead>
+                <thead style={{ background: "#f67800", color: "white" }}>
                   <tr>
-                    <th><i className="fas fa-hashtag" style={{ marginRight: 6, opacity: .6 }}></i>Numéro</th>
-                    <th><i className="fas fa-info-circle" style={{ marginRight: 6, opacity: .6 }}></i>Intitulé</th>
-                    <th><i className="fas fa-user" style={{ marginRight: 6, opacity: .6 }}></i>Client</th>
-                    <th><i className="fas fa-lightbulb" style={{ marginRight: 6, opacity: .6 }}></i>Offre</th>
-                    <th><i className="fas fa-calendar-alt" style={{ marginRight: 6, opacity: .6 }}></i>Émission</th>
-                    <th><i className="fas fa-tasks" style={{ marginRight: 6, opacity: .6 }}></i>État</th>
-                    <th><i className="fas fa-file-alt" style={{ marginRight: 6, opacity: .6 }}></i>Docs</th>
-                    {hasPermission("factures_view_all") && <th><i className="fas fa-user-shield" style={{ marginRight: 6, opacity: .6 }}></i>Responsable</th>}
-                    <th style={{ textAlign: "right", paddingRight: 24 }}>Gérer</th>
+                    <th style={{ color: "white" }}><i className="fas fa-hashtag" style={{ marginRight: 6, opacity: .8 }}></i>Numéro</th>
+                    <th style={{ color: "white" }}><i className="fas fa-info-circle" style={{ marginRight: 6, opacity: .8 }}></i>Intitulé</th>
+                    <th style={{ color: "white" }}><i className="fas fa-user" style={{ marginRight: 6, opacity: .8 }}></i>Client</th>
+                    <th style={{ color: "white" }}><i className="fas fa-lightbulb" style={{ marginRight: 6, opacity: .8 }}></i>Offre</th>
+                    <th style={{ color: "white" }}><i className="fas fa-calendar-alt" style={{ marginRight: 6, opacity: .8 }}></i>Émission</th>
+                    <th style={{ color: "white" }}><i className="fas fa-tasks" style={{ marginRight: 6, opacity: .8 }}></i>État</th>
+                    <th style={{ color: "white" }}><i className="fas fa-file-alt" style={{ marginRight: 6, opacity: .8 }}></i>Docs</th>
+                    {hasPermission("factures_view_all") && <th style={{ color: "white" }}><i className="fas fa-user-shield" style={{ marginRight: 6, opacity: .8 }}></i>Responsable</th>}
+                    <th style={{ textAlign: "right", paddingRight: 24, color: "white" }}>Gérer</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredFactures.map((facture) => (
+                  {factures.map((facture) => (
                     <tr key={facture._id}>
                       <td>{facture.numero_facture || facture.numero || "-"}</td>
                       <td>{facture.intitule || "-"}</td>
@@ -744,7 +755,7 @@ const FacturesPage = () => {
                             backgroundColor: getEtatColor(facture.etat),
                           }}
                         >
-                          {facture.etat || "Non défini"}
+                          {(facture.etat || "Non défini").charAt(0).toUpperCase() + (facture.etat || "Non défini").slice(1).toLowerCase()}
                         </span>
                       </td>
                       <td>
@@ -1068,14 +1079,14 @@ const FactureModal = ({
     <div className="modal-overlay">
       <div className="modal-content">
         {/* Header orange — titre BLANC GRAND */}
-        <div className="modal-header" style={{ background: "#f67800", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 30px", borderRadius: "16px 16px 0 0" }}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
           <h2 style={{
             margin: 0, color: "#ffffff",
-            fontSize: "1.15rem", fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 9,
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
             textShadow: "0 1px 3px rgba(0,0,0,.18)"
           }}>
-            <i className={`fas ${facture ? "fa-file-invoice-dollar" : "fa-file-medical"}`} style={{ fontSize: "1rem", opacity: .85 }}></i>
+            <i className={`fas ${facture ? "fa-file-invoice-dollar" : "fa-file-medical"}`} style={{ fontSize: "1.1rem", opacity: .85 }}></i>
             {title}
           </h2>
           <button
@@ -1264,34 +1275,15 @@ const FactureModal = ({
             )}
           </div>
 
-          <div className="modal-actions" style={{ gridColumn: "span 2", marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={onClose}
-              disabled={loading}
-              style={{ display: "flex", alignItems: "center", gap: "6px", height: "38px", padding: "0 20px", borderRadius: "8px", border: "1.5px solid #d1d5db", background: "white", cursor: "pointer" }}
-            >
-              <i className="fas fa-times"></i>
-              Annuler
+          <div className="modal-actions-enhanced full-width" style={{ gridColumn: "span 2", marginTop: "10px" }}>
+            <button type="button" onClick={onClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Annuler
             </button>
-            <button 
-              type="submit" 
-              className="save-btn" 
-              disabled={loading}
-              style={{ 
-                display: "flex", alignItems: "center", gap: "6px",
-                background: "#f67800", color: "white", border: "none",
-                padding: "0 26px", borderRadius: "8px", fontWeight: "600",
-                height: "38px", cursor: "pointer"
-              }}
-            >
-              {loading ? (
-                <i className="fas fa-spinner fa-spin"></i>
-              ) : (
-                <i className="fas fa-check"></i>
-              )}
-              {facture ? "Mettre à jour" : "Créer la Facture"}
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading
+                ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 7 }}></i>Enregistrement…</>
+                : <><i className="fas fa-check" style={{ marginRight: 7 }}></i>{facture ? "Mettre à jour" : "Créer la Facture"}</>
+              }
             </button>
           </div>
         </form>
@@ -1329,9 +1321,29 @@ const FactureViewModal = ({ isOpen, onClose, facture, etats }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>Détails de la Facture</h2>
-          <button className="close-btn" onClick={onClose}>
+        <div className="modal-header" style={{ background: "#f67800", position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 24px 14px", minHeight: "80px", borderRadius: "16px 16px 0 0" }}>
+          <h2 style={{
+            margin: 0, color: "#ffffff",
+            fontSize: "1.25rem", fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,.18)"
+          }}>
+            <i className="fas fa-id-card" style={{ fontSize: "1.1rem", opacity: .85 }}></i>
+            Détails de la Facture
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,.2)",
+              border: "1px solid rgba(255,255,255,.35)",
+              color: "#ffffff", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".9rem", transition: "all .22s", flexShrink: 0
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,.2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.2)"; }}
+          >
             <i className="fas fa-times"></i>
           </button>
         </div>
@@ -1375,7 +1387,7 @@ const FactureViewModal = ({ isOpen, onClose, facture, etats }) => {
                 className="etat-badge"
                 style={{ backgroundColor: getEtatColor(facture.etat) }}
               >
-                {facture.etat || "Non défini"}
+                {(facture.etat || "Non défini").charAt(0).toUpperCase() + (facture.etat || "Non défini").slice(1).toLowerCase()}
               </span>
             </div>
           </div>
@@ -1415,11 +1427,11 @@ const FactureViewModal = ({ isOpen, onClose, facture, etats }) => {
           )}
         </div>
 
-        <div className="modal-actions">
-          <button onClick={onClose} className="cancel-btn">
-            Fermer
-          </button>
-        </div>
+          <div className="modal-actions">
+            <button type="button" onClick={onClose} className="cancel-btn">
+              <i className="fas fa-times" style={{ marginRight: 6 }}></i>Fermer
+            </button>
+          </div>
       </div>
     </div>
   );

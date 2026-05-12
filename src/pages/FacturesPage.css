@@ -281,7 +281,7 @@
   padding: 14px 15px;
   text-align: left;
   font-weight: 700;
-  color: #343a40;
+  color: #f67800;
   border-bottom: 2px solid #dee2e6;
   white-space: nowrap;
   font-size: 0.82rem;
@@ -310,14 +310,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 8px;        /* ← SEUL CHANGEMENT : 20px → 8px (rectangle arrondi comme DevisPage) */
   color: white;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* ====================== ACTIONS EXCELLENTS ====================== */
@@ -466,12 +465,8 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .modal-content {
@@ -486,14 +481,8 @@
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-header {
@@ -511,8 +500,6 @@
   font-size: 1.4rem;
   font-weight: 600;
 }
-
-/* Style .close-btn défini dans global.css */
 
 .modal-form {
   padding: 28px;
@@ -602,18 +589,6 @@
   color: #333;
   font-weight: 500;
   line-height: 1.5;
-}
-
-.etat-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 20px;
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .documents-list {
@@ -726,12 +701,8 @@
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .loading-spinner p {
@@ -742,21 +713,10 @@
 /* ====================== RESPONSIVE DESIGN ====================== */
 
 @media (max-width: 1024px) {
-  .main-content {
-    padding-left: 0;
-  }
-
-  .factures-header {
-    margin: 15px;
-  }
-
-  .factures-content {
-    padding: 0 15px 15px;
-  }
-
-  .factures-table-container {
-    margin: 0 15px;
-  }
+  .main-content { padding-left: 0; }
+  .factures-header { margin: 15px; }
+  .factures-content { padding: 0 15px 15px; }
+  .factures-table-container { margin: 0 15px; }
 }
 
 @media (max-width: 768px) {
@@ -767,187 +727,47 @@
     padding: 16px 20px;
     margin: 10px;
   }
-
-  .factures-header-left h1 {
-    font-size: 1.4rem;
-  }
-
-  .factures-header-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .search-input {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .add-facture-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .factures-content {
-    padding: 0 5px 10px;
-  }
-
-  .factures-table-container {
-    margin: 0 auto;
-    max-width: 98%;
-    border-radius: 12px;
-  }
-
-  .factures-table {
-    font-size: 0.75rem;
-  }
-
-  .factures-table th {
-    padding: 10px 6px;
-    font-size: 0.7rem;
-  }
-
-  .factures-table td {
-    padding: 10px 6px;
-    font-size: 0.72rem;
-  }
-
-  .actions {
-    flex-direction: row;
-    gap: 4px;
-    justify-content: center;
-  }
-
-  .actions button {
-    padding: 8px;
-    min-width: 32px;
-    min-height: 32px;
-    font-size: 12px;
-  }
-
-  .etat-badge {
-    font-size: 9px;
-    padding: 4px 8px;
-  }
-
-  .document-link {
-    font-size: 10px;
-    padding: 3px 6px;
-  }
-
-  .documents-cell {
-    max-width: 150px;
-  }
-
-  .document-name {
-    max-width: 100px;
-  }
-
-  .modal-content {
-    width: 95%;
-    max-height: 85vh;
-    border-radius: 16px;
-  }
-
-  .modal-header {
-    padding: 20px;
-  }
-
-  .modal-header h2 {
-    font-size: 1.2rem;
-  }
-
-  .modal-form {
-    padding: 20px;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-    padding: 16px 20px;
-  }
-
-  .cancel-btn,
-  .submit-btn {
-    width: 100%;
-  }
-
-  .empty-factures {
-    padding: 60px 20px;
-    margin: 0 10px;
-  }
-
-  .empty-factures i {
-    font-size: 48px;
-  }
-
-  .empty-factures h3 {
-    font-size: 1.2rem;
-  }
-
-  .empty-factures p {
-    font-size: 0.95rem;
-  }
+  .factures-header-left h1 { font-size: 1.4rem; }
+  .factures-header-actions { flex-direction: column; gap: 10px; }
+  .search-input { min-width: auto; width: 100%; }
+  .add-facture-btn { width: 100%; justify-content: center; }
+  .factures-content { padding: 0 5px 10px; }
+  .factures-table-container { margin: 0 auto; max-width: 98%; border-radius: 12px; }
+  .factures-table { font-size: 0.75rem; }
+  .factures-table th { padding: 10px 6px; font-size: 0.7rem; }
+  .factures-table td { padding: 10px 6px; font-size: 0.72rem; }
+  .actions { flex-direction: row; gap: 4px; justify-content: center; }
+  .actions button { padding: 8px; min-width: 32px; min-height: 32px; font-size: 12px; }
+  .etat-badge { font-size: 9px; padding: 4px 8px; }
+  .document-link { font-size: 10px; padding: 3px 6px; }
+  .documents-cell { max-width: 150px; }
+  .document-name { max-width: 100px; }
+  .modal-content { width: 95%; max-height: 85vh; border-radius: 16px; }
+  .modal-header { padding: 20px; }
+  .modal-header h2 { font-size: 1.2rem; }
+  .modal-form { padding: 20px; }
+  .modal-actions { flex-direction: column; padding: 16px 20px; }
+  .cancel-btn, .submit-btn { width: 100%; }
+  .empty-factures { padding: 60px 20px; margin: 0 10px; }
+  .empty-factures i { font-size: 48px; }
+  .empty-factures h3 { font-size: 1.2rem; }
+  .empty-factures p { font-size: 0.95rem; }
 }
 
 @media (max-width: 480px) {
-  .factures-header-left h1 {
-    font-size: 1.2rem;
-  }
-
-  .factures-table-container {
-    max-width: 99%;
-  }
-
-  .factures-table {
-    font-size: 0.7rem;
-  }
-
-  .factures-table th {
-    padding: 8px 4px;
-    font-size: 0.65rem;
-  }
-
-  .factures-table td {
-    padding: 8px 4px;
-    font-size: 0.68rem;
-  }
-
-  .etat-badge {
-    font-size: 8px;
-    padding: 3px 6px;
-  }
-
-  .actions button {
-    padding: 6px;
-    font-size: 11px;
-    min-width: 28px;
-    min-height: 28px;
-  }
-
-  .document-link {
-    font-size: 9px;
-    padding: 2px 4px;
-  }
-
-  .documents-cell {
-    max-width: 120px;
-  }
-
-  .document-name {
-    max-width: 80px;
-  }
-
-  .modal-header h2 {
-    font-size: 1.1rem;
-  }
-
-  .form-group label {
-    font-size: 13px;
-  }
-
+  .factures-header-left h1 { font-size: 1.2rem; }
+  .factures-table-container { max-width: 99%; }
+  .factures-table { font-size: 0.7rem; }
+  .factures-table th { padding: 8px 4px; font-size: 0.65rem; }
+  .factures-table td { padding: 8px 4px; font-size: 0.68rem; }
+  .etat-badge { font-size: 8px; padding: 3px 6px; }
+  .actions button { padding: 6px; font-size: 11px; min-width: 28px; min-height: 28px; }
+  .document-link { font-size: 9px; padding: 2px 4px; }
+  .documents-cell { max-width: 120px; }
+  .document-name { max-width: 80px; }
+  .modal-header h2 { font-size: 1.1rem; }
+  .form-group label { font-size: 13px; }
   .form-group input,
   .form-group select,
-  .form-group textarea {
-    font-size: 13px;
-    padding: 10px 14px;
-  }
+  .form-group textarea { font-size: 13px; padding: 10px 14px; }
 }
