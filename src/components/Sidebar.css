@@ -63,14 +63,25 @@
 }
 
 .section-header:hover {
-  background: #e9ecef;
+  background: #f8f9fa;
   transform: translateX(3px);
+  border-color: #f67800;
+}
+
+.section-header.active {
+  background: linear-gradient(
+    90deg,
+    rgba(246, 120, 0, 0.1),
+    rgba(246, 120, 0, 0.05)
+  );
+  color: #f67800;
+  border-left: 4px solid #f67800;
 }
 
 .section-icon {
   font-size: 18px;
   margin-right: 12px;
-  color: #000000;
+  color: #f67800;
 }
 
 .section-label {
@@ -78,6 +89,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: inherit;
 }
 
 .section-toggle {
@@ -140,7 +152,7 @@
 .item-icon {
   font-size: 16px;
   margin-right: 10px;
-  color: #000000;
+  color: #f67800;
 }
 
 .menu-item.active .item-icon {

@@ -569,7 +569,14 @@ const DevisPage = () => {
             </h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: ".75rem", fontWeight: 600, color: "#6b7280", background: "#f8f9fa", border: "1px solid #e2e8f0", borderRadius: 20, padding: "4px 12px" }}>
+            <span style={{
+              fontSize: ".8rem", fontWeight: 700,
+              color: "#f67800", background: "rgba(246, 120, 0, 0.1)",
+              border: "1px solid rgba(246, 120, 0, 0.2)", borderRadius: 20,
+              padding: "5px 14px", whiteSpace: "nowrap",
+              display: "flex", alignItems: "center", gap: 5
+            }}>
+              <i className="fas fa-database" style={{ fontSize: "0.7rem" }}></i>
               {devis.length} devis
             </span>
             {hasPermission("devis_create") && (

@@ -116,7 +116,7 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
         "menu_view_clients",
         "menu_view_devis",
         "menu_view_factures",
-      ], // Au moins une de ces permissions
+      ],
       children: [
         {
           id: "clients",
@@ -283,18 +283,26 @@ const SidebarDynamic = ({ isOpen, setSelectedMenu, selectedMenu }) => {
                 return (
                   <div key={section.id} className="menu-section">
                     <div
-                      className="section-header"
-                      onClick={() => toggleSection(section.id)}
+                      className={`section-header ${selectedMenu === section.id ? "active" : ""}`}
+                      onClick={() => {
+                        if (section.children && section.children.length > 0) {
+                          toggleSection(section.id);
+                        } else {
+                          setSelectedMenu(section.id);
+                        }
+                      }}
                     >
                       <span className="section-icon">{section.icon}</span>
                       <span className="section-label">{section.label}</span>
-                      <span className="section-toggle">
-                        {expandedSections[section.id] ? (
-                          <FaChevronDown />
-                        ) : (
-                          <FaChevronRight />
-                        )}
-                      </span>
+                      {section.children && section.children.length > 0 && (
+                        <span className="section-toggle">
+                          {expandedSections[section.id] ? (
+                            <FaChevronDown />
+                          ) : (
+                            <FaChevronRight />
+                          )}
+                        </span>
+                      )}
                     </div>
                     {expandedSections[section.id] && (
                       <ul className="section-items">

@@ -140,11 +140,13 @@ const PersonnelPage = () => {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* Compteur */}
           <span style={{
-            fontSize: ".75rem", fontWeight: 600,
-            color: "#6b7280", background: "#f8f9fa",
-            border: "1px solid #e2e8f0", borderRadius: 20,
-            padding: "4px 12px"
+            fontSize: ".8rem", fontWeight: 700,
+            color: "#f67800", background: "rgba(246, 120, 0, 0.1)",
+            border: "1px solid rgba(246, 120, 0, 0.2)", borderRadius: 20,
+            padding: "5px 14px", whiteSpace: "nowrap",
+            display: "flex", alignItems: "center", gap: 5
           }}>
+            <i className="fas fa-database" style={{ fontSize: "0.7rem" }}></i>
             {filteredPersonnel.length} personnel{filteredPersonnel.length !== 1 ? "s" : ""}
           </span>
 
