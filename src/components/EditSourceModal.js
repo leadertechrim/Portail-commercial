@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaSave, FaTrash } from "react-icons/fa";
 import { usePermissionsImproved } from "../hooks/usePermissionsImproved";
 import "./EditSourceModal.css";
 

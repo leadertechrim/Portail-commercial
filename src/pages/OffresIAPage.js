@@ -20,7 +20,6 @@ import {
   FiLayers,
 } from "react-icons/fi";
 import { HiOutlineDocumentText } from "react-icons/hi";
-import { AiOutlineRobot } from "react-icons/ai";
 import { BsStar, BsTrash } from "react-icons/bs";
 import "./OffresIAPage.css";
 

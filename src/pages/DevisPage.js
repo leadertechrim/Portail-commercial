@@ -626,7 +626,7 @@ const DevisPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {devis.map((devis) => (
+                  {filteredDevis.map((devis) => (
                     <tr key={devis._id}>
                       <td>{devis.numero_devis || devis.numero || "-"}</td>
                       <td>{devis.intitule || "-"}</td>
